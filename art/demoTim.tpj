@@ -1,0 +1,68 @@
+<tim_project>
+    <properties buffer_res="2" buffer_order="0"/>
+    <tim_group name="global">
+        <tim file="girl01.tim" source="girl01.png">
+            <import_parameters>
+                <target_bpp>16</target_bpp>
+                <dithering>0</dithering>
+                <quantize_mode>0</quantize_mode>
+                <set_color_stp>0</set_color_stp>
+                <set_black_stp>0</set_black_stp>
+                <transparency_mode>0</transparency_mode>
+            </import_parameters>
+        </tim>
+        <tim file="girl02.tim" source="girl02.png">
+            <import_parameters>
+                <target_bpp>16</target_bpp>
+                <dithering>0</dithering>
+                <quantize_mode>0</quantize_mode>
+                <set_color_stp>0</set_color_stp>
+                <set_black_stp>0</set_black_stp>
+                <transparency_mode>0</transparency_mode>
+            </import_parameters>
+        </tim>
+        <tim file="texture6.tim" source="texture6.png">
+            <import_parameters>
+                <target_bpp>4</target_bpp>
+                <dithering>0</dithering>
+                <quantize_mode>0</quantize_mode>
+                <set_color_stp>0</set_color_stp>
+                <set_black_stp>0</set_black_stp>
+                <transparency_mode>0</transparency_mode>
+            </import_parameters>
+        </tim>
+        <tim file="sonic.tim" source="sonic.png">
+            <import_parameters>
+                <target_bpp>4</target_bpp>
+                <dithering>0</dithering>
+                <quantize_mode>0</quantize_mode>
+                <set_color_stp>0</set_color_stp>
+                <set_black_stp>0</set_black_stp>
+                <transparency_mode>1</transparency_mode>
+                <alpha_threshold>127</alpha_threshold>
+                <alpha_stp_threshold>255</alpha_stp_threshold>
+            </import_parameters>
+        </tim>
+        <tim file="bgb.tim" source="bgb.png">
+            <import_parameters>
+                <target_bpp>4</target_bpp>
+                <dithering>0</dithering>
+                <quantize_mode>0</quantize_mode>
+                <set_color_stp>0</set_color_stp>
+                <set_black_stp>0</set_black_stp>
+                <transparency_mode>0</transparency_mode>
+            </import_parameters>
+        </tim>
+        <tim file="bga.tim" source="bga.png">
+            <import_parameters>
+                <target_bpp>4</target_bpp>
+                <dithering>0</dithering>
+                <quantize_mode>0</quantize_mode>
+                <set_color_stp>0</set_color_stp>
+                <set_black_stp>0</set_black_stp>
+                <transparency_mode>2</transparency_mode>
+                <color_key>0x0</color_key>
+            </import_parameters>
+        </tim>
+    </tim_group>
+</tim_project>
