@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Make Iso" type="CLionNativeAppRunConfigurationType" PROGRAM_PARAMS="iso" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="demo" TARGET_NAME="Makefile" CONFIG_NAME="Makefile" version="1" RUN_PATH="$PROJECT_DIR$/../../gppmipsel/bin/make.exe">
+    <method v="2" />
+  </configuration>
+</component>

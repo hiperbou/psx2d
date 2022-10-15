@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "system.h": "c",
+        "libetc.h": "c",
+        "stdio.h": "c",
+        "fpg.h": "c",
+        "strings.h": "c"
+    }
+}

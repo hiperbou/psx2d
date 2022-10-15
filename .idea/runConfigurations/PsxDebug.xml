@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="PsxDebug" type="CLion_Remote" version="1" remoteCommand="localhost:3333" symbolFile="$PROJECT_DIR$/Demo.elf" sysroot="">
+    <debugger toolchainName="PSX" />
+    <method v="2">
+      <option name="RunConfigurationTask" enabled="false" run_configuration_name="Load" run_configuration_type="CLionNativeAppRunConfigurationType" />
+    </method>
+  </configuration>
+</component>
