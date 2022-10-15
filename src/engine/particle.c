@@ -19,7 +19,7 @@ typedef struct ParticleItem {
 }ParticleItem;
 
 static void initPool() {
-    particlePool = new_ObjectPool(MAX_NUM_PARTICLES, sizeof(ParticleItem));
+    particlePool = new_ObjectPool(MAX_NUM_PARTICLES, sizeof(Particle));
     ParticleItem * particleItem = particlePool->objects;
 
     for (int i=0; i<MAX_NUM_PARTICLES; i++){
@@ -95,7 +95,7 @@ Particle * new_Particle(int x, int y) {
 
 void remove_Particle(Particle *particle) {
     active_particles--;
-    ObjectPool_free(particlePool, (ObjectPoolItemID *) &((ParticleItem*)particle)->itemID);
+    ObjectPool_free(particlePool, particle);
 }
 
 static void particleUpdater(Particle * particle) {

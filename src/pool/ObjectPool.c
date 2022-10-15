@@ -3,15 +3,19 @@
 
 ObjectPool* new_ObjectPool(int numObjects, int objectSize) {
     ObjectPool* pool = HGL_malloc(sizeof(ObjectPool));
+
+    int chunkSize = objectSize + sizeof (ObjectPoolItemInfo);
+
     pool->maxLength = numObjects;
     pool->objectSize = objectSize;
-    pool->objects = HGL_malloc(numObjects * objectSize);
+    pool->chunkSize = chunkSize;
+    pool->objects = HGL_malloc(numObjects * chunkSize);
     pool->elements = HGL_malloc(numObjects * sizeof(PoolElement));
 
     HGL_POOL_createPool(&pool->pool,
                         numObjects,
                         pool->objects,
-                        objectSize,
+                        chunkSize,
                         pool->elements);
     return pool;
 }
@@ -22,11 +26,28 @@ void delete_ObjectPool(ObjectPool*pool) {
     HGL_free(pool);
 }
 
-PoolElement *ObjectPool_get(ObjectPool*pool) {
-    return HGL_POOL_get(&pool->pool);
+inline static ObjectPoolItemInfo* getObjectPoolItemInfo(ObjectPool *pool, void *ptr) {
+    return ((void *)ptr) + pool->objectSize;
 }
 
-void ObjectPool_free(ObjectPool*pool, ObjectPoolItemID *chunk) {
-    //printf("free %p id %i\n", chunk, chunk->id);
-    HGL_POOL_free(&pool->pool, &pool->elements[chunk->id]);
+inline static int* getPoolElementIDPtr(ObjectPool *pool, void *ptr) {
+    return &getObjectPoolItemInfo(pool, ptr)->poolElementID;
+}
+
+inline static int getPoolElementId(ObjectPool *pool, void *ptr) {
+    return getObjectPoolItemInfo(pool, ptr)->poolElementID;
+}
+
+inline static void storePoolElementId(ObjectPool *pool, PoolElement *elem) {
+    *getPoolElementIDPtr(pool, elem->data) = elem->id;
+}
+
+PoolElement *ObjectPool_get(ObjectPool*pool) {
+    PoolElement* elem = HGL_POOL_get(&pool->pool);
+    storePoolElementId(pool, elem);
+    return elem;
+}
+
+void ObjectPool_free(ObjectPool*pool, void* chunk) {
+    HGL_POOL_freeByID(&pool->pool, getPoolElementId(pool, chunk));
 }
