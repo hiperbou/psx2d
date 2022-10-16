@@ -9,8 +9,6 @@
 #define MAX_NUM_PARTICLES 128
 #define FIX32(X) ((int)((X) * 4096))
 
-static int active_particles = 0;
-
 static ObjectPool * particlePool;
 
 typedef struct ParticleItem {
@@ -20,14 +18,9 @@ typedef struct ParticleItem {
 
 static void initPool() {
     particlePool = new_ObjectPool(MAX_NUM_PARTICLES, sizeof(Particle));
-    ParticleItem * particleItem = particlePool->objects;
-
-    for (int i=0; i<MAX_NUM_PARTICLES; i++){
-        Particle * particle = (Particle *)particleItem;//&particleItem->particle;
-        particle->active = 0;
-        //particle->id = i;
-        particleItem++;
-    }
+    /*ObjectPool_initialize(particlePool, &(Particle) {
+            .active = 0
+    }, sizeof(Particle));*/
 }
 
 void init_particles() {
@@ -44,7 +37,7 @@ void init_particle(Particle *particle, int x, int y) {
     *particle = (Particle) {
             //.id = particle->id,
 
-            .active = 1,
+            //.active = 1,
             .pos.x = FIX32(x),
             .pos.y = FIX32(y),
             .speed.x = random(FIX32(-2), FIX32(2)),
@@ -89,39 +82,28 @@ static Particle* newParticleFromPool(){
 Particle * new_Particle(int x, int y) {
     Particle * p = newParticleFromPool();
     init_particle(p, x, y);
-    active_particles++;
     return p;
 }
 
 void remove_Particle(Particle *particle) {
-    active_particles--;
     ObjectPool_free(particlePool, particle);
 }
 
-static void particleUpdater(Particle * particle) {
+static inline void particleUpdater(Particle * particle) {
     update_particle(particle);
     draw_particle(particle);
     if (particle->life <= 0 ||
         particle->pos.x < 0 || particle->pos.x > FIX32(320) ||
         particle->pos.y < 0 || particle->pos.y > FIX32(240)) {
-        particle->active = 0;
+        //particle->active = 0;
         remove_Particle(particle);
     }
 }
 
+
 void update_Particles() {
-    int i = 0;
-    int particlesToProcess = active_particles;
-    ParticleItem * particleItem = particlePool->objects;
-    while (i < MAX_NUM_PARTICLES && particlesToProcess > 0){
-        Particle * particle = (Particle *)particleItem;
-        if (particle->active)
-        {
-            particlesToProcess--;
-            particleUpdater(particle);
-        }
-        particleItem++;
-        i++;
-    }
-    //printf("hgl processed %i iterations %i\n", active_particles, i);
+    OBJECTPOOL_ITERATOR_ALLOCATED_START(particlePool, Particle)
+    particleUpdater(it);
+    OBJECTPOOL_ITERATOR_ALLOCATED_END
+    //printf("iterations %i\n", _i);
 }

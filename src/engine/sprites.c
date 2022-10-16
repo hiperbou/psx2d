@@ -4,6 +4,7 @@
 #include "sprites.h"
 #include "fpg.h"
 #include "particle.h"
+#include "hgl_types.h"
 
 #include <sys/types.h>	// This provides typedefs needed by libgte.h and libgpu.h
 #include <stdio.h>	// Not necessary but include it anyway
@@ -137,10 +138,6 @@ void draw_tilemap_with_sprites(int file, int base_map, TileMap *tilemap) {
 
 Tsprite tilemapSprite;
 
-#define MIN(X,Y) ((X)<(Y)) ? (X) : (Y)
-#define MAX(X,Y) ((X)>(Y)) ? (X) : (Y)
-
-#define CLAMP(X, A, B) MAX((A), ( MIN((X),(B)) )) 
 
 static inline int mod_floor(int a, int n) {
     return ((a % n) + n) % n;

@@ -19,4 +19,10 @@ typedef int s16;
 #define fun3(X,Y,Z) X (*Y)(Z)
 
 
+
+#define MIN(X,Y) ((X)<(Y)) ? (X) : (Y)
+#define MAX(X,Y) ((X)>(Y)) ? (X) : (Y)
+
+#define CLAMP(X, A, B) MAX((A), ( MIN((X),(B)) ))
+
 #endif //_HGL_TYPES_H_
