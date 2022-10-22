@@ -6,7 +6,7 @@ typedef struct {
     int* frames;
     int numFrames;
     int accumTicks;
-    int speed;
+    int delay;
     int animFrame;
     int currentFrame;
 }AnimationState;
@@ -16,7 +16,8 @@ AnimationState* HGL_ANIM_new();
 void HGL_ANIM_delete(AnimationState *e);
 void HGL_ANIM_updateAll();
 
-void SetAnimationState(AnimationState * animationState, const int* data, int speed);
+void SetAnimationState(AnimationState * animationState, const int* data, int delay);
+void SetAnimationDelay(AnimationState * animationState, int delay);
 //void updateAnimationState(AnimationState * animationState);
 
 #endif //DEMO_HGL_ANIM_H

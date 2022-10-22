@@ -5,6 +5,7 @@
 #include "sprites.h"
 #include "hgl_types.h"
 #include "game/enemyupdate.h"
+#include "abs.h"
 //#include "hgl_spr.h"
 //#include "hgl_ent.h"
 
@@ -19,14 +20,7 @@
 #define SFX_ROLL        65
 #define SFX_STOP        66
 
-#define ANIM_STAND      0
-#define ANIM_WAIT       1
-#define ANIM_WALK       2
-#define ANIM_RUN        3
-#define ANIM_BRAKE      4
-#define ANIM_UP         5
-#define ANIM_CROUCH    6
-#define ANIM_ROLL       7
+
 
 #define MAX_SPEED       FIX32(8)
 #define RUN_SPEED       FIX32(6)
@@ -148,37 +142,54 @@ void updatePhysic(Actor * actor, u16 input)
     //spr->y = posy >> 12;
 }
 
-static const int anim_stand[] = {1, 1}; //The first number indicates the number of frames
-static const int anim_walk[] = {6, 2,3,4,5,6,7};
-static const int anim_run[] = {4, 8,9,10,11};
-static const int anim_brake[] = {2, 12,13};
-static const int anim_up[] = {1, 14};
-static const int anim_crouch[] = {1, 15};
-static const int anim_roll[] = {5, 16,17,18,19, 20};
+/*
+#define ANIM_STAND      0
+#define ANIM_WAIT       1
+#define ANIM_WALK       2
+#define ANIM_RUN        3
+#define ANIM_BRAKE      4
+#define ANIM_UP         5
+#define ANIM_CROUCH    6
+#define ANIM_ROLL       7
+*/
+static const int ANIM_STAND[] = {1, 1}; //The first number indicates the number of frames
+static const int ANIM_WAIT[] = {2, 21, 22};
+static const int ANIM_WALK[] = {6, 2,3,4,5,6,7};
+static const int ANIM_RUN[] = {4, 8,9,10,11};
+static const int ANIM_BRAKE[] = {2, 12,13};
+static const int ANIM_UP[] = {1, 14};
+static const int ANIM_CROUCH[] = {1, 15};
+static const int ANIM_ROLL[] = {5, 16,17,18,19, 20};
 
 
 static void updateAnim(Actor * actor)
 {
     // jumping
-    if (movy) setAnimation(actor, anim_roll, 25);//HGL_SPR_setAnim(spr, ANIM_ROLL);
+    if (movy) {
+        setAnimation(actor, ANIM_ROLL, 4);//HGL_SPR_setAnim(spr, ANIM_ROLL);
+        setAnimationDelay(actor, 1 * (fix32ToInt(MAX_SPEED - abs(movx))));
+    }
     else
     {
         if (((movx >= BRAKE_SPEED) && (input & BUTTON_LEFT)) || ((movx <= -BRAKE_SPEED) && (input & BUTTON_RIGHT)))
-            setAnimation(actor, anim_brake, 25);//HGL_SPR_setAnim(spr, ANIM_BRAKE);
+            setAnimation(actor, ANIM_BRAKE, 4);//HGL_SPR_setAnim(spr, ANIM_BRAKE);
         else if ((movx >= RUN_SPEED) || (movx <= -RUN_SPEED))
-            setAnimation(actor, anim_run, 25);//HGL_SPR_setAnim(spr, ANIM_RUN);
-        else if (movx != 0)
-            setAnimation(actor, anim_walk, 25);//HGL_SPR_setAnim(spr, ANIM_WALK);
+            setAnimation(actor, ANIM_RUN, 4);//HGL_SPR_setAnim(spr, ANIM_RUN);
+        else if (movx != 0) {
+            setAnimation(actor, ANIM_WALK, 4);//HGL_SPR_setAnim(spr, ANIM_WALK);
+            setAnimationDelay(actor, 2 * (fix32ToInt(RUN_SPEED - abs(movx))));
+        }
         else
         {
             if (input & BUTTON_UP)
-                setAnimation(actor, anim_up, 25);//HGL_SPR_setAnim(spr, ANIM_UP);
+                setAnimation(actor, ANIM_UP, 4);//HGL_SPR_setAnim(spr, ANIM_UP);
             else if (input & BUTTON_DOWN)
-                setAnimation(actor, anim_crouch, 25);//HGL_SPR_setAnim(spr, ANIM_CROUCH);
+                setAnimation(actor, ANIM_CROUCH, 4);//HGL_SPR_setAnim(spr, ANIM_CROUCH);
             else
-                setAnimation(actor, anim_stand, 25);//HGL_SPR_setAnim(spr, ANIM_STAND);
+                setAnimation(actor, ANIM_STAND, 4);//HGL_SPR_setAnim(spr, ANIM_STAND);
         }
     }
+    printf("movx %i delay %i\n", fix32ToInt(movx), (fix32ToInt(RUN_SPEED - abs(movx))));
 
     if (movx > 0)
         HGL_SPR_setHFlip(actor->entity->spr, FALSE);
@@ -202,7 +213,7 @@ static void constructor(Actor* actor) {
     SonicData* sonic = &actor->sonic;
     sonic->handleInput = handleInput;
 
-    setAnimation(actor, anim_stand, 100);
+    setAnimation(actor, ANIM_STAND, 100);
 
     //HGL_SPR_setPalette(actor->entity->spr, PAL0);
 }

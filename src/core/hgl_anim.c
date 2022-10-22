@@ -21,7 +21,7 @@ void HGL_ANIM_delete(AnimationState *e)
     ObjectPool_free(animationStatePool, e);
 }
 
-void SetAnimationState(AnimationState * animationState, const int* data, int speed) {
+void SetAnimationState(AnimationState * animationState, const int* data, int delay) {
     if(animationState->data == data) return;
 
     *animationState = (AnimationState) {
@@ -29,19 +29,23 @@ void SetAnimationState(AnimationState * animationState, const int* data, int spe
             .frames = (int *) &data[1],
             .numFrames = data[0],
             .animFrame = 0,
-            .accumTicks = 0,
-            .speed = speed,
+            .accumTicks = delay,
+            .delay = delay,
             .currentFrame = data[1]
     };
 }
 
+void SetAnimationDelay(AnimationState *animationState, int delay) {
+    animationState->delay = delay;
+}
+
 static inline void updateAnimationState(AnimationState * animationState) {
-    animationState->accumTicks += animationState->speed;
-    if (animationState->accumTicks > 100) {
+    animationState->accumTicks--;
+    if (animationState->accumTicks <= 0) {
         animationState->animFrame++;
         animationState->animFrame %= animationState->numFrames;
         animationState->currentFrame = animationState->frames[animationState->animFrame];
-        animationState->accumTicks -= 100;
+        animationState->accumTicks = animationState->delay;
     }
 }
 

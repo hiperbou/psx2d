@@ -92,8 +92,6 @@ int main() {
     int bgbx = 0;
     int bgby = 0;
 
-
-
     fix32 mx = FIX32(128);
     fix32 my = FIX32(180);
 

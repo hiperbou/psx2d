@@ -7,8 +7,12 @@
 void updatePhysicsActorSimple(Actor *ent, fix32 speed);
 void faceDirectionAnim(Actor * entity);
 
-static inline void setAnimation(Actor * actor, const int * data, int speed) {
-    SetAnimationState(actor->animationState, data, speed);
+static inline void setAnimation(Actor * actor, const int * data, int delay) {
+    SetAnimationState(actor->animationState, data, delay);
+}
+
+static inline void setAnimationDelay(Actor*actor, int delay) {
+    SetAnimationDelay(actor->animationState, delay);
 }
 
 #endif /* ENEMYUPDATE_H_ */

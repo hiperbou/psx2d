@@ -18,7 +18,7 @@ static void update(Actor* ent) {
 }
 
 static void constructor(Actor* actor) {
-    setAnimation(actor, anim_patrol, 50);
+    setAnimation(actor, anim_patrol, 2);
 }
 
 Actor* newBee(int file, const fix32 x, const fix32 y) {
