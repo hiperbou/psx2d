@@ -1,7 +1,7 @@
 TARGET = Demo
 TYPE = ps-exe
 
-MODULES = core engine media pool psx utils
+MODULES = core engine game media pool psx utils
 SOURCES	= src $(addprefix src/,$(MODULES))
 
 CFILES		= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
@@ -19,16 +19,21 @@ CLionSources:
 	@echo $(CPPFILES)
 	@echo $(OBJECTS)
 	@echo $(INCLUDES)
-	@echo CLION_CPPFLAGS := -Isrc -Isrc/core -Isrc/engine -Isrc/media -Isrc/pool -Isrc/psx -Isrc/utils
+	@echo CLION_CPPFLAGS := -Isrc -Isrc/core -Isrc/engine -Isrc/game -Isrc/media -Isrc/pool -Isrc/psx -Isrc/utils
 	@echo CLION_SRCS := src/main.c \
     src/sonic.c \
     src/core/hgl.c \
+    src/core/hgl_anim.c \
     src/core/hgl_ent.c \
     src/core/hgl_mem.c \
     src/core/hgl_pool.c \
     src/core/hgl_spr.c \
     src/engine/particle.c \
     src/engine/sprites.c \
+    src/game/actors.c \
+    src/game/bee.c \
+    src/game/enemyupdate.c \
+    src/game/motobug.c \
     src/media/fpg.c \
     src/pool/FixedPool.c \
     src/pool/ObjectPool.c \
@@ -42,7 +47,7 @@ CLionSources:
 SRCS = ${OBJECTS} \
 $(CPPOBJECTS) \
 ../third_party/common/syscalls/printf.s \
-../third_party/common/crt0/crt0.s \
+../third_party/common/crt0/crt0.s
 
 CPPFLAGS += -I../third_party/common
 CPPFLAGS += -I../third_party/psyq/include

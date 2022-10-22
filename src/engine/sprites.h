@@ -41,5 +41,7 @@ void draw_all_sprites_basic();
 void draw_tilemap(int file, int base_map, TileMap *tilemap, int offsetX, int offsetY, int flags);
 
 void draw_particle(Particle *p);
+void draw_sprite(Tsprite * spr);
+void draw_sprite_fast(Tsprite * spr);
 
 #endif

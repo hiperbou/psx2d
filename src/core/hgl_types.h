@@ -7,8 +7,8 @@ typedef int fix32;
 typedef int u16;
 typedef int s16;
 
-#define FIXED_POINT_UNIT 4096 // 2 << 12
-#define FIXED_POINT_SHIFT 12
+#define FIXED_POINT_UNIT 4096 // 2 ^ 12
+#define FIXED_POINT_SHIFT 12    // 1 << 12 = 4096
 
 #define FIX32(X) ((int)((X) * FIXED_POINT_UNIT))
 #define fix32ToInt(X) ((X) >> FIXED_POINT_SHIFT)

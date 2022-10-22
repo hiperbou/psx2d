@@ -64,5 +64,16 @@
                 <color_key>0x0</color_key>
             </import_parameters>
         </tim>
+        <tim file="enemies.tim" source="enemies.png">
+            <import_parameters>
+                <target_bpp>4</target_bpp>
+                <dithering>0</dithering>
+                <quantize_mode>0</quantize_mode>
+                <set_color_stp>0</set_color_stp>
+                <set_black_stp>1</set_black_stp>
+                <transparency_mode>2</transparency_mode>
+                <color_key>0x0</color_key>
+            </import_parameters>
+        </tim>
     </tim_group>
 </tim_project>

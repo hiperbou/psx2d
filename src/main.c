@@ -8,6 +8,9 @@
 #include "cppfunction.h"
 #include "hgl_types.h"
 
+#include "game/actors.h"
+#include "hgl_anim.h"
+
 #include <sys/types.h>	// This provides typedefs needed by libgte.h and libgpu.h
 #include <stdio.h>	// Not necessary but include it anyway
 #include <libetc.h>	// Includes some functions that controls the display
@@ -38,11 +41,17 @@ int main() {
     printf("result from cpp %i\n", result);
 
     init();
+
+    HGL_ANIM_init();
+    HGL_SPR_init();
+    HGL_ENT_init();
+    HGL_ACTOR_init();
     
     int system_fpg = 0;
     int girl_fpg = new_fpg();
     int sonic_fpg = new_fpg();
     int tiles_fpg = new_fpg();
+    int enemies_fpg = new_fpg();
     //int tiles2_fpg = new_fpg();
 
     //int texture64_map = load_map_from_memory(system_fpg, texture64);
@@ -56,6 +65,8 @@ int main() {
     int sonic_map = load_atlas(sonic_fpg, "art/sonic", 48, 48, 5, 5);
     int bga_map = load_atlas(tiles_fpg, "art/bga", 16, 16, 10, 8);
     int bgb_map = load_atlas(tiles_fpg, "art/bgb", 16, 16, 15, 13);
+
+    int enemies_map = load_atlas(enemies_fpg, "art/enemies", 48, 32, 4, 2);
 
     TileMap bgbTilemap;
     bgbTilemap.map = bgbMap;
@@ -81,6 +92,16 @@ int main() {
     int bgbx = 0;
     int bgby = 0;
 
+
+    fix32 mx = FIX32(128);
+    fix32 my = FIX32(180);
+    newMotobug(enemies_fpg, mx,my);
+    newMotobug(enemies_fpg, FIX32(128+64),my);
+
+    newBee(enemies_fpg, FIX32(128+64),FIX32(64));
+
+
+    int cooldown = 0;
     while(1)
     {
         FntPrint("HELLO WORLD!\n");
@@ -120,6 +141,11 @@ int main() {
         if(btn & PAD_SQUARE)
         {
             //spriteGirl->file = girl_fpg;
+            if (cooldown==0) {
+                newMotobug(enemies_fpg, FIX32(128 + 64), my);
+                cooldown = 30;
+            }
+            cooldown--;
         }
 
         int extraRotation = x << 4;
@@ -143,6 +169,15 @@ int main() {
         new_Particle(spriteGirl->x, spriteGirl->y);
 
         updatePhysic(spriteGirl/*HGL_Entity *ent*/, btn);
+
+        HGL_ANIM_updateAll();
+
+        HGL_ENT_updateAll(bgbx,bgby);
+
+        HGL_ACTOR_updateAll();
+
+        HGL_ENT_renderAll(bgbx,bgby);
+        HGL_SPR_renderAll();
 
         draw_all_sprites_basic();
 

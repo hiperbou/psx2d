@@ -58,7 +58,7 @@ inline static int getPoolElementID(ObjectPool *pool, void *ptr) {
     }
 
 #define OBJECTPOOL_ITERATOR_IF_START(POOL, TYPE, CONDITION) \
-            OBJECTPOOL_ITERATOR_ALLOCATED_START(POOL, TYPE, CONDITION)   \
+            OBJECTPOOL_ITERATOR_ALLOCATED_START(POOL, TYPE)   \
                 if(CONDITION) {
 
 #define OBJECTPOOL_ITERATOR_IF_END \

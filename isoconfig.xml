@@ -89,6 +89,7 @@
 
             <dir name="art">
                 <file name="texture6.tim"   type="data" source="art\texture6.tim"/>
+                <file name="enemies.tim"   type="data" source="art\enemies.tim"/>
                 <file name="girl01.tim"   type="data" source="art\girl01.tim"/>
                 <file name="girl02.tim"   type="data" source="art\girl02.tim"/>
                 <file name="sonic.tim"   type="data" source="art\sonic.tim"/>
