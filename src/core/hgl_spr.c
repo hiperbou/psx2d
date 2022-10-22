@@ -15,7 +15,7 @@ void HGL_SPR_update() {
 
 static inline void HGL_SPR_render(HGL_Sprite *e)
 {
-    draw_sprite(e->spr);
+    //draw_sprite(e->spr); //TODO: This is not needed if we use draw_all_sprites
 }
 
 void HGL_SPR_renderAll()

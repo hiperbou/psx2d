@@ -1,17 +1,13 @@
-//
-// Created by DaniW on 22/10/2022.
-//
-
 #ifndef DEMO_HGL_ANIM_H
 #define DEMO_HGL_ANIM_H
 
 typedef struct {
-    int* anim_data;
-    int* anim_frames;
-    int anim_numFrames;
-    int anim_accum_ticks;
-    int anim_speed;
-    int anim_frame;
+    int* data;
+    int* frames;
+    int numFrames;
+    int accumTicks;
+    int speed;
+    int animFrame;
     int currentFrame;
 }AnimationState;
 

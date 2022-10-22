@@ -19,17 +19,19 @@ static Actor* newActorFromPool(){
     return actor;
 }
 
-static HGL_Entity* createEntity(int file, int graph, const fix32 x, const fix32 y, void *data, EntityUpdateCallback* updateCB) {
+static HGL_Entity* createEntity(int file, int graph, const fix32 x, const fix32 y) {
     //TODO: allow actors without sprite
     HGL_Sprite *spr = HGL_SPR_new(file, graph, fix32ToInt(x), fix32ToInt(y));
-    AnimationState *animationState = HGL_ANIM_new();
-    HGL_Entity* entity = HGL_ENT_new2(x, y, spr, animationState, updateCB, data);
+    HGL_Entity* entity = HGL_ENT_new(x, y, spr, NULL);
     return entity;
 }
 
-Actor* newActor(int file, int graph, const fix32 x, const fix32 y, _actorConstructorCallback* constructorCB, EntityUpdateCallback* updateCB){
+Actor* newActor(int file, int graph, const fix32 x, const fix32 y, ActorConstructorCallback* constructorCB, ActorUpdateCallback* updateCB){
 	Actor * actor = newActorFromPool();
-	actor->entity = createEntity(file, graph, x, y,actor, updateCB);
+    actor->animationState = HGL_ANIM_new();
+    actor->animationState->currentFrame = graph;
+	actor->entity = createEntity(file, graph, x, y);
+    if(updateCB) actor->updateCallback = updateCB;
 	if(constructorCB) constructorCB(actor);
 	return actor;
 }
@@ -37,21 +39,23 @@ Actor* newActor(int file, int graph, const fix32 x, const fix32 y, _actorConstru
 void deleteActor(Actor *actor)
 {
     if (actor->entity) HGL_ENT_delete(actor->entity);
+    if (actor->animationState) HGL_ANIM_delete(actor->animationState);
     ObjectPool_free(actorPool, actor);
 }
 
 
 inline static void updateActor(Actor* actor) {
-    HGL_Entity * ent = actor->entity;
+    if(actor->updateCallback) actor->updateCallback(actor);
 
-    if (ent->spr && ent->animationState) {
-        ent->spr->spr->graph = ent->animationState->currentFrame;
+    HGL_Entity * ent = actor->entity;
+    if (ent->spr && actor->animationState) {
+        ent->spr->spr->graph = actor->animationState->currentFrame;
     }
 }
 
 void HGL_ACTOR_updateAll() {
     OBJECTPOOL_ITERATOR_ALLOCATED_START(actorPool, Actor)
-            updateActor(it);
+        updateActor(it);
     OBJECTPOOL_ITERATOR_ALLOCATED_END
 }
 

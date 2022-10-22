@@ -14,22 +14,24 @@ typedef struct{
 	fun2 (handleInput, u16);
 }SonicData;
 
-typedef struct Actor{
+typedef struct Actor Actor;
+typedef void ActorConstructorCallback(Actor* actor);
+typedef void ActorUpdateCallback(Actor* actor);
+
+typedef struct Actor {
 	HGL_Entity *entity;
-	u16 id;
+    AnimationState *animationState;
 	union {
 		EnemyData enemy;
 		SonicData sonic;
 	};
+    ActorUpdateCallback *updateCallback;
 }Actor;
 
 void        HGL_ACTOR_init();
 void        HGL_ACTOR_updateAll();
 
-typedef void _actorConstructorCallback(Actor* actor);
-typedef void _actorUpdateCallback(Actor* actor);
-
-Actor* newActor(int file, int graph, fix32 x, fix32 y, _actorConstructorCallback* constructorCB, EntityUpdateCallback* updateCB);
+Actor* newActor(int file, int graph, fix32 x, fix32 y, ActorConstructorCallback* constructorCB, ActorUpdateCallback* updateCB);
 void deleteActor(Actor *actor);
 
 #endif

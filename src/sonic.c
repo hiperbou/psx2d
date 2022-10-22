@@ -4,6 +4,7 @@
 #include "input.h"
 #include "sprites.h"
 #include "hgl_types.h"
+#include "game/enemyupdate.h"
 //#include "hgl_spr.h"
 //#include "hgl_ent.h"
 
@@ -75,7 +76,7 @@ static void handleInput(u16 i){
 #define FALSE (0)
 #define TRUE (!FALSE)
 
-void updatePhysic(Tsprite * spr/*HGL_Entity *ent*/, u16 input)
+void updatePhysic(Actor * actor, u16 input)
 {
     if(input & (BUTTON_A | BUTTON_B | BUTTON_C)){
         jump();
@@ -142,46 +143,56 @@ void updatePhysic(Tsprite * spr/*HGL_Entity *ent*/, u16 input)
 
     // set sprite position
     //HGL_ENT_setPosition(ent, posx , posy);
-    spr->x = posx >> 12;
-    spr->y = posy >> 12;
+    HGL_ENT_setPosition(actor->entity, posx , posy);
+    //spr->x = posx >> 12;
+    //spr->y = posy >> 12;
 }
-/*
-static void updateAnim(HGL_Sprite * spr)
+
+static const int anim_stand[] = {1, 1}; //The first number indicates the number of frames
+static const int anim_walk[] = {6, 2,3,4,5,6,7};
+static const int anim_run[] = {4, 8,9,10,11};
+static const int anim_brake[] = {2, 12,13};
+static const int anim_up[] = {1, 14};
+static const int anim_crouch[] = {1, 15};
+static const int anim_roll[] = {5, 16,17,18,19, 20};
+
+
+static void updateAnim(Actor * actor)
 {
     // jumping
-    if (movy) HGL_SPR_setAnim(spr, ANIM_ROLL);
+    if (movy) setAnimation(actor, anim_roll, 25);//HGL_SPR_setAnim(spr, ANIM_ROLL);
     else
     {
         if (((movx >= BRAKE_SPEED) && (input & BUTTON_LEFT)) || ((movx <= -BRAKE_SPEED) && (input & BUTTON_RIGHT)))
-            HGL_SPR_setAnim(spr, ANIM_BRAKE);
+            setAnimation(actor, anim_brake, 25);//HGL_SPR_setAnim(spr, ANIM_BRAKE);
         else if ((movx >= RUN_SPEED) || (movx <= -RUN_SPEED))
-            HGL_SPR_setAnim(spr, ANIM_RUN);
+            setAnimation(actor, anim_run, 25);//HGL_SPR_setAnim(spr, ANIM_RUN);
         else if (movx != 0)
-            HGL_SPR_setAnim(spr, ANIM_WALK);
+            setAnimation(actor, anim_walk, 25);//HGL_SPR_setAnim(spr, ANIM_WALK);
         else
         {
             if (input & BUTTON_UP)
-                HGL_SPR_setAnim(spr, ANIM_UP);
+                setAnimation(actor, anim_up, 25);//HGL_SPR_setAnim(spr, ANIM_UP);
             else if (input & BUTTON_DOWN)
-                HGL_SPR_setAnim(spr, ANIM_CROUCH);
+                setAnimation(actor, anim_crouch, 25);//HGL_SPR_setAnim(spr, ANIM_CROUCH);
             else
-                HGL_SPR_setAnim(spr, ANIM_STAND);
+                setAnimation(actor, anim_stand, 25);//HGL_SPR_setAnim(spr, ANIM_STAND);
         }
     }
 
     if (movx > 0)
-        HGL_SPR_setHFlip(spr, FALSE);
+        HGL_SPR_setHFlip(actor->entity->spr, FALSE);
     else if (movx < 0)
-        HGL_SPR_setHFlip(spr, TRUE);
+        HGL_SPR_setHFlip(actor->entity->spr, TRUE);
 
-}*/
-/*
-static void update(HGL_Entity* ent) {
-    updatePhysic(ent);
-    updateAnim(ent->spr);
-}*/
+}
 
-/*static void constructor(Actor* actor) {
+static void update(Actor* actor) {
+    updatePhysic(actor, input);
+    updateAnim(actor);
+}
+
+static void constructor(Actor* actor) {
     posx = actor->entity->x;
     posy = actor->entity->y;
     movx = FIX32(0);
@@ -191,10 +202,11 @@ static void update(HGL_Entity* ent) {
     SonicData* sonic = &actor->sonic;
     sonic->handleInput = handleInput;
 
-    HGL_SPR_setPalette(actor->entity->spr, PAL0);
-}*/
+    setAnimation(actor, anim_stand, 100);
 
-/*Actor* newSonic(const fix32 x, const fix32 y){
-    return newActor(x, y, &sprite_sonic, constructor, update);
+    //HGL_SPR_setPalette(actor->entity->spr, PAL0);
 }
-*/
+
+Actor* newSonic(int file, const fix32 x, const fix32 y){
+    return newActor(file, 1, x, y, constructor, update);
+}

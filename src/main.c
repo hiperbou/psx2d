@@ -93,13 +93,16 @@ int main() {
     int bgby = 0;
 
 
+
     fix32 mx = FIX32(128);
     fix32 my = FIX32(180);
+
     newMotobug(enemies_fpg, mx,my);
     newMotobug(enemies_fpg, FIX32(128+64),my);
-
+    newMotobug (enemies_fpg, FIX32(0+16), FIX32(240-16));
     newBee(enemies_fpg, FIX32(128+64),FIX32(64));
 
+    Actor * sonic = newSonic(sonic_fpg, FIX32(128), FIX32(128));
 
     int cooldown = 0;
     while(1)
@@ -168,7 +171,8 @@ int main() {
         }
         new_Particle(spriteGirl->x, spriteGirl->y);
 
-        updatePhysic(spriteGirl/*HGL_Entity *ent*/, btn);
+        sonic->sonic.handleInput(btn);
+        //updatePhysic(spriteGirl/*HGL_Entity *ent*/, btn);
 
         HGL_ANIM_updateAll();
 

@@ -1,13 +1,13 @@
 #include "hgl_anim.h"
 #include "ObjectPool.h"
 
-#define MAX_NUM_ANIMATIONS 64
+#define MAX_NUM_ANIMATION_STATES 64
 
 static ObjectPool * animationStatePool;
 
 void HGL_ANIM_init()
 {
-    animationStatePool = new_ObjectPool(MAX_NUM_ANIMATIONS, sizeof(AnimationState));
+    animationStatePool = new_ObjectPool(MAX_NUM_ANIMATION_STATES, sizeof(AnimationState));
 }
 
 AnimationState* HGL_ANIM_new()
@@ -22,25 +22,26 @@ void HGL_ANIM_delete(AnimationState *e)
 }
 
 void SetAnimationState(AnimationState * animationState, const int* data, int speed) {
-    if(animationState->anim_data == data) return;
+    if(animationState->data == data) return;
 
     *animationState = (AnimationState) {
-            .anim_data = (int*) data,
-            .anim_frames = (int *) &data[1],
-            .anim_numFrames = data[0],
-            .anim_frame = 0,
-            .anim_accum_ticks = 0,
-            .anim_speed = speed,
+            .data = (int*) data,
+            .frames = (int *) &data[1],
+            .numFrames = data[0],
+            .animFrame = 0,
+            .accumTicks = 0,
+            .speed = speed,
             .currentFrame = data[1]
     };
 }
 
 static inline void updateAnimationState(AnimationState * animationState) {
-    animationState->anim_accum_ticks += animationState->anim_speed;
-    if (animationState->anim_accum_ticks > 100) {
-        animationState->anim_frame = (animationState->anim_frame + 1) % animationState->anim_numFrames;
-        animationState->currentFrame = animationState->anim_frames[animationState->anim_frame];
-        animationState->anim_accum_ticks -= 100;
+    animationState->accumTicks += animationState->speed;
+    if (animationState->accumTicks > 100) {
+        animationState->animFrame++;
+        animationState->animFrame %= animationState->numFrames;
+        animationState->currentFrame = animationState->frames[animationState->animFrame];
+        animationState->accumTicks -= 100;
     }
 }
 

@@ -2,12 +2,13 @@
 #define ENEMYUPDATE_H_
 
 #include "hgl_ent.h"
+#include "actor.h"
 
-void updatePhysicsActorSimple(HGL_Entity *ent, fix32 speed);
-void faceDirectionAnim(HGL_Entity * entity);
+void updatePhysicsActorSimple(Actor *ent, fix32 speed);
+void faceDirectionAnim(Actor * entity);
 
-static inline void setAnimation(HGL_Entity * entity, const int * data, int speed) {
-    SetAnimationState(entity->animationState, data, speed);
+static inline void setAnimation(Actor * actor, const int * data, int speed) {
+    SetAnimationState(actor->animationState, data, speed);
 }
 
 #endif /* ENEMYUPDATE_H_ */

@@ -8,17 +8,17 @@
 
 static const int anim_patrol[] = {2, 1, 2}; //The first number indicates the number of frames
 
-static void updatePhysics(HGL_Entity *ent) {
+static void updatePhysics(Actor *ent) {
 	updatePhysicsActorSimple(ent, FIX32(1.7));
 }
 
-static void update(HGL_Entity* ent) {
+static void update(Actor* ent) {
 	updatePhysics(ent);
 	faceDirectionAnim(ent);//TODO: call faceDirection only on direction change :D
 }
 
 static void constructor(Actor* actor) {
-    setAnimation(actor->entity, anim_patrol, 50);
+    setAnimation(actor, anim_patrol, 50);
 }
 
 Actor* newBee(int file, const fix32 x, const fix32 y) {
