@@ -142,25 +142,14 @@ void updatePhysic(Actor * actor, u16 input)
     //spr->y = posy >> 12;
 }
 
-/*
-#define ANIM_STAND      0
-#define ANIM_WAIT       1
-#define ANIM_WALK       2
-#define ANIM_RUN        3
-#define ANIM_BRAKE      4
-#define ANIM_UP         5
-#define ANIM_CROUCH    6
-#define ANIM_ROLL       7
-*/
-static const int ANIM_STAND[] = {1, 1}; //The first number indicates the number of frames
-static const int ANIM_WAIT[] = {2, 21, 22};
-static const int ANIM_WALK[] = {6, 2,3,4,5,6,7};
-static const int ANIM_RUN[] = {4, 8,9,10,11};
-static const int ANIM_BRAKE[] = {2, 12,13};
-static const int ANIM_UP[] = {1, 14};
-static const int ANIM_CROUCH[] = {1, 15};
-static const int ANIM_ROLL[] = {5, 16,17,18,19, 20};
-
+ANIM(ANIM_STAND, 1)
+ANIM(ANIM_WAIT, 21, 22)
+ANIM(ANIM_WALK, 2, 3, 4, 5, 6, 7)
+ANIM(ANIM_RUN, 8, 9, 10, 11)
+ANIM(ANIM_BRAKE, 12, 13)
+ANIM(ANIM_UP, 14)
+ANIM(ANIM_CROUCH, 15)
+ANIM(ANIM_ROLL, 16, 17, 18, 19, 20)
 
 static void updateAnim(Actor * actor)
 {
@@ -189,7 +178,6 @@ static void updateAnim(Actor * actor)
                 setAnimation(actor, ANIM_STAND, 4);//HGL_SPR_setAnim(spr, ANIM_STAND);
         }
     }
-    printf("movx %i delay %i\n", fix32ToInt(movx), (fix32ToInt(RUN_SPEED - abs(movx))));
 
     if (movx > 0)
         HGL_SPR_setHFlip(actor->entity->spr, FALSE);

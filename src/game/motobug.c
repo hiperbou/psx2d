@@ -6,7 +6,7 @@
 #include "actor.h"
 #include "hgl_anim.h"
 
-static const int anim_patrol[] = {4, 5, 6, 7, 8}; //The first number indicates the number of frames
+ANIM(anim_patrol, 5, 6, 7, 8)
 
 static void update(Actor* ent) {
 	updatePhysicsActorSimple(ent, FIX32(0.7));
