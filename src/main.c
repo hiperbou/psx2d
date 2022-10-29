@@ -181,8 +181,7 @@ int main() {
         bgbx = camposx;
         bgby = camposy;
 
-        HGL_ENT_updateAll(bgbx,bgby);
-
+        HGL_ENT_updateAll();
         HGL_ACTOR_updateAll();
 
         HGL_ENT_renderAll(bgbx,bgby);

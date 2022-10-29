@@ -6,8 +6,8 @@
 
 static ObjectPool * entityPool;
 
-u16 scrollOffsetX = 0;
-u16 scrollOffsetY = 0;
+static u16 scrollOffsetX = 0;
+static u16 scrollOffsetY = 0;
 
 typedef struct EntityItem {
     HGL_Entity entity;
@@ -63,10 +63,8 @@ void HGL_ENT_render(HGL_Entity *e)
     HGL_SPR_setPosition(e->spr, fix32ToInt(e->x) - scrollOffsetX, fix32ToInt(e->y) - scrollOffsetY);
 }
 
-void HGL_ENT_updateAll(u16 offsetX, u16 offsetY) {
-    scrollOffsetX = offsetX;
-    scrollOffsetY = offsetY;
-
+void HGL_ENT_updateAll()
+{
     OBJECTPOOL_ITERATOR_IF_START(entityPool, HGL_Entity, it->state != ENT_STATE_DEAD)
         HGL_ENT_update(it);
     OBJECTPOOL_ITERATOR_IF_END

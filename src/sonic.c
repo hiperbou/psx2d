@@ -40,12 +40,45 @@
 
 #define MIN_POSX            FIX32(10L)
 #define MAX_POSX            FIX32(MAP_WIDTH - 100)
-#define MAX_POSY            FIX32(MAP_HEIGHT - 40)
+#define MAX_POSY            FIX32(MAP_HEIGHT - 48)
 
 static fix32 posx = FIX32(128);
 static fix32 posy = FIX32(128);
 static fix32 movx = FIX32(0);
 static fix32 movy = FIX32(0);
+
+#define GROUND_HIGH_Z FIX32(MAP_HEIGHT - 48)
+#define GROUND_LOW_Z FIX32(MAP_HEIGHT - 40)
+
+//interp = (a*(256 - x) + b*x) >> 8
+#define LinearInterpolate(X,Y,Z,UNIT) (X*(UNIT-Z)+Y*Z)
+#define LinearInterpolateFIX32(X,Y,Z) ((X)*(FIX32(1)-(Z))+(Y)*(Z))
+
+inline fix32 linearInterpolateFix32(int a, int b, fix32 t) {
+    return (a*(FIX32(1)-t)+b*t);
+}
+
+static fix32 getGroundY(fix32 x) {
+    x = fix32ToInt(x) % MAP_WIDTH;
+    if(x < 96) return GROUND_HIGH_Z;
+    if(x > 176 && x<400) return GROUND_HIGH_Z;
+    if(x > 496) return GROUND_HIGH_Z;
+    //x 136 and 456
+
+    //interp = (a*(256 - x) + b*x) >> 8
+    if(x<136) {
+        int dist = 136 - x;
+        int relativePosition = FIX32(dist) / 40;
+        return linearInterpolateFix32(fix32ToInt(GROUND_LOW_Z), fix32ToInt(GROUND_HIGH_Z), relativePosition);
+    }
+    if(x<=176) {
+        int dist = 176 - x;
+        int relativePosition = FIX32(dist) / 40;
+        return linearInterpolateFix32(fix32ToInt(GROUND_HIGH_Z), fix32ToInt(GROUND_LOW_Z), relativePosition);
+    }
+
+    return GROUND_LOW_Z;
+}
 
 static void jump(){
     if (movy == 0)
@@ -113,15 +146,18 @@ void updatePhysic(Actor * actor, u16 input)
 
     if (movy)
     {
-        if (posy > MAX_POSY)
+        int groundY = getGroundY(posx);
+        if (posy > groundY)
         {
-            posy = MAX_POSY;
+            posy = groundY;
             movy = 0;
             //TEST
             //shot(ent);
             //TEST
         }
         else movy += GRAVITY;
+    } else {
+        posy = getGroundY(posx);
     }
 
     /*if (posx >= MAX_POSX)

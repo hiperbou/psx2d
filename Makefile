@@ -31,6 +31,7 @@ CLionSources:
     src/engine/particle.c \
     src/engine/sprites.c \
     src/game/actors.c \
+    src/game/camera.c \
     src/game/bee.c \
     src/game/enemyupdate.c \
     src/game/motobug.c \
@@ -48,7 +49,6 @@ SRCS = ${OBJECTS} \
 $(CPPOBJECTS) \
 ../third_party/common/syscalls/printf.s \
 ../third_party/common/crt0/crt0.s
-
 CPPFLAGS += -I../third_party/common
 CPPFLAGS += -I../third_party/psyq/include
 CPPFLAGS += $(INCLUDES)
