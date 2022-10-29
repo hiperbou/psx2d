@@ -75,6 +75,18 @@ Tsprite *new_sprite(int x, int y, int z,int file, int graph) {
     return nuevo;
 }
 
+
+void delete_sprite(Tsprite * spr) {
+    int spriteId = spr->id;
+    if (spriteId != -1) {
+        if(spriteId==num_procesos) {
+            num_procesos--;
+        }
+        new_proceso = MIN(spriteId, new_proceso);
+        spr->id = -1;
+    }
+}
+
 void draw_sprite(Tsprite * spr) {
     if (spr->graph < 0 || spr->id < 0) return;
     SPRITE* sprite = fpg[spr->file]->map[spr->graph]->image;

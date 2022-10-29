@@ -6,6 +6,12 @@
 #include "sprites.h"
 
 typedef struct{
+    int x;
+    int y;
+    int z;
+    int file;
+    int graph;
+    int flags;
     Tsprite *spr;
 }HGL_Sprite;
 

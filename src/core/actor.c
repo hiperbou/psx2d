@@ -53,7 +53,7 @@ inline static void updateActor(Actor* actor) {
 
     HGL_Entity * ent = actor->entity;
     if (ent->spr && actor->animationState) {
-        ent->spr->spr->graph = actor->animationState->currentFrame;
+        ent->spr->graph = actor->animationState->currentFrame;
     }
 }
 

@@ -37,6 +37,7 @@ typedef struct {
 
 void initSprites();
 Tsprite *new_sprite(int x, int y, int z,int file, int graph);
+void delete_sprite(Tsprite * spr);
 void draw_all_sprites_basic();
 void draw_tilemap(int file, int base_map, TileMap *tilemap, int offsetX, int offsetY, int flags);
 
