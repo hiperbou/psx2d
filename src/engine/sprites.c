@@ -156,14 +156,14 @@ void draw_tilemap_no_wrap(int file, int base_map, TileMap *tilemap, int offsetX,
     int destY = 0;
     int maxDestY = 240;
 
-    int minX = (0 - offsetX) >> 4;
-    int maxX = (((maxDestX - destX) - offsetX) >> 4) + 1;
+    int minX = offsetX >> 4;
+    int maxX = (((maxDestX - destX) + offsetX) >> 4) + 1;
 
     int initialX = CLAMP(minX, 0, numCols);
     int finalX = CLAMP(maxX, 0, numCols);
 
-    int minY = (0 - offsetY) >> 4;
-    int maxY = (((maxDestY - destY) - offsetY) >> 4) + 1;
+    int minY = offsetY >> 4;
+    int maxY = (((maxDestY - destY) + offsetY) >> 4) + 1;
 
     int initialY = CLAMP(minY, 0, numRows);
     int finalY = CLAMP(maxY, 0, numRows);
@@ -180,8 +180,8 @@ void draw_tilemap_no_wrap(int file, int base_map, TileMap *tilemap, int offsetX,
     for(int y = initialY; y < finalY; y++) {
         for(int x = initialX; x < finalX; x++) {
             if (drawTileWithIndex0 || tileMap[x + y * numCols] > 0) {
-                tilemapSprite.x = destX + offsetX + x * 16;
-                tilemapSprite.y = destY + offsetY + y * 16;
+                tilemapSprite.x = destX - offsetX + x * 16;
+                tilemapSprite.y = destY - offsetY + y * 16;
                 tilemapSprite.graph =  tileMap[x + y * numCols] + base_map;
 
                 //This could be optimized using SPRT_8 and SPRT_16
@@ -207,14 +207,14 @@ void draw_tilemap(int file, int base_map, TileMap *tilemap, int offsetX, int off
     int destY = 0;
     int maxDestY = 240;
 
-    int minX = (0 - offsetX) >> 4;
-    int maxX = (((maxDestX - destX) - offsetX) >> 4) + 1;
+    int minX = offsetX >> 4;
+    int maxX = (((maxDestX - destX) + offsetX) >> 4) + 1;
 
     int initialX = CLAMP(minX, 0, numCols);
     int finalX = CLAMP(maxX, 0, numCols);
 
-    int minY = (0 - offsetY) >> 4;
-    int maxY = (((maxDestY - destY) - offsetY) >> 4) + 1;
+    int minY = offsetY >> 4;
+    int maxY = (((maxDestY - destY) + offsetY) >> 4) + 1;
 
     //int initialY = CLAMP(minY, 0, numRows);
     //int finalY = CLAMP(maxY, 0, numRows);
@@ -232,8 +232,8 @@ void draw_tilemap(int file, int base_map, TileMap *tilemap, int offsetX, int off
         for(int x = minX; x < maxX; x++) {
             int index = ((mod_floor(x, numCols)) + (mod_floor(y, numRows)) * numCols);
             if (drawTileWithIndex0 || tileMap[index] > 0) {
-                tilemapSprite.x = destX + offsetX + x * 16;
-                tilemapSprite.y = destY + offsetY + y * 16;
+                tilemapSprite.x = destX - offsetX + x * 16;
+                tilemapSprite.y = destY - offsetY + y * 16;
                 tilemapSprite.graph =  tileMap[index] + base_map;
 
                 //This could be optimized using SPRT_8 and SPRT_16

@@ -196,9 +196,6 @@ int main() {
         addPrimitive(x + 64,64,0,64,64,255,0,255);
         addPrimitive(x + 96,96,0,64,64,0,255,255);
 
-        bgbx = -camposx;
-        bgby = -camposy;
-
         draw_tilemap(tiles_fpg, 1, &bgaTilemap, bgbx, bgby, 0); //Front
         draw_tilemap(tiles_fpg, bgb_map, &bgbTilemap, bgbx>>1, bgby>>1, 1); //BK
 
