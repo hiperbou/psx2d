@@ -95,12 +95,14 @@ int main() {
     fix32 mx = FIX32(128);
     fix32 my = FIX32(180);
 
+    Actor * sonic = newSonic(sonic_fpg, FIX32(128), FIX32(128));
+
+
     newMotobug(enemies_fpg, mx,my);
     newMotobug(enemies_fpg, FIX32(128+64),my);
     newMotobug (enemies_fpg, FIX32(0+16), FIX32(240-16));
     newBee(enemies_fpg, FIX32(128+64),FIX32(64));
 
-    Actor * sonic = newSonic(sonic_fpg, FIX32(128), FIX32(128));
 
     int cooldown = 0;
     while(1)
@@ -185,9 +187,9 @@ int main() {
 
         update_Particles();
 
-        addPrimitive(x + 32,32,64,64,255,255,0);
-        addPrimitive(x + 64,64,64,64,255,0,255);
-        addPrimitive(x + 96,96,64,64,0,255,255);
+        addPrimitive(x + 32,32,0,64,64,255,255,0);
+        addPrimitive(x + 64,64,0,64,64,255,0,255);
+        addPrimitive(x + 96,96,0,64,64,0,255,255);
 
         draw_tilemap(tiles_fpg, 1, &bgaTilemap, bgbx*2, bgby*2, 0);
         draw_tilemap(tiles_fpg, bgb_map, &bgbTilemap, bgbx, bgby, 1);

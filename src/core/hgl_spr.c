@@ -68,3 +68,7 @@ void HGL_SPR_setVFlip(HGL_Sprite *sprite, u16 flip){
         sprite->spr->flags &= ~2;
 
 }
+
+void HGL_SPR_setZ(HGL_Sprite * sprite, int z) {
+    sprite->spr->z = z;
+}

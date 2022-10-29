@@ -23,4 +23,6 @@ void HGL_SPR_setPosition(HGL_Sprite *sprite, s16 x, s16 y);
 void HGL_SPR_setHFlip(HGL_Sprite *sprite, u16 flip);
 void HGL_SPR_setVFlip(HGL_Sprite *sprite, u16 flip);
 
+void HGL_SPR_setZ(HGL_Sprite * sprite, int z);
+
 #endif /* HGL_H_ */

@@ -13,16 +13,16 @@
 #include "system.h"
 
 // Define environment pairs and buffer counter
-DISPENV disp[2];
-DRAWENV draw[2];
-int db = 0;
+static DISPENV disp[2];
+static DRAWENV draw[2];
+static int db = 0;
 
-#define OTLEN 8         // Ordering table length (recommended to set as a define
-                        // so it can be changed easily)
-u_long ot[2][OTLEN];    // Ordering table length
+#define ORDER_TABLE_LENGTH 8
 
-char pribuff[2][65536]; // Primitive buffer (32768)
-char *nextpri;          // Next primitive pointer
+static u_long ot[2][ORDER_TABLE_LENGTH];
+
+static char pribuff[2][65536]; // Primitive buffer (32768)
+static char *nextpri;          // Next primitive pointer
 
 bool isPal() {
     return (*(char *)0xbfc7ff52=='E');  // SCEE string address
@@ -71,7 +71,8 @@ void applyEnvironments() {
 }
 
 void clearOrderingTable() {
-    ClearOTagR(ot[db], OTLEN);  // Clear ordering table
+    //ClearOTag(ot[db], ORDER_TABLE_LENGTH);  // Clear ordering table
+    ClearOTagR(ot[db], ORDER_TABLE_LENGTH);  // Clear ordering table Reverse order
 }
 
 void initDisplay() {
@@ -106,7 +107,8 @@ void display() {
     // Enable display
     SetDispMask(1);
 
-    DrawOTag(ot[db] + OTLEN - 1);   // Draw the ordering table
+    //DrawOTag(ot[db]);   // Draw the ordering table
+    DrawOTag(ot[db] + ORDER_TABLE_LENGTH - 1);   // Draw the ordering table Reversed
     // Flip buffer counter
     db = !db;
     nextpri = pribuff[db];      // Reset next primitive pointer
@@ -125,19 +127,19 @@ void drawTexts() {
     FntFlush(-1);
 }
 
-void addPrimitive(int x, int y, int w, int h, int r, int g, int b) {
+void addPrimitive(int x, int y, int z, int w, int h, int r, int g, int b) {
     TILE * tile = (TILE*)nextpri;      // Cast next primitive
 
     setTile(tile);              // Initialize the primitive (very important)
     setXY0(tile, x, y);       // Set primitive (x,y) position
     setWH(tile, w, h);        // Set primitive size
     setRGB0(tile, r, g, b); // Set color yellow
-    addPrim(ot[db], tile);      // Add primitive to the ordering table
+    addPrim(&ot[db][z], tile);      // Add primitive to the ordering table
 
     nextpri += sizeof(TILE);    // Advance the next primitive pointer
 }
 
-void addSpriteTim(int x, int y,  int w, int h, int tim_uoffs, int tim_voffs, RECT tim_crect) {
+void addSpriteTim(int x, int y, int z, int w, int h, int tim_uoffs, int tim_voffs, RECT tim_crect) {
     // Sort textured sprite
     SPRT *sprt = (SPRT*)nextpri;
 
@@ -152,7 +154,7 @@ void addSpriteTim(int x, int y,  int w, int h, int tim_uoffs, int tim_voffs, REC
         tim_crect.y);
     setRGB0(sprt,                   // Set primitive color
         128, 128, 128);
-    addPrim(ot[db], sprt);          // Sort primitive to OT
+    addPrim(&ot[db][z], sprt);          // Sort primitive to OT
 
     nextpri += sizeof(SPRT);        // Advance next primitive address
 }
@@ -189,8 +191,8 @@ char* SortSprite(int x, int y, u_long *ot, char *nextpri, SPRITE *sprite, int up
     }
 }
 
-void addSprite(int x, int y, SPRITE *sprite, int uploadTpage) {
-    nextpri = SortSprite(x, y, ot[db], nextpri, sprite, uploadTpage);
+void addSprite(int x, int y, int z, SPRITE *sprite, int uploadTpage) {
+    nextpri = SortSprite(x, y, &ot[db][z], nextpri, sprite, uploadTpage);
 }
 
 void SortTile16(int x, int y, u_long *ot, SPRITE *sprite) {
@@ -227,15 +229,15 @@ void SortTile8(int x, int y, u_long *ot, SPRITE *sprite) {
     nextpri += sizeof(SPRT_8);
 }
 
-void addTile16(int x, int y, SPRITE *sprite) {
-    SortTile16(x, y, ot[db], sprite);
+void addTile16(int x, int y, int z, SPRITE *sprite) {
+    SortTile16(x, y, &ot[db][z], sprite);
 }
 
-void addTile8(int x, int y, SPRITE *sprite) {
-    SortTile8(x, y, ot[db], sprite);
+void addTile8(int x, int y, int z, SPRITE *sprite) {
+    SortTile8(x, y, &ot[db][z], sprite);
 }
 
-void sortRotSprite( int x, int y, int angle, int scale, int flags, SPRITE *sprite, int uploadTpage)
+void sortRotSprite(int x, int y, int angle, int scale, int flags, SPRITE *sprite, int uploadTpage, u_long *orderTable)
 {
     int spriteWidth = sprite->w;
     int spriteHeight = sprite->h;
@@ -308,7 +310,7 @@ void sortRotSprite( int x, int y, int angle, int scale, int flags, SPRITE *sprit
     int hh = spriteHeight * (1 - 2 * mirroredVertical);
     setUVWH( quad, uu, vv, ww, hh);
 
-    addPrim( ot[db], quad );
+    addPrim(orderTable, quad );
     nextpri += sizeof(POLY_FT4);
 
     //TODO: check if we are already in the same page to optimize
@@ -319,20 +321,20 @@ void sortRotSprite( int x, int y, int angle, int scale, int flags, SPRITE *sprit
 
         DR_TPAGE *tpage = (DR_TPAGE*)nextpri;             // Sort the texture page value
         setDrawTPage(tpage, 0, 1, sprite->tpage);
-        addPrim(ot, tpage);
+        addPrim(orderTable, tpage);
 
         nextpri += sizeof(DR_TPAGE);    // (set to nextpri)
     }
 }
 
-void addRotSprite( int x, int y, int angle, int scale, int flags, SPRITE *sprite, int uploadTpage) {
-    sortRotSprite(x, y, angle, scale, flags, sprite, uploadTpage);
+void addRotSprite( int x, int y, int z, int angle, int scale, int flags, SPRITE *sprite, int uploadTpage) {
+    sortRotSprite(x, y, angle, scale, flags, sprite, uploadTpage, &ot[db][z]);
 }
 
-void sortTpage(u_short newTpage) {
+void sortTpage(u_short newTpage, int z) {
     DR_TPAGE *tpage = (DR_TPAGE*)nextpri;             // Sort the texture page value
     setDrawTPage(tpage, 0, 1, newTpage);
-    addPrim(ot[db], tpage);
+    addPrim(&ot[db][z], tpage);
 
     nextpri += sizeof(DR_TPAGE);    // (set to nextpri)
 }
@@ -343,13 +345,13 @@ void setTexturePage(int tim_mode, RECT tim_prect, RECT tim_crect) {
     draw[1].tpage = getTPage( tim_mode&0x3, 0, tim_prect.x, tim_prect.y );
 }
 
-void addTexturePage(int tim_mode, RECT tim_prect) {
+void addTexturePage(int tim_mode, RECT tim_prect, int z) {
     DR_TPAGE *tpage = (DR_TPAGE*)nextpri;
     setDrawTPage(tpage, 0, 1,       // Set TPage primitive
     getTPage(tim_mode & 0x3, 0, 
         tim_prect.x, tim_prect.y));
 
-    addPrim(ot[db], tpage);         // Sort primitive to OT
+    addPrim(ot[db][z], tpage);         // Sort primitive to OT
 
     nextpri += sizeof(DR_TPAGE);    // Advance next primitive address
 }

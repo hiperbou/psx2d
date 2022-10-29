@@ -78,25 +78,25 @@ Tsprite *new_sprite(int x, int y, int z,int file, int graph) {
 void draw_sprite(Tsprite * spr) {
     if (spr->graph < 0 || spr->id < 0) return;
     SPRITE* sprite = fpg[spr->file]->map[spr->graph]->image;
-    addRotSprite(spr->x, spr->y, spr->angle, spr->size_x, spr->flags, sprite, spr->uploadTpage);
+    addRotSprite(spr->x, spr->y, spr->z, spr->angle, spr->size_x, spr->flags, sprite, spr->uploadTpage);
 }
 
 void draw_sprite_fast(Tsprite * spr) {
     if (spr->graph < 0 || spr->id < 0) return;
     SPRITE* sprite = fpg[spr->file]->map[spr->graph]->image;
-    addSprite(spr->x, spr->y, sprite, spr->uploadTpage);
+    addSprite(spr->x, spr->y, spr->z, sprite, spr->uploadTpage);
 }
 
 void draw_tile16_fast(Tsprite * spr) {
     if (spr->graph < 0 || spr->id < 0) return;
     SPRITE* sprite = fpg[spr->file]->map[spr->graph]->image;
-    addTile16(spr->x, spr->y, sprite);
+    addTile16(spr->x, spr->y, spr->z, sprite);
 }
 
 void draw_tile8_fast(Tsprite * spr) {
     if (spr->graph < 0 || spr->id < 0) return;
     SPRITE* sprite = fpg[spr->file]->map[spr->graph]->image;
-    addTile8(spr->x, spr->y, sprite);
+    addTile8(spr->x, spr->y, spr->z, sprite);
 }
 
 void draw_all_sprites_basic(){
@@ -168,7 +168,7 @@ void draw_tilemap_no_wrap(int file, int base_map, TileMap *tilemap, int offsetX,
     int initialY = CLAMP(minY, 0, numRows);
     int finalY = CLAMP(maxY, 0, numRows);
 
-    tilemapSprite.z = 0;
+    tilemapSprite.z = 7;
     tilemapSprite.file = file;
     tilemapSprite.uploadTpage = 0;
     tilemapSprite.fast = 1;
@@ -193,7 +193,7 @@ void draw_tilemap_no_wrap(int file, int base_map, TileMap *tilemap, int offsetX,
     }
 
     SPRITE* sprite = fpg[file]->map[base_map]->image;
-    sortTpage(sprite->tpage);
+    sortTpage(sprite->tpage, tilemapSprite.z);
 }
 
 void draw_tilemap(int file, int base_map, TileMap *tilemap, int offsetX, int offsetY, int flags) {
@@ -219,7 +219,7 @@ void draw_tilemap(int file, int base_map, TileMap *tilemap, int offsetX, int off
     //int initialY = CLAMP(minY, 0, numRows);
     //int finalY = CLAMP(maxY, 0, numRows);
 
-    tilemapSprite.z = 0;
+    tilemapSprite.z = 7;
     tilemapSprite.file = file;
     tilemapSprite.uploadTpage = 0;
     tilemapSprite.fast = 1;
@@ -245,7 +245,7 @@ void draw_tilemap(int file, int base_map, TileMap *tilemap, int offsetX, int off
     }
 
     SPRITE* sprite = fpg[file]->map[base_map]->image;
-    sortTpage(sprite->tpage);
+    sortTpage(sprite->tpage, tilemapSprite.z);
 }
 
 void draw_particle(Particle *p) {
@@ -264,5 +264,5 @@ void draw_particle(Particle *p) {
     draw_sprite(&tilemapSprite);
     //draw_sprite_fast(&tilemapSprite);
     SPRITE* sprite = fpg[file]->map[base_map]->image;
-    sortTpage(sprite->tpage);
+    sortTpage(sprite->tpage, tilemapSprite.z);
 }

@@ -8,8 +8,6 @@
 #include <libgpu.h>	// GPU library header
 #include <libcd.h>
 
-extern int db;
-
 typedef struct _SPRITE {
     u_short tpage;  // Tpage value
     u_short clut;   // CLUT value
@@ -34,15 +32,15 @@ void GetSpriteFromDisc(char *filename, SPRITE *sprite);
 void GetSpriteFromMemory(u_char *data, SPRITE *sprite);
 void drawTexts();
 void clearOrderingTable();
-void addPrimitive(int x, int y, int w, int h, int r, int g, int b);
-void addSpriteTim(int x, int y,  int w, int h, int tim_uoffs, int tim_voffs, RECT tim_crect);
-void addSprite(int x, int y, SPRITE *sprite, int uploadTpage);
-void addRotSprite( int x, int y, int angle, int scale, int flags, SPRITE *sprite, int uploadTpage);
-void addTile16(int x, int y, SPRITE *sprite);
-void addTile8(int x, int y, SPRITE *sprite);
-void addTexturePage(int tim_mode, RECT tim_prect);
+void addPrimitive(int x, int y, int z, int w, int h, int r, int g, int b);
+void addSpriteTim(int x, int y, int z, int w, int h, int tim_uoffs, int tim_voffs, RECT tim_crect);
+void addSprite(int x, int y, int z, SPRITE *sprite, int uploadTpage);
+void addRotSprite( int x, int y, int z, int angle, int scale, int flags, SPRITE *sprite, int uploadTpage);
+void addTile16(int x, int y, int z, SPRITE *sprite);
+void addTile8(int x, int y, int z, SPRITE *sprite);
+void addTexturePage(int tim_mode, RECT tim_prect, int z);
 void setTexturePage(int tim_mode, RECT tim_prect, RECT tim_crect);
-void sortTpage(u_short newTpage);
+void sortTpage(u_short newTpage, int z);
 u_long *loadfile(char *filename);
 
 #endif

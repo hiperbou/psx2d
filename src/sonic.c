@@ -203,6 +203,8 @@ static void constructor(Actor* actor) {
 
     setAnimation(actor, ANIM_STAND, 100);
 
+    HGL_SPR_setZ(actor->entity->spr, 0);
+
     //HGL_SPR_setPalette(actor->entity->spr, PAL0);
 }
 

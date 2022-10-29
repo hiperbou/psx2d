@@ -15,6 +15,8 @@ static void update(Actor* ent) {
 static void constructor(Actor* actor) {
 	//HGL_SPR_setAnim(actor->entity->spr, 1);
     setAnimation(actor, anim_patrol, 10);
+
+    HGL_SPR_setZ(actor->entity->spr, 1);
 }
 
 Actor* newMotobug(int file, const fix32 x, const fix32 y){
