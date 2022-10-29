@@ -63,7 +63,7 @@ void HGL_ENT_render(HGL_Entity *e)
     HGL_SPR_setPosition(e->spr, fix32ToInt(e->x) - scrollOffsetX, fix32ToInt(e->y) - scrollOffsetY);
 }
 
-void HGL_ENT_updateAll(u16 offsetX,u16 offsetY) {
+void HGL_ENT_updateAll(u16 offsetX, u16 offsetY) {
     scrollOffsetX = offsetX;
     scrollOffsetY = offsetY;
 
@@ -72,7 +72,7 @@ void HGL_ENT_updateAll(u16 offsetX,u16 offsetY) {
     OBJECTPOOL_ITERATOR_IF_END
 }
 
-void HGL_ENT_renderAll(u16 offsetX,u16 offsetY)
+void HGL_ENT_renderAll(u16 offsetX, u16 offsetY)
 {
     scrollOffsetX = offsetX;
     scrollOffsetY = offsetY;

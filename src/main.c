@@ -10,6 +10,7 @@
 
 #include "game/actors.h"
 #include "hgl_anim.h"
+#include "game/camera.h"
 
 #include <sys/types.h>	// This provides typedefs needed by libgte.h and libgpu.h
 #include <stdio.h>	// Not necessary but include it anyway
@@ -103,6 +104,7 @@ int main() {
     newMotobug (enemies_fpg, FIX32(0+16), FIX32(240-16));
     newBee(enemies_fpg, FIX32(128+64),FIX32(64));
 
+    Actor * camera = newCamera(sonic, FIX32(40), FIX32(128));
 
     int cooldown = 0;
     while(1)
@@ -176,6 +178,9 @@ int main() {
 
         HGL_ANIM_updateAll();
 
+        bgbx = camposx;
+        bgby = camposy;
+
         HGL_ENT_updateAll(bgbx,bgby);
 
         HGL_ACTOR_updateAll();
@@ -191,8 +196,11 @@ int main() {
         addPrimitive(x + 64,64,0,64,64,255,0,255);
         addPrimitive(x + 96,96,0,64,64,0,255,255);
 
-        draw_tilemap(tiles_fpg, 1, &bgaTilemap, bgbx*2, bgby*2, 0);
-        draw_tilemap(tiles_fpg, bgb_map, &bgbTilemap, bgbx, bgby, 1);
+        bgbx = -camposx;
+        bgby = -camposy;
+
+        draw_tilemap(tiles_fpg, 1, &bgaTilemap, bgbx, bgby, 0); //Front
+        draw_tilemap(tiles_fpg, bgb_map, &bgbTilemap, bgbx>>1, bgby>>1, 1); //BK
 
         frame();
     }

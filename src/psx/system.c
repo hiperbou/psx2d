@@ -110,7 +110,7 @@ void display() {
     // Enable display
     SetDispMask(1);
 
-    //DrawOTag(ot[db]);   // Draw the ordering table
+    //DrawOTag(currentOrderTable);   // Draw the ordering table
     DrawOTag(currentOrderTable + ORDER_TABLE_LENGTH - 1);   // Draw the ordering table Reversed
     // Flip buffer counter
     db = !db;

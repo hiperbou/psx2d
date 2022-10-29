@@ -11,6 +11,10 @@ static inline void setAnimation(Actor * actor, const int * data, int delay) {
     SetAnimationState(actor->animationState, data, delay);
 }
 
+static inline void setZ(Actor * actor, int z) {
+    HGL_SPR_setZ(actor->entity->spr, z);
+}
+
 static inline void setAnimationDelay(Actor*actor, int delay) {
     SetAnimationDelay(actor->animationState, delay);
 }

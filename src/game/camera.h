@@ -1,0 +1,11 @@
+
+
+#ifndef DEMO_CAMERA_H
+#define DEMO_CAMERA_H
+
+extern int camposx;
+extern int camposy;
+
+void updateCameraVPD();
+
+#endif //DEMO_CAMERA_H

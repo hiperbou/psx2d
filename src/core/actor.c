@@ -28,8 +28,12 @@ static HGL_Entity* createEntity(int file, int graph, const fix32 x, const fix32 
 
 Actor* newActor(int file, int graph, const fix32 x, const fix32 y, ActorConstructorCallback* constructorCB, ActorUpdateCallback* updateCB){
 	Actor * actor = newActorFromPool();
-    actor->animationState = HGL_ANIM_new();
-    actor->animationState->currentFrame = graph;
+    if(graph>0) {
+        actor->animationState = HGL_ANIM_new();
+        actor->animationState->currentFrame = graph;
+    } else {
+        actor->animationState = NULL;
+    }
 	actor->entity = createEntity(file, graph, x, y);
     if(updateCB) actor->updateCallback = updateCB;
 	if(constructorCB) constructorCB(actor);

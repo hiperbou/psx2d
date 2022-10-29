@@ -24,7 +24,7 @@ static void initPool() {
 }
 
 void init_particles() {
-    printf("init Particles");
+    printf("init Particles\n");
     //srand(123);
     initPool();
 }
