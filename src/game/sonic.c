@@ -28,6 +28,7 @@
 #define BRAKE_SPEED     FIX32(2)
 
 #define JUMP_SPEED      FIX32(-8)
+#define JUMP_MIN_SPEED  FIX32(-4)
 #define GRAVITY         FIX32(0.4)
 #define ACCEL           FIX32(0.1)
 #define DE_ACCEL        FIX32(0.15)
@@ -48,6 +49,7 @@ static fix32 posy = FIX32(128);
 static fix32 speedX = FIX32(0);
 static fix32 speedY = FIX32(0);
 
+static bool onAir = false;
 
 static TileMap colisionTilemap;
 
@@ -70,16 +72,24 @@ static fix32 getGroundXY(fix32 x, fix32 y) {
     return y + 1; //return ground is down the player
 }
 
+static fix32 getCeiling(fix32 x, fix32 y, fix32 sensorWidth) {
+    Tile tile = getTileInfo(&colisionTilemap, fix32ToInt(x) >> 4, fix32ToInt(y - sensorWidth) >> 4);
+    if (tile.id == 1) {
+        return FIX32( (tile.tileY + 1) << 4 ) + sensorWidth;
+    }
+    return y;
+}
+
 static fix32 getWallRight(fix32 x, fix32 y, fix32 sensorWidth) {
     Tile tile = getTileInfo(&colisionTilemap, fix32ToInt(x + sensorWidth) >> 4, fix32ToInt(y) >> 4);
-    if (tile.id > 0) {
+    if (tile.id == 1) {
         return FIX32( (tile.tileX) << 4 ) - sensorWidth;
     }
     return x;
 }
 static fix32 getWallLeft(fix32 x, fix32 y, fix32 sensorWidth) {
     Tile tile = getTileInfo(&colisionTilemap, fix32ToInt(x - sensorWidth) >> 4, fix32ToInt(y) >> 4);
-    if (tile.id > 0) {
+    if (tile.id == 1) {
         return FIX32( (tile.tileX + 1) << 4 ) + sensorWidth;
     }
     return x;
@@ -115,9 +125,10 @@ static fix32 getGroundYFake(fix32 x) {
 }
 
 static void jump(){
-    if (speedY == 0)
+    if (!onAir)
     {
         speedY = JUMP_SPEED;
+        onAir = true;
         //SND_startPlayPCM_XGM(SFX_JUMP, 1, SOUND_PCM_CH2);
     }
 }
@@ -184,41 +195,95 @@ void updatePhysic(Actor * actor, u16 input)
     posx += speedX;
     posy += speedY;
 
-    if (speedY)
+    if (onAir)
     {
-        int groundY = getGroundXY(posx, posy);
+        if(released & (BUTTON_A | BUTTON_B | BUTTON_C)) {
+            if(speedY<JUMP_MIN_SPEED) {
+                speedY = JUMP_MIN_SPEED;
+            }
+        }
+        if(!(input & BUTTON_NOCLIP)) {
+
+            if (speedX > 0) {
+                int wallX = getWallRight(posx, posy, FIX32(10));
+                if (posx > wallX) speedX = 0;
+                posx = MIN(posx, wallX);
+            }
+            if (speedX < 0) {
+                int wallX = getWallLeft(posx, posy, FIX32(10));
+                if (posx < wallX) speedX = 0;
+                posx = MAX(posx, wallX);
+            }
+            if(speedY<0) {
+                //TODO: needs another sensor on the center because player width = 1+9+9 and tilewidth=16
+                int wallY = getCeiling(posx - FIX32(9), posy, FIX32(10));
+                if (posy < wallY) speedY = 0;
+                posy = MAX(posy, wallY);
+
+                wallY = getCeiling(posx + FIX32(9), posy, FIX32(10));
+                if (posy < wallY) speedY = 0;
+                posy = MAX(posy, wallY);
+
+                wallY = getCeiling(posx, posy, FIX32(10));
+                if (posy < wallY) speedY = 0;
+                posy = MAX(posy, wallY);
+            }
+        }
+
+        //TODO: needs another sensor on the center because player width = 1+9+9 and tilewidth=16
+        int groundY = getGroundXY(posx  - FIX32(9), posy + FIX32(19));
+        int groundYR = getGroundXY(posx + FIX32(9), posy + FIX32(19));
+        groundY = MIN(groundY, groundYR);
+
         if (speedY > 0 && posy >= groundY)
         {
             //printf("Grounded from %i %i\n", fix32ToInt(posy)>>4, fix32ToInt(groundY)>>4);
             //printf("Grounded from %i %i\n", fix32ToInt(posy), fix32ToInt(groundY));
             posy = groundY;
             speedY = 0;
+            onAir = false;
             //printf("Grounded\n");
         } else {
             speedY += GRAVITY;
             //printf("Falling\n");
         }
     } else {
-        int groundY = getGroundXY(posx, posy + FIX32(16));
+        //TODO: needs another sensor on the center because player width = 1+9+9 and tilewidth=16
+        int groundY = getGroundXY(posx  - FIX32(9), posy + FIX32(16));
+        int groundYR = getGroundXY(posx + FIX32(9), posy + FIX32(16));
+        groundY = MIN(groundY, groundYR);
+
         int groundYStep = getGroundXY(posx, posy);
 
         if (groundY > posy + FIX32(16)) {
             speedY = GRAVITY;
+            onAir = true;
             //printf("Falling from %i %i\n", fix32ToInt(posy)>>4, fix32ToInt(groundY)>>4);
         } else if(groundYStep<groundY) {
             posy = groundYStep;
         }
-    }
 
-    if(!(input & BUTTON_NOCLIP)) {
-        if (speedX > 0) {
-            int wallX = getWallRight(posx, posy, FIX32(10));
-            if (posx > wallX) speedX = 0;
-            posx = MIN(posx, wallX);
-        } else if (speedX < 0) {
-            int wallX = getWallLeft(posx, posy,  FIX32(10));
-            if (posx < wallX) speedX = 0;
-            posx = MAX(posx, wallX);
+        if(!(input & BUTTON_NOCLIP)) {
+            if (speedX > 0) {
+                int wallX = getWallRight(posx, posy, FIX32(10));
+                if (posx > wallX) speedX = 0;
+                posx = MIN(posx, wallX);
+            }
+            if (speedX < 0) {
+                int wallX = getWallLeft(posx, posy,  FIX32(10));
+                if (posx < wallX) speedX = 0;
+                posx = MAX(posx, wallX);
+            }
+            /*if(speedY < 0) {
+                //TODO: needs another sensor on the center because player width = 1+9+9 and tilewidth=16
+                int wallY = getCeiling(posx - FIX32(9), posy, FIX32(10));
+                if (posy < wallY) speedY = 0;
+                posy = MAX(posy, wallY);
+
+                wallY = getCeiling(posx + FIX32(9), posy, FIX32(10));
+                if (posy < wallY) speedY = 0;
+                posy = MAX(posy, wallY);
+            }*/
         }
     }
 

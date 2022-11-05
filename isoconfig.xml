@@ -95,6 +95,9 @@
                 <file name="sonic.tim"   type="data" source="art\sonic.tim"/>
                 <file name="bga.tim"   type="data" source="art\bga.tim"/>
                 <file name="bgb.tim"   type="data" source="art\bgb.tim"/>
+                <file name="ghz16.tim"   type="data" source="art\ghz16.tim"/>
+                <file name="ghz1tile.tim"   type="data" source="art\ghz1tile.tim"/>
+                <file name="smb3t.tim"   type="data" source="art\smb3t.tim"/>
             </dir>
 
             <dummy sectors="1024"/>
