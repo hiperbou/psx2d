@@ -111,12 +111,12 @@ int load_atlas(int file, char *filename, int tileWidth, int tileHeight, int numC
     for (int y=0; y < numRows; y++) {     
         for(int x=0; x < numCols; x++) {   
             if (atlas_sprite == NULL) {
-                //printf("load_map %i %s\n", file, filename);
+                //printf("load_map %i %s %i %i\n", file, filename,x,y);
                 atlas_map = load_map(file, filename);
                 atlas_sprite = fpg[file]->map[atlas_map]->image;
                 sprite = atlas_sprite;
             } else {
-                //printf("get_free_map %i\n", file);
+                //printf("get_free_map %i x %i y %i\n", file, x, y);
                 map = new_map(file, get_free_map(file));
                 sprite = fpg[file]->map[map]->image;
                 CopySprite(atlas_sprite, sprite);

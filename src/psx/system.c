@@ -22,7 +22,7 @@ static int db = 0;
 static u_long ot[2][ORDER_TABLE_LENGTH];
 static u_long *currentOrderTable;
 
-static char pribuff[2][65536]; // Primitive buffer (32768)
+static char pribuff[2][32768]; // Primitive buffer (32768)
 static char *nextpri;          // Next primitive pointer
 
 bool isPal() {
@@ -200,7 +200,7 @@ void addSprite(int x, int y, int z, SPRITE *sprite, int uploadTpage) {
     nextpri = SortSprite(x, y, &currentOrderTable[z], nextpri, sprite, uploadTpage);
 }
 
-void SortTile16(int x, int y, u_long *ot, SPRITE *sprite) {
+static inline void SortTile16(int x, int y, u_long *ot, SPRITE *sprite) {
     SPRT_16 *sprt = (SPRT_16*)nextpri;
     setSprt16(sprt);
 
@@ -217,7 +217,7 @@ void SortTile16(int x, int y, u_long *ot, SPRITE *sprite) {
     nextpri += sizeof(SPRT_16);
 }
 
-void SortTile8(int x, int y, u_long *ot, SPRITE *sprite) {
+static inline void SortTile8(int x, int y, u_long *ot, SPRITE *sprite) {
     SPRT_8 *sprt = (SPRT_8*)nextpri;
     setSprt8(sprt);
 

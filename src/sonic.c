@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include "sonic.h"
 
 #include "hgl.h"
@@ -36,7 +37,7 @@
 //#define MAX_POSY        FIX32(156.0)
 
 #define MAP_WIDTH           320 //10240
-#define MAP_HEIGHT          224 //1280
+#define MAP_HEIGHT          416//992//224 //1280
 
 #define MIN_POSX            FIX32(10L)
 #define MAX_POSX            FIX32(MAP_WIDTH - 100)
@@ -46,6 +47,9 @@ static fix32 posx = FIX32(128);
 static fix32 posy = FIX32(128);
 static fix32 movx = FIX32(0);
 static fix32 movy = FIX32(0);
+
+
+static TileMap colisionTilemap;
 
 #define GROUND_HIGH_Z FIX32(MAP_HEIGHT - 48)
 #define GROUND_LOW_Z FIX32(MAP_HEIGHT - 40)
@@ -58,7 +62,22 @@ inline fix32 linearInterpolateFix32(int a, int b, fix32 t) {
     return (a*(FIX32(1)-t)+b*t);
 }
 
-static fix32 getGroundY(fix32 x) {
+static fix32 getGroundXY(fix32 x, fix32 y) {
+    int tx = CLAMP(fix32ToInt(x) >> 4, 0, colisionTilemap.numCols - 1);
+    int ty = CLAMP(fix32ToInt(y) >> 4, 0, colisionTilemap.numRows - 1);
+    if (colisionTilemap.map [tx + ty * colisionTilemap.numCols] > 0) {
+        return FIX32( (ty-1) << 4 );
+    }
+    return y + 16; //return ground is down the player
+}
+
+static bool checkGround(fix32 x, fix32 y) {
+    int tx = CLAMP(fix32ToInt(x) >> 4, 0, colisionTilemap.numCols - 1);
+    int ty = CLAMP(fix32ToInt(y) >> 4, 0, colisionTilemap.numRows - 1);
+    return (colisionTilemap.map [tx + ty * colisionTilemap.numCols] > 0);
+}
+
+static fix32 getGroundYFake(fix32 x) {
     x = fix32ToInt(x) % MAP_WIDTH;
     if(x < 96) return GROUND_HIGH_Z;
     if(x > 176 && x<400) return GROUND_HIGH_Z;
@@ -89,7 +108,12 @@ static void jump(){
 }
 
 static u16 input = 0;
+static u16 just_pressed = 0;
+static u16 released = 0;
+
 static void handleInput(u16 i){
+    just_pressed = (i ^ input) & (~input);
+    released = (i ^ input) & (~i);
     input = i;
 }
 
@@ -105,7 +129,7 @@ static void handleInput(u16 i){
 
 void updatePhysic(Actor * actor, u16 input)
 {
-    if(input & (BUTTON_A | BUTTON_B | BUTTON_C)){
+    if(just_pressed & (BUTTON_A | BUTTON_B | BUTTON_C)){
         jump();
     }
 
@@ -146,18 +170,26 @@ void updatePhysic(Actor * actor, u16 input)
 
     if (movy)
     {
-        int groundY = getGroundY(posx);
-        if (posy > groundY)
+        int groundY = getGroundXY(posx, posy);
+        if (movy>0 && posy >= groundY)
         {
             posy = groundY;
             movy = 0;
-            //TEST
-            //shot(ent);
-            //TEST
+            //printf("Grounded\n");
+        } else {
+            movy += GRAVITY;
+            //printf("Falling\n");
         }
-        else movy += GRAVITY;
     } else {
-        posy = getGroundY(posx);
+        int groundY = getGroundXY(posx, posy + FIX32(16));
+        int groundYStep = getGroundXY(posx, posy);
+
+        if (groundY > posy + FIX32(16)) {
+            //printf("Edge!\n");
+            movy = GRAVITY;
+        } else if(groundYStep<groundY) {
+            posy = groundYStep;
+        }
     }
 
     /*if (posx >= MAX_POSX)
@@ -244,6 +276,7 @@ static void constructor(Actor* actor) {
     //HGL_SPR_setPalette(actor->entity->spr, PAL0);
 }
 
-Actor* newSonic(int file, const fix32 x, const fix32 y){
+Actor* newSonic(int file, const fix32 x, const fix32 y, TileMap _colisionTilemap){
+    colisionTilemap = _colisionTilemap;
     return newActor(file, 1, x, y, constructor, update);
 }

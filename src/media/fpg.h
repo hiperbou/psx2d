@@ -5,7 +5,7 @@
 #include <sys/types.h>	// This provides typedefs needed by libgte.h and libgpu.h
 
 #define MAX_NUM_FPGS 8
-#define MAX_NUM_MAPS 512
+#define MAX_NUM_MAPS 1024
 
 typedef struct{
         //SDL_Surface *image;

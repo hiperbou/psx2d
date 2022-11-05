@@ -79,7 +79,7 @@ Tsprite *new_sprite(int x, int y, int z,int file, int graph) {
 void delete_sprite(Tsprite * spr) {
     int spriteId = spr->id;
     if (spriteId != -1) {
-        if(spriteId==num_procesos) {
+        if(spriteId==num_procesos -1 ) {
             num_procesos--;
         }
         new_proceso = MIN(spriteId, new_proceso);
@@ -88,7 +88,7 @@ void delete_sprite(Tsprite * spr) {
 }
 
 void draw_sprite(Tsprite * spr) {
-    if (spr->graph < 0 || spr->id < 0) return;
+    if (spr->graph <= 0 || spr->id < 0) return;
     SPRITE* sprite = fpg[spr->file]->map[spr->graph]->image;
     addRotSprite(spr->x, spr->y, spr->z, spr->angle, spr->size_x, spr->flags, sprite, spr->uploadTpage);
 }
@@ -114,7 +114,7 @@ void draw_tile8_fast(Tsprite * spr) {
 void draw_all_sprites_basic(){
     Tsprite * sprite;
     for (int i = num_procesos-1; i >= 0; i--)     
-    {   
+    {
         sprite = &proceso[i];
         if(sprite->fast) {
             draw_sprite_fast(sprite);
@@ -158,11 +158,18 @@ static inline int mod_floor(int a, int n) {
 #define MOD_FLOOR(A, N) (((A % N) + N) % N)
 
 void draw_tilemap_no_wrap(int file, int base_map, TileMap *tilemap, int offsetX, int offsetY, int flags) {
-    int *tileMap = tilemap->map;
+
     int numCols = tilemap->numCols;
     int numRows = tilemap->numRows;
 
     //destination rectangle
+    // NES RESOLUTION 256x224
+    /*int destX = 32;
+    int maxDestX = 256 + destX;
+    int destY = 8;
+    int maxDestY = 224 + destY;*/
+
+    // FULL SCREEN NTSC
     int destX = 0;
     int maxDestX = 320;
     int destY = 0;
@@ -180,28 +187,100 @@ void draw_tilemap_no_wrap(int file, int base_map, TileMap *tilemap, int offsetX,
     int initialY = CLAMP(minY, 0, numRows);
     int finalY = CLAMP(maxY, 0, numRows);
 
+    int posXBase = destX - offsetX;
+    int posYBase = destY - offsetY;
+
     tilemapSprite.z = 7;
     tilemapSprite.file = file;
     tilemapSprite.uploadTpage = 0;
     tilemapSprite.fast = 1;
 
-    //offsetY = offsetY + 8; //Ths has an y offset of 8 that shouldn't be needed?
-
     int drawTileWithIndex0 = flags;
 
+    uint8_t *tilePtr = tilemap->map + initialX + initialY * numCols;
+    int lineIncrement = numCols - (finalX - initialX);
     for(int y = initialY; y < finalY; y++) {
         for(int x = initialX; x < finalX; x++) {
-            if (drawTileWithIndex0 || tileMap[x + y * numCols] > 0) {
-                tilemapSprite.x = destX - offsetX + x * 16;
-                tilemapSprite.y = destY - offsetY + y * 16;
-                tilemapSprite.graph =  tileMap[x + y * numCols] + base_map;
+            tilemapSprite.y = posYBase + (y << 4);
+            int tileIndex = *tilePtr;
+            if (drawTileWithIndex0 || tileIndex > 0) {
+                tilemapSprite.x = posXBase + (x << 4);
+                tilemapSprite.graph =  tileIndex + base_map - 1; //-1 because of tiled base_map is used to get the SPRITE later
 
                 //This could be optimized using SPRT_8 and SPRT_16
                 //draw_sprite_fast(&tilemapSprite);
                 draw_tile16_fast(&tilemapSprite); //SPRT_16
                 //draw_tile8_fast(&tilemapSprite); //SPRT_8
             }
-        }    
+            tilePtr++;
+        }
+        tilePtr += lineIncrement;
+    }
+
+    SPRITE* sprite = fpg[file]->map[base_map]->image;
+    sortTpage(sprite->tpage, tilemapSprite.z);
+}
+
+void draw_tilemap_no_wrap8(int file, int base_map, TileMap *tilemap, int offsetX, int offsetY, int flags) {
+    int *tileMap = tilemap->map;
+    int numCols = tilemap->numCols;
+    int numRows = tilemap->numRows;
+
+    //destination rectangle
+    int destX = 0;
+    int maxDestX = 320;
+    int destY = 0;
+    int maxDestY = 240;
+
+    int minX = offsetX >> 3;
+    int maxX = (((maxDestX - destX) + offsetX) >> 3) + 1;
+
+    int initialX = CLAMP(minX, 0, numCols);
+    int finalX = CLAMP(maxX, 0, numCols);
+
+    int minY = offsetY >> 3;
+    int maxY = (((maxDestY - destY) + offsetY) >> 3) + 1;
+
+    int initialY = CLAMP(minY, 0, numRows);
+    int finalY = CLAMP(maxY, 0, numRows);
+
+    tilemapSprite.z = 7;
+    tilemapSprite.file = file;
+    tilemapSprite.uploadTpage = 0;
+    tilemapSprite.fast = 1;
+
+    int drawTileWithIndex0 = flags;
+    static int step = 60;
+    int counter = 0;
+
+    int posXBase = destX - offsetX;
+    int posYBase = destY - offsetY;
+    int posYTile = 0;
+    int yMultipliedByCols = 0;
+    int tileIndex = 0;
+    for(int y = initialY; y < finalY; y++) {
+        posYTile = (y << 3);
+        yMultipliedByCols = y * numCols;
+        for(int x = initialX; x < finalX; x++) {
+            tileIndex = tileMap[x + yMultipliedByCols];
+            if (drawTileWithIndex0 || tileIndex > 0) {
+                tilemapSprite.x = posXBase + (x << 3);
+                tilemapSprite.y = posYBase + posYTile;
+                tilemapSprite.graph =  tileIndex + base_map;
+
+                //This could be optimized using SPRT_8 and SPRT_16
+                //draw_sprite_fast(&tilemapSprite);
+                //draw_tile16_fast(&tilemapSprite); //SPRT_16
+                draw_tile8_fast(&tilemapSprite); //SPRT_8
+                counter++;
+            }
+        }
+    }
+
+    step--;
+    if(step==0) {
+        step = 60;
+        printf("tiles drawn %i\n", counter);
     }
 
     SPRITE* sprite = fpg[file]->map[base_map]->image;
@@ -236,8 +315,6 @@ void draw_tilemap(int file, int base_map, TileMap *tilemap, int offsetX, int off
     tilemapSprite.uploadTpage = 0;
     tilemapSprite.fast = 1;
 
-    //offsetY = offsetY + 8; //Ths has an y offset of 8 that shouldn't be needed?
-
     int drawTileWithIndex0 = flags;
 
     for(int y = minY; y < maxY; y++) {
@@ -256,6 +333,63 @@ void draw_tilemap(int file, int base_map, TileMap *tilemap, int offsetX, int off
         }    
     }
 
+    SPRITE* sprite = fpg[file]->map[base_map]->image;
+    sortTpage(sprite->tpage, tilemapSprite.z);
+}
+
+void draw_tilemap8(int file, int base_map, TileMap *tilemap, int offsetX, int offsetY, int flags) {
+    int *tileMap = tilemap->map;
+    int numCols = tilemap->numCols;
+    int numRows = tilemap->numRows;
+
+    //destination rectangle
+    int destX = 0;
+    int maxDestX = 320;
+    int destY = 0;
+    int maxDestY = 240;
+
+    int minX = offsetX >> 3;
+    int maxX = (((maxDestX - destX) + offsetX) >> 3) + 1;
+
+    int initialX = CLAMP(minX, 0, numCols);
+    int finalX = CLAMP(maxX, 0, numCols);
+
+    int minY = offsetY >> 3;
+    int maxY = (((maxDestY - destY) + offsetY) >> 3) + 1;
+
+    //int initialY = CLAMP(minY, 0, numRows);
+    //int finalY = CLAMP(maxY, 0, numRows);
+
+    tilemapSprite.z = 7;
+    tilemapSprite.file = file;
+    tilemapSprite.uploadTpage = 0;
+    tilemapSprite.fast = 1;
+
+    int drawTileWithIndex0 = flags;
+    static int step = 60;
+    int counter = 0;
+
+    for(int y = minY; y < maxY; y++) {
+        for(int x = minX; x < maxX; x++) {
+            int index = ((mod_floor(x, numCols)) + (mod_floor(y, numRows)) * numCols);
+            if (drawTileWithIndex0 || tileMap[index] > 0) {
+                tilemapSprite.x = destX - offsetX + x * 8;
+                tilemapSprite.y = destY - offsetY + y * 8;
+                tilemapSprite.graph =  tileMap[index] + base_map;
+
+                //This could be optimized using SPRT_8 and SPRT_16
+                //draw_sprite_fast(&tilemapSprite);
+                //draw_tile16_fast(&tilemapSprite); //SPRT_16
+                draw_tile8_fast(&tilemapSprite); //SPRT_8
+                counter++;
+            }
+        }
+    }
+    step--;
+    if(step==0) {
+        step = 60;
+        printf("tiles drawn %i\n", counter);
+    }
     SPRITE* sprite = fpg[file]->map[base_map]->image;
     sortTpage(sprite->tpage, tilemapSprite.z);
 }
