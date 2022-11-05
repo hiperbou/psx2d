@@ -45,8 +45,8 @@
 
 static fix32 posx = FIX32(128);
 static fix32 posy = FIX32(128);
-static fix32 movx = FIX32(0);
-static fix32 movy = FIX32(0);
+static fix32 speedX = FIX32(0);
+static fix32 speedY = FIX32(0);
 
 
 static TileMap colisionTilemap;
@@ -63,13 +63,28 @@ inline fix32 linearInterpolateFix32(int a, int b, fix32 t) {
 }
 
 static fix32 getGroundXY(fix32 x, fix32 y) {
-    int tx = CLAMP(fix32ToInt(x) >> 4, 0, colisionTilemap.numCols - 1);
-    int ty = CLAMP(fix32ToInt(y) >> 4, 0, colisionTilemap.numRows - 1);
-    if (colisionTilemap.map [tx + ty * colisionTilemap.numCols] > 0) {
-        return FIX32( (ty-1) << 4 );
+    Tile tile = getTileInfo(&colisionTilemap, fix32ToInt(x) >> 4, fix32ToInt(y) >> 4);
+    if (tile.id > 0) {
+        return FIX32( (tile.tileY - 1) << 4 );
     }
-    return y + 16; //return ground is down the player
+    return y + 1; //return ground is down the player
 }
+
+static fix32 getWallRight(fix32 x, fix32 y, fix32 sensorWidth) {
+    Tile tile = getTileInfo(&colisionTilemap, fix32ToInt(x + sensorWidth) >> 4, fix32ToInt(y) >> 4);
+    if (tile.id > 0) {
+        return FIX32( (tile.tileX) << 4 ) - sensorWidth;
+    }
+    return x;
+}
+static fix32 getWallLeft(fix32 x, fix32 y, fix32 sensorWidth) {
+    Tile tile = getTileInfo(&colisionTilemap, fix32ToInt(x - sensorWidth) >> 4, fix32ToInt(y) >> 4);
+    if (tile.id > 0) {
+        return FIX32( (tile.tileX + 1) << 4 ) + sensorWidth;
+    }
+    return x;
+}
+
 
 static bool checkGround(fix32 x, fix32 y) {
     int tx = CLAMP(fix32ToInt(x) >> 4, 0, colisionTilemap.numCols - 1);
@@ -100,9 +115,9 @@ static fix32 getGroundYFake(fix32 x) {
 }
 
 static void jump(){
-    if (movy == 0)
+    if (speedY == 0)
     {
-        movy = JUMP_SPEED;
+        speedY = JUMP_SPEED;
         //SND_startPlayPCM_XGM(SFX_JUMP, 1, SOUND_PCM_CH2);
     }
 }
@@ -124,6 +139,7 @@ static void handleInput(u16 i){
 #define BUTTON_RIGHT PAD_RIGHT
 #define BUTTON_UP PAD_UP
 #define BUTTON_DOWN PAD_DOWN
+#define BUTTON_NOCLIP PAD_SQUARE
 #define FALSE (0)
 #define TRUE (!FALSE)
 
@@ -135,49 +151,51 @@ void updatePhysic(Actor * actor, u16 input)
 
     if (input & BUTTON_RIGHT)
     {
-        movx += ACCEL;
+        speedX += ACCEL;
         // going opposite side, quick breaking
-        if (movx < 0) movx += ACCEL;
+        if (speedX < 0) speedX += ACCEL;
 
-        if (movx >= MAX_SPEED) movx = MAX_SPEED;
+        if (speedX >= MAX_SPEED) speedX = MAX_SPEED;
     }
     else if (input & BUTTON_LEFT)
     {
-        movx -= ACCEL;
+        speedX -= ACCEL;
         // going opposite side, quick breaking
-        if (movx > 0) movx -= ACCEL;
+        if (speedX > 0) speedX -= ACCEL;
 
-        if (movx <= -MAX_SPEED) movx = -MAX_SPEED;
+        if (speedX <= -MAX_SPEED) speedX = -MAX_SPEED;
     }
     else
     {
-        if ((movx < FIX32(0.1)) && (movx > FIX32(-0.1)))
-            movx = 0;
-        else if ((movx < FIX32(0.3)) && (movx > FIX32(-0.3)))
-            movx -= movx >> 2;
-        else if ((movx < FIX32(1)) && (movx > FIX32(-1)))
-            movx -= movx >> 3;
+        if ((speedX < FIX32(0.1)) && (speedX > FIX32(-0.1)))
+            speedX = 0;
+        else if ((speedX < FIX32(0.3)) && (speedX > FIX32(-0.3)))
+            speedX -= speedX >> 2;
+        else if ((speedX < FIX32(1)) && (speedX > FIX32(-1)))
+            speedX -= speedX >> 3;
         else
-            movx -= movx >> 4;
+            speedX -= speedX >> 4;
     }
 
 
     //fix32 posx = ent->x;
     //fix32 posy = ent->y;
 
-    posx += movx;
-    posy += movy;
+    posx += speedX;
+    posy += speedY;
 
-    if (movy)
+    if (speedY)
     {
         int groundY = getGroundXY(posx, posy);
-        if (movy>0 && posy >= groundY)
+        if (speedY > 0 && posy >= groundY)
         {
+            //printf("Grounded from %i %i\n", fix32ToInt(posy)>>4, fix32ToInt(groundY)>>4);
+            //printf("Grounded from %i %i\n", fix32ToInt(posy), fix32ToInt(groundY));
             posy = groundY;
-            movy = 0;
+            speedY = 0;
             //printf("Grounded\n");
         } else {
-            movy += GRAVITY;
+            speedY += GRAVITY;
             //printf("Falling\n");
         }
     } else {
@@ -185,23 +203,24 @@ void updatePhysic(Actor * actor, u16 input)
         int groundYStep = getGroundXY(posx, posy);
 
         if (groundY > posy + FIX32(16)) {
-            //printf("Edge!\n");
-            movy = GRAVITY;
+            speedY = GRAVITY;
+            //printf("Falling from %i %i\n", fix32ToInt(posy)>>4, fix32ToInt(groundY)>>4);
         } else if(groundYStep<groundY) {
             posy = groundYStep;
         }
     }
 
-    /*if (posx >= MAX_POSX)
-    {
-        posx = MAX_POSX;
-        movx = 0;
+    if(!(input & BUTTON_NOCLIP)) {
+        if (speedX > 0) {
+            int wallX = getWallRight(posx, posy, FIX32(10));
+            if (posx > wallX) speedX = 0;
+            posx = MIN(posx, wallX);
+        } else if (speedX < 0) {
+            int wallX = getWallLeft(posx, posy,  FIX32(10));
+            if (posx < wallX) speedX = 0;
+            posx = MAX(posx, wallX);
+        }
     }
-    else if (posx <= MIN_POSX)
-    {
-        posx = MIN_POSX;
-        movx = 0;
-    }*/
 
     // set sprite position
     //HGL_ENT_setPosition(ent, posx , posy);
@@ -222,19 +241,19 @@ ANIM(ANIM_ROLL, 16, 17, 18, 19, 20)
 static void updateAnim(Actor * actor)
 {
     // jumping
-    if (movy) {
+    if (speedY) {
         setAnimation(actor, ANIM_ROLL, 4);//HGL_SPR_setAnim(spr, ANIM_ROLL);
-        setAnimationDelay(actor, 1 * (fix32ToInt(MAX_SPEED - abs(movx))));
+        setAnimationDelay(actor, 1 * (fix32ToInt(MAX_SPEED - abs(speedX))));
     }
     else
     {
-        if (((movx >= BRAKE_SPEED) && (input & BUTTON_LEFT)) || ((movx <= -BRAKE_SPEED) && (input & BUTTON_RIGHT)))
+        if (((speedX >= BRAKE_SPEED) && (input & BUTTON_LEFT)) || ((speedX <= -BRAKE_SPEED) && (input & BUTTON_RIGHT)))
             setAnimation(actor, ANIM_BRAKE, 4);//HGL_SPR_setAnim(spr, ANIM_BRAKE);
-        else if ((movx >= RUN_SPEED) || (movx <= -RUN_SPEED))
+        else if ((speedX >= RUN_SPEED) || (speedX <= -RUN_SPEED))
             setAnimation(actor, ANIM_RUN, 4);//HGL_SPR_setAnim(spr, ANIM_RUN);
-        else if (movx != 0) {
+        else if (speedX != 0) {
             setAnimation(actor, ANIM_WALK, 4);//HGL_SPR_setAnim(spr, ANIM_WALK);
-            setAnimationDelay(actor, 2 * (fix32ToInt(RUN_SPEED - abs(movx))));
+            setAnimationDelay(actor, 2 * (fix32ToInt(RUN_SPEED - abs(speedX))));
         }
         else
         {
@@ -247,9 +266,9 @@ static void updateAnim(Actor * actor)
         }
     }
 
-    if (movx > 0)
+    if (speedX > 0)
         HGL_SPR_setHFlip(actor->entity->spr, FALSE);
-    else if (movx < 0)
+    else if (speedX < 0)
         HGL_SPR_setHFlip(actor->entity->spr, TRUE);
 
 }
@@ -262,8 +281,8 @@ static void update(Actor* actor) {
 static void constructor(Actor* actor) {
     posx = actor->entity->x;
     posy = actor->entity->y;
-    movx = FIX32(0);
-    movy = FIX32(0);
+    speedX = FIX32(0);
+    speedY = FIX32(0);
     input = 0;
 
     SonicData* sonic = &actor->sonic;

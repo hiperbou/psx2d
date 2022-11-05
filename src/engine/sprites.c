@@ -127,7 +127,7 @@ void draw_all_sprites_basic(){
 void draw_tilemap_with_sprites(int file, int base_map, TileMap *tilemap) {
     Tsprite * tileB;
     Tsprite * firstTileB = NULL;
-    int *tileMap = tilemap->map;
+    const uint8_t *tileMap = tilemap->map;
     int numCols = tilemap->numCols;
     int numRows = tilemap->numRows;
 
@@ -197,7 +197,7 @@ void draw_tilemap_no_wrap(int file, int base_map, TileMap *tilemap, int offsetX,
 
     int drawTileWithIndex0 = flags;
 
-    uint8_t *tilePtr = tilemap->map + initialX + initialY * numCols;
+    const uint8_t *tilePtr = tilemap->map + initialX + initialY * numCols;
     int lineIncrement = numCols - (finalX - initialX);
     for(int y = initialY; y < finalY; y++) {
         for(int x = initialX; x < finalX; x++) {
@@ -222,7 +222,7 @@ void draw_tilemap_no_wrap(int file, int base_map, TileMap *tilemap, int offsetX,
 }
 
 void draw_tilemap_no_wrap8(int file, int base_map, TileMap *tilemap, int offsetX, int offsetY, int flags) {
-    int *tileMap = tilemap->map;
+    const uint8_t *tileMap = tilemap->map;
     int numCols = tilemap->numCols;
     int numRows = tilemap->numRows;
 
@@ -288,7 +288,7 @@ void draw_tilemap_no_wrap8(int file, int base_map, TileMap *tilemap, int offsetX
 }
 
 void draw_tilemap(int file, int base_map, TileMap *tilemap, int offsetX, int offsetY, int flags) {
-    int *tileMap = tilemap->map;
+    const uint8_t *tileMap = tilemap->map;
     int numCols = tilemap->numCols;
     int numRows = tilemap->numRows;
 
@@ -338,7 +338,7 @@ void draw_tilemap(int file, int base_map, TileMap *tilemap, int offsetX, int off
 }
 
 void draw_tilemap8(int file, int base_map, TileMap *tilemap, int offsetX, int offsetY, int flags) {
-    int *tileMap = tilemap->map;
+    const uint8_t *tileMap = tilemap->map;
     int numCols = tilemap->numCols;
     int numRows = tilemap->numRows;
 

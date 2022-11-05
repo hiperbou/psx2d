@@ -5,6 +5,8 @@
 #include "system.h"
 #include "particle.h"
 
+#include "hgl_types.h"
+
 typedef struct{
       int x; 
       int y;
@@ -28,12 +30,33 @@ typedef struct{
 }Tsprite;
 
 typedef struct {
-    uint8_t * map;
+    const uint8_t * map;
     //int *map;
     int numCols;
     int numRows;
 }TileMap;
 
+typedef struct {
+    uint8_t id;
+    int tileX;
+    int tileY;
+}Tile;
+
+inline static uint8_t* getTileAt(TileMap* tileMap, int tileX, int tileY) {
+    tileX = CLAMP(tileX, 0, tileMap->numCols - 1);
+    tileY = CLAMP(tileY, 0, tileMap->numRows - 1);
+    return (uint8_t*)&tileMap->map[tileX + tileY * tileMap->numCols];
+}
+
+inline static Tile getTileInfo(TileMap* tileMap, int tileX, int tileY) {
+    tileX = CLAMP(tileX, 0, tileMap->numCols - 1);
+    tileY = CLAMP(tileY, 0, tileMap->numRows - 1);
+    return (Tile) {
+        .id = tileMap->map[tileX + tileY * tileMap->numCols],
+        .tileX = tileX,
+        .tileY = tileY
+    };
+}
 
 //extern SPRITE psxSpritePool[4096];
 

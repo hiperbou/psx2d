@@ -17,7 +17,7 @@ void updatePhysicsActorSimple(Actor *actor, fix32 speed) {
     if (order > 0) posx += speed;
     else posx -= speed;
 
-    if ((posx >= MAX_POSX) || (posx <= MIN_POSX))
+    if ((posx >= actor->enemy.max) || (posx <= actor->enemy.min))
             actor->enemy.direction = !order;
 
     HGL_ENT_setPosition(ent, posx , posy);

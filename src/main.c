@@ -213,8 +213,8 @@ TileMap fromTiledBinOpt(TiledBin*tmx) {
 }*/
 
 //Amiga AMOS Pro Tome (.map) and Turbo Plus (.scene)
-TileMap fromTiledBinScene(uint8_t *tmx, int padding) {
-    uint8_t *ptr = tmx;
+TileMap fromTiledBinScene(const uint8_t *tmx, int padding) {
+    const uint8_t *ptr = tmx;
 
     uint8_t l = *ptr;
     uint8_t r = *(ptr + 1);
@@ -238,6 +238,30 @@ void wait(u_char *message) {
         FntPrint(message);
         wait--;
         frame();
+    }
+}
+
+#define TILE_SIZE 16
+#define TILE(X) FIX32(X*TILE_SIZE)
+#define POS_TO_TILE_16(X) (fix32ToInt(X)>>4)
+
+
+void checkCoin(TileMap* tileMap, Actor * actor) {
+    int actorHalfWidth = FIX32(6);
+    int actorHalfHeight = FIX32(6);
+    int actorBoundingBoxY = FIX32(16);
+    int minTileX = POS_TO_TILE_16(actor->entity->x - actorHalfWidth);
+    int maxTileX = POS_TO_TILE_16(actor->entity->x + actorHalfWidth);
+    int minTileY = POS_TO_TILE_16(actor->entity->y - actorBoundingBoxY);
+    int maxTileY = POS_TO_TILE_16(actor->entity->y + actorHalfHeight);
+
+    for (int tileY = minTileY; tileY <= maxTileY; tileY++) {
+        for (int tileX = minTileX; tileX <= maxTileX; tileX++) {
+            uint8_t* coinTile = getTileAt(tileMap, tileX, tileY);
+            if (*coinTile == 7) {
+                *coinTile = 1;
+            }
+        }
     }
 }
 
@@ -291,8 +315,8 @@ int main() {
     bgaTilemap.numRows = bgaNumRows;*/
 
     ///TileMap bgaTilemap = fromTiledBinOpt(&smb3ma2);
-    TileMap bgaTilemap = fromTiledBinScene(&smb3scene,28);
-    TileMap colisionTilemap = fromTiledBinScene(&smb3col,32);
+    TileMap bgaTilemap = fromTiledBinScene(smb3scene,28);
+    TileMap colisionTilemap = fromTiledBinScene(smb3col,32);
 
 
     //Tsprite* spriteQuad = new_sprite(32, 32, 0, system_fpg, texture64_map);
@@ -314,10 +338,12 @@ int main() {
 
     Actor * sonic = newSonic(sonic_fpg, FIX32(128), FIX32(128), colisionTilemap);
 
-    newMotobug(enemies_fpg, mx,my);
-    newMotobug(enemies_fpg, FIX32(128+64),my);
-    newMotobug (enemies_fpg, FIX32(0+16), FIX32(240-16));
-    newBee(enemies_fpg, FIX32(128+64),FIX32(64));
+
+
+    newMotobug(enemies_fpg, TILE(20),TILE(25));
+    newMotobug(enemies_fpg, TILE(64),TILE(24));
+    newMotobug (enemies_fpg, TILE(90), TILE(25));
+    newBee(enemies_fpg, TILE(130),TILE(19));
 
     Actor * camera = newCamera(sonic, FIX32(40), FIX32(128));
 
@@ -398,6 +424,10 @@ int main() {
 
         HGL_ENT_updateAll();
         HGL_ACTOR_updateAll();
+
+        //Handle collisions
+        checkCoin(&bgaTilemap, sonic);
+
 
         HGL_ENT_renderAll(bgbx,bgby);
         HGL_SPR_renderAll();

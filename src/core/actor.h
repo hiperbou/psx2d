@@ -8,6 +8,8 @@
 
 typedef struct{
 	s16 direction;
+    s16 min;
+    s16 max;
 }EnemyData;
 
 typedef struct{
