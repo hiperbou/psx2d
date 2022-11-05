@@ -215,7 +215,7 @@ void updatePhysic(Actor * actor, u16 input)
                 posx = MAX(posx, wallX);
             }
             if(speedY<0) {
-                //TODO: needs another sensor on the center because player width = 1+9+9 and tilewidth=16
+                //TODO: needs 3 sensors because player width = 1+9+9 and tilewidth=16
                 int wallY = getCeiling(posx - FIX32(9), posy, FIX32(10));
                 if (posy < wallY) speedY = 0;
                 posy = MAX(posy, wallY);
@@ -230,10 +230,11 @@ void updatePhysic(Actor * actor, u16 input)
             }
         }
 
-        //TODO: needs another sensor on the center because player width = 1+9+9 and tilewidth=16
-        int groundY = getGroundXY(posx  - FIX32(9), posy + FIX32(19));
+        //TODO: needs 3 sensors because player width = 1+9+9 and tilewidth=16
+        int groundY = getGroundXY(posx, posy + FIX32(19));
+        int groundYL = getGroundXY(posx  - FIX32(9), posy + FIX32(19));
         int groundYR = getGroundXY(posx + FIX32(9), posy + FIX32(19));
-        groundY = MIN(groundY, groundYR);
+        groundY = MIN(groundY, MIN(groundYL, groundYR));
 
         if (speedY > 0 && posy >= groundY)
         {
@@ -248,10 +249,11 @@ void updatePhysic(Actor * actor, u16 input)
             //printf("Falling\n");
         }
     } else {
-        //TODO: needs another sensor on the center because player width = 1+9+9 and tilewidth=16
-        int groundY = getGroundXY(posx  - FIX32(9), posy + FIX32(16));
+        //TODO: needs 3 sensors because player width = 1+9+9 and tilewidth=16
+        int groundY = getGroundXY(posx, posy + FIX32(16));
+        int groundYL = getGroundXY(posx  - FIX32(9), posy + FIX32(16));
         int groundYR = getGroundXY(posx + FIX32(9), posy + FIX32(16));
-        groundY = MIN(groundY, groundYR);
+        groundY = MIN(groundY, MIN(groundYL, groundYR));
 
         int groundYStep = getGroundXY(posx, posy);
 
