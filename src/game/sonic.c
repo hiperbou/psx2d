@@ -7,21 +7,11 @@
 #include "hgl_types.h"
 #include "game/enemyupdate.h"
 #include "abs.h"
-//#include "hgl_spr.h"
-//#include "hgl_ent.h"
-
-//#include "sprite.h"
-//#include "sound.h"
-
-//#include "actor.h"
-//#include "key.h"
-
+#include "fsm.h"
 
 #define SFX_JUMP        64
 #define SFX_ROLL        65
 #define SFX_STOP        66
-
-
 
 #define MAX_SPEED       FIX32(8)
 #define RUN_SPEED       FIX32(6)
@@ -49,8 +39,6 @@ static fix32 posy = FIX32(128);
 static fix32 speedX = FIX32(0);
 static fix32 speedY = FIX32(0);
 
-static bool onAir = false;
-
 static TileMap colisionTilemap;
 
 #define GROUND_HIGH_Z FIX32(MAP_HEIGHT - 48)
@@ -72,10 +60,10 @@ static fix32 getGroundXY(fix32 x, fix32 y) {
     return y + 1; //return ground is down the player
 }
 
-static fix32 getCeiling(fix32 x, fix32 y, fix32 sensorWidth) {
-    Tile tile = getTileInfo(&colisionTilemap, fix32ToInt(x) >> 4, fix32ToInt(y - sensorWidth) >> 4);
+static fix32 getCeiling(fix32 x, fix32 y, fix32 sensorHeight) {
+    Tile tile = getTileInfo(&colisionTilemap, fix32ToInt(x) >> 4, fix32ToInt(y - sensorHeight) >> 4);
     if (tile.id == 1) {
-        return FIX32( (tile.tileY + 1) << 4 ) + sensorWidth;
+        return FIX32( (tile.tileY + 1) << 4 ) + sensorHeight;
     }
     return y;
 }
@@ -124,23 +112,15 @@ static fix32 getGroundYFake(fix32 x) {
     return GROUND_LOW_Z;
 }
 
-static void jump(){
-    if (!onAir)
-    {
-        speedY = JUMP_SPEED;
-        onAir = true;
-        //SND_startPlayPCM_XGM(SFX_JUMP, 1, SOUND_PCM_CH2);
-    }
-}
 
 static u16 input = 0;
 static u16 just_pressed = 0;
 static u16 released = 0;
 
-static void handleInput(u16 i){
-    just_pressed = (i ^ input) & (~input);
-    released = (i ^ input) & (~i);
-    input = i;
+static void handleInput(u16 inputState){
+    just_pressed = (inputState ^ input) & (~input);
+    released = (inputState ^ input) & (~inputState);
+    input = inputState;
 }
 
 #define BUTTON_A PAD_CROSS
@@ -154,13 +134,23 @@ static void handleInput(u16 i){
 #define FALSE (0)
 #define TRUE (!FALSE)
 
-void updatePhysic(Actor * actor, u16 input)
-{
-    if(just_pressed & (BUTTON_A | BUTTON_B | BUTTON_C)){
-        jump();
-    }
+inline static fix32 checkGroundY(fix32 sensorWidth, fix32 sensorHeight){
+    //TODO: needs 3 sensors because player width = 1+9+9 and tilewidth=16
+    int groundY = getGroundXY(posx, posy + sensorHeight);
+    int groundYL = getGroundXY(posx  - sensorWidth, posy + sensorHeight);
+    int groundYR = getGroundXY(posx + sensorWidth, posy + sensorHeight);
+    return MIN(groundY, MIN(groundYL, groundYR));
+}
 
-    if (input & BUTTON_RIGHT)
+inline static fix32 checkCeiling(fix32 sensorWidth, fix32 sensorHeight) {
+    int wallY = getCeiling(posx, posy, sensorHeight);
+    int wallYL = getCeiling(posx - sensorWidth, posy, sensorHeight);
+    int wallYR = getCeiling(posx + sensorWidth, posy, sensorHeight);
+    return MAX(wallY, MAX(wallYL, wallYR));
+}
+
+static void updateMovement() {
+    if (input & BUTTON_RIGHT && !(input & BUTTON_LEFT))
     {
         speedX += ACCEL;
         // going opposite side, quick breaking
@@ -168,7 +158,7 @@ void updatePhysic(Actor * actor, u16 input)
 
         if (speedX >= MAX_SPEED) speedX = MAX_SPEED;
     }
-    else if (input & BUTTON_LEFT)
+    else if (input & BUTTON_LEFT && !(input & BUTTON_RIGHT))
     {
         speedX -= ACCEL;
         // going opposite side, quick breaking
@@ -188,112 +178,91 @@ void updatePhysic(Actor * actor, u16 input)
             speedX -= speedX >> 4;
     }
 
-
-    //fix32 posx = ent->x;
-    //fix32 posy = ent->y;
-
     posx += speedX;
     posy += speedY;
+}
 
-    if (onAir)
-    {
-        if(released & (BUTTON_A | BUTTON_B | BUTTON_C)) {
-            if(speedY<JUMP_MIN_SPEED) {
-                speedY = JUMP_MIN_SPEED;
-            }
+CREATE_STATE_MACHINE(StateMachine, Grounded, Jumping)
+
+inline static void jump(){
+    speedY = JUMP_SPEED;
+    StateMachine.setJumping();
+    //SND_startPlayPCM_XGM(SFX_JUMP, 1, SOUND_PCM_CH2);
+}
+
+static void stateJumping() {
+    updateMovement();
+
+    if(released & (BUTTON_A | BUTTON_B | BUTTON_C)) {
+        if(speedY<JUMP_MIN_SPEED) {
+            speedY = JUMP_MIN_SPEED;
         }
-        if(!(input & BUTTON_NOCLIP)) {
+    }
+    if(!(input & BUTTON_NOCLIP)) {
 
-            if (speedX > 0) {
-                int wallX = getWallRight(posx, posy, FIX32(10));
-                if (posx > wallX) speedX = 0;
-                posx = MIN(posx, wallX);
-            }
-            if (speedX < 0) {
-                int wallX = getWallLeft(posx, posy, FIX32(10));
-                if (posx < wallX) speedX = 0;
-                posx = MAX(posx, wallX);
-            }
-            if(speedY<0) {
-                //TODO: needs 3 sensors because player width = 1+9+9 and tilewidth=16
-                int wallY = getCeiling(posx - FIX32(9), posy, FIX32(10));
-                if (posy < wallY) speedY = 0;
-                posy = MAX(posy, wallY);
-
-                wallY = getCeiling(posx + FIX32(9), posy, FIX32(10));
-                if (posy < wallY) speedY = 0;
-                posy = MAX(posy, wallY);
-
-                wallY = getCeiling(posx, posy, FIX32(10));
-                if (posy < wallY) speedY = 0;
-                posy = MAX(posy, wallY);
-            }
+        if (speedX > 0) {
+            int wallX = getWallRight(posx, posy, FIX32(10));
+            if (posx > wallX) speedX = 0;
+            posx = MIN(posx, wallX);
         }
-
-        //TODO: needs 3 sensors because player width = 1+9+9 and tilewidth=16
-        int groundY = getGroundXY(posx, posy + FIX32(19));
-        int groundYL = getGroundXY(posx  - FIX32(9), posy + FIX32(19));
-        int groundYR = getGroundXY(posx + FIX32(9), posy + FIX32(19));
-        groundY = MIN(groundY, MIN(groundYL, groundYR));
-
-        if (speedY > 0 && posy >= groundY)
-        {
-            //printf("Grounded from %i %i\n", fix32ToInt(posy)>>4, fix32ToInt(groundY)>>4);
-            //printf("Grounded from %i %i\n", fix32ToInt(posy), fix32ToInt(groundY));
-            posy = groundY;
-            speedY = 0;
-            onAir = false;
-            //printf("Grounded\n");
-        } else {
-            speedY += GRAVITY;
-            //printf("Falling\n");
+        if (speedX < 0) {
+            int wallX = getWallLeft(posx, posy, FIX32(10));
+            if (posx < wallX) speedX = 0;
+            posx = MAX(posx, wallX);
         }
-    } else {
-        //TODO: needs 3 sensors because player width = 1+9+9 and tilewidth=16
-        int groundY = getGroundXY(posx, posy + FIX32(16));
-        int groundYL = getGroundXY(posx  - FIX32(9), posy + FIX32(16));
-        int groundYR = getGroundXY(posx + FIX32(9), posy + FIX32(16));
-        groundY = MIN(groundY, MIN(groundYL, groundYR));
-
-        int groundYStep = getGroundXY(posx, posy);
-
-        if (groundY > posy + FIX32(16)) {
-            speedY = GRAVITY;
-            onAir = true;
-            //printf("Falling from %i %i\n", fix32ToInt(posy)>>4, fix32ToInt(groundY)>>4);
-        } else if(groundYStep<groundY) {
-            posy = groundYStep;
-        }
-
-        if(!(input & BUTTON_NOCLIP)) {
-            if (speedX > 0) {
-                int wallX = getWallRight(posx, posy, FIX32(10));
-                if (posx > wallX) speedX = 0;
-                posx = MIN(posx, wallX);
-            }
-            if (speedX < 0) {
-                int wallX = getWallLeft(posx, posy,  FIX32(10));
-                if (posx < wallX) speedX = 0;
-                posx = MAX(posx, wallX);
-            }
-            /*if(speedY < 0) {
-                //TODO: needs another sensor on the center because player width = 1+9+9 and tilewidth=16
-                int wallY = getCeiling(posx - FIX32(9), posy, FIX32(10));
-                if (posy < wallY) speedY = 0;
-                posy = MAX(posy, wallY);
-
-                wallY = getCeiling(posx + FIX32(9), posy, FIX32(10));
-                if (posy < wallY) speedY = 0;
-                posy = MAX(posy, wallY);
-            }*/
+        if(speedY<0) {
+            int ceilingY = checkCeiling(FIX32(9), FIX32(10));
+            if (posy < ceilingY) speedY = 0;
+            posy = MAX(posy, ceilingY);
         }
     }
 
-    // set sprite position
-    //HGL_ENT_setPosition(ent, posx , posy);
-    HGL_ENT_setPosition(actor->entity, posx , posy);
-    //spr->x = posx >> 12;
-    //spr->y = posy >> 12;
+    fix32 groundY = checkGroundY(FIX32(9), FIX32(16));
+
+    if (speedY > 0 && posy >= groundY)
+    {
+        //printf("Grounded from %i %i\n", fix32ToInt(posy)>>4, fix32ToInt(groundY)>>4);
+        //printf("Grounded from %i %i\n", fix32ToInt(posy), fix32ToInt(groundY));
+        posy = groundY;
+        speedY = 0;
+        StateMachine.setGrounded();
+    } else {
+        speedY += GRAVITY;
+        //printf("Falling\n");
+    }
+}
+
+static void stateGrounded() {
+    if(just_pressed & (BUTTON_A | BUTTON_B | BUTTON_C)){
+        jump();
+        return;
+    }
+
+    updateMovement();
+
+    int groundY = checkGroundY(FIX32(9), FIX32(16));;
+    int groundYStep = getGroundXY(posx, posy);
+
+    if (groundY > posy + FIX32(16)) {
+        speedY = GRAVITY;
+        StateMachine.setJumping();
+        //printf("Falling from %i %i\n", fix32ToInt(posy)>>4, fix32ToInt(groundY)>>4);
+    } else if(groundYStep<groundY) {
+        posy = groundYStep;
+    }
+
+    if(!(input & BUTTON_NOCLIP)) {
+        if (speedX > 0) {
+            int wallX = getWallRight(posx, posy, FIX32(10));
+            if (posx > wallX) speedX = 0;
+            posx = MIN(posx, wallX);
+        }
+        if (speedX < 0) {
+            int wallX = getWallLeft(posx, posy,  FIX32(10));
+            if (posx < wallX) speedX = 0;
+            posx = MAX(posx, wallX);
+        }
+    }
 }
 
 ANIM(ANIM_STAND, 1)
@@ -307,9 +276,8 @@ ANIM(ANIM_ROLL, 16, 17, 18, 19, 20)
 
 static void updateAnim(Actor * actor)
 {
-    // jumping
-    if (speedY) {
-        setAnimation(actor, ANIM_ROLL, 4);//HGL_SPR_setAnim(spr, ANIM_ROLL);
+    if (StateMachine.isJumping()) {
+        setAnimation(actor, ANIM_ROLL, 4);
         setAnimationDelay(actor, 1 * (fix32ToInt(MAX_SPEED - abs(speedX))));
     }
     else
@@ -341,7 +309,8 @@ static void updateAnim(Actor * actor)
 }
 
 static void update(Actor* actor) {
-    updatePhysic(actor, input);
+    StateMachine.update();
+    HGL_ENT_setPosition(actor->entity, posx , posy);
     updateAnim(actor);
 }
 
@@ -358,6 +327,8 @@ static void constructor(Actor* actor) {
     setAnimation(actor, ANIM_STAND, 100);
 
     setZ(actor, 0);
+
+    initStateMachine();
 
     //HGL_SPR_setPalette(actor->entity->spr, PAL0);
 }
