@@ -21,7 +21,6 @@ CLionSources:
 	@echo $(INCLUDES)
 	@echo CLION_CPPFLAGS := -Isrc -Isrc/core -Isrc/engine -Isrc/game -Isrc/media -Isrc/pool -Isrc/psx -Isrc/utils
 	@echo CLION_SRCS := src/main.c \
-    src/sonic.c \
     src/core/hgl.c \
     src/core/hgl_anim.c \
     src/core/hgl_ent.c \
@@ -35,6 +34,7 @@ CLionSources:
     src/game/bee.c \
     src/game/enemyupdate.c \
     src/game/motobug.c \
+    src/game/sonic.c \
     src/media/fpg.c \
     src/pool/FixedPool.c \
     src/pool/ObjectPool.c \

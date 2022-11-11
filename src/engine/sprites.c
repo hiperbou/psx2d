@@ -396,7 +396,7 @@ void draw_tilemap8(int file, int base_map, TileMap *tilemap, int offsetX, int of
 
 void draw_particle(Particle *p) {
     int file = 2;
-    int base_map = 1;
+    int base_map = 42;
     tilemapSprite.file = file;
     tilemapSprite.graph = base_map;
     tilemapSprite.x = p->pos.x >> 12;

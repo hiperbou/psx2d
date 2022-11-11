@@ -25,4 +25,12 @@ typedef int s16;
 
 #define CLAMP(X, A, B) MAX((A), ( MIN((X),(B)) ))
 
+//interp = (a*(256 - x) + b*x) >> 8
+#define LinearInterpolate(X,Y,Z,UNIT) (X*(UNIT-Z)+Y*Z)
+#define LinearInterpolateFIX32(X,Y,Z) ((X)*(FIX32(1)-(Z))+(Y)*(Z))
+
+inline fix32 linearInterpolateFix32(int a, int b, fix32 t) {
+    return (a*(FIX32(1)-t)+b*t);
+}
+
 #endif //_HGL_TYPES_H_

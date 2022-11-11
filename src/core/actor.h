@@ -14,6 +14,7 @@ typedef struct{
 
 typedef struct{
 	fun2 (handleInput, u16);
+    fun (doRebound);
 }SonicData;
 
 typedef struct Actor Actor;

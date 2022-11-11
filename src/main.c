@@ -4,7 +4,7 @@
 #include "sprites.h"
 #include "fpg.h"
 
-#include "sonic.h"
+#include "game/sonic.h"
 #include "cppfunction.h"
 #include "hgl_types.h"
 
@@ -242,8 +242,64 @@ void wait(u_char *message) {
 }
 
 #define TILE_SIZE 16
+#define HALF_TILE_SIZE (TILE_SIZE/2)
 #define TILE(X) FIX32(X*TILE_SIZE)
+#define TILE_X_TO_SCREEN(X) ((X*TILE_SIZE) - camposx)
+#define TILE_CENTER_X_TO_SCREEN(X) ((X*TILE_SIZE) + HALF_TILE_SIZE - camposx)
+#define TILE_Y_TO_SCREEN(X) ((X*TILE_SIZE) - camposy)
+#define TILE_CENTER_Y_TO_SCREEN(X) ((X*TILE_SIZE) + HALF_TILE_SIZE - camposy)
 #define POS_TO_TILE_16(X) (fix32ToInt(X)>>4)
+
+#define REPEAT5(X) X; X; X; X; X;
+#define REPEAT10(X) REPEAT5(X); REPEAT5(X);
+#define REPEAT25(X) REPEAT10(X); REPEAT10(X); REPEAT5(X);
+#define REPEAT50(X) REPEAT25(X); REPEAT25(X);
+#define REPEAT100(X) REPEAT50(X); REPEAT50(X);
+
+
+void onPlayerCollidedWithCeilingTile(PlayerEventHandler*playerEventHandler, Tile tile) {
+    switch (tile.id) {
+        case 0: break;
+        case 1:
+            setTileAt(playerEventHandler->collisionTilemap, tile.tileX, tile.tileY, 0);
+            setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 1);
+            int x = TILE_CENTER_X_TO_SCREEN(tile.tileX);
+            int y = TILE_CENTER_Y_TO_SCREEN(tile.tileY);
+            REPEAT25(new_Particle(x, y))
+            break;
+        default:
+            break;
+    }
+}
+
+bool onPlayerCollidedWithFloorTile(PlayerEventHandler*playerEventHandler, Tile tile) {
+    uint8_t tileId = *getTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY);
+    switch (tileId) {
+        case 0: break;
+        case 42:
+        case 77:
+            playerEventHandler->player->sonic.doRebound();
+
+            setTileAt(playerEventHandler->collisionTilemap, tile.tileX, tile.tileY, 0);
+            setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 1);
+            int x = TILE_CENTER_X_TO_SCREEN(tile.tileX);
+            int y = TILE_CENTER_Y_TO_SCREEN(tile.tileY);
+            REPEAT25(new_Particle(x, y))
+            return true;
+            break;
+        default:
+            break;
+    }
+    return false;
+}
+
+void initPlayerEventHandler(PlayerEventHandler*playerEventHandler, TileMap *tilemap, TileMap* collisionTilemap) {
+    playerEventHandler->collisionTilemap = collisionTilemap;
+    playerEventHandler->tilemap = tilemap;
+    playerEventHandler->onColidedWithCeilingTile = onPlayerCollidedWithCeilingTile;
+    playerEventHandler->onColidedWithFloorTile = onPlayerCollidedWithFloorTile;
+    //playerEventHandler->player = player;
+}
 
 
 void checkCoin(TileMap* tileMap, Actor * actor) {
@@ -260,6 +316,7 @@ void checkCoin(TileMap* tileMap, Actor * actor) {
             uint8_t* coinTile = getTileAt(tileMap, tileX, tileY);
             if (*coinTile == 7) {
                 *coinTile = 1;
+                REPEAT5(new_Particle(TILE_CENTER_X_TO_SCREEN(tileX), TILE_CENTER_Y_TO_SCREEN(tileY)))
             }
         }
     }
@@ -316,7 +373,7 @@ int main() {
 
     ///TileMap bgaTilemap = fromTiledBinOpt(&smb3ma2);
     TileMap bgaTilemap = fromTiledBinScene(smb3scene,28);
-    TileMap colisionTilemap = fromTiledBinScene(smb3col,32);
+    TileMap collisionTilemap = fromTiledBinScene(smb3col,32);
 
 
     //Tsprite* spriteQuad = new_sprite(32, 32, 0, system_fpg, texture64_map);
@@ -336,8 +393,11 @@ int main() {
     fix32 mx = FIX32(128);
     fix32 my = FIX32(180);
 
-    Actor * sonic = newSonic(sonic_fpg, FIX32(128), FIX32(128), colisionTilemap);
+    PlayerEventHandler playerEventHandler;
+    initPlayerEventHandler(&playerEventHandler, &bgaTilemap, &collisionTilemap);
 
+    Actor * sonic = newSonic(sonic_fpg, FIX32(128), FIX32(128), collisionTilemap, &playerEventHandler);
+    playerEventHandler.player = sonic;
 
 
     newMotobug(enemies_fpg, TILE(20),TILE(25));
@@ -412,7 +472,7 @@ int main() {
             //new_Particle(spriteGirl->x, spriteGirl->y);
             //printf("active particles %i iterations %i\n", active_particles, maxIterations);
         }
-        new_Particle(spriteGirl->x, spriteGirl->y);
+        //new_Particle(spriteGirl->x, spriteGirl->y);
 
         sonic->sonic.handleInput(btn);
         //updatePhysic(spriteGirl/*HGL_Entity *ent*/, btn);
@@ -441,7 +501,7 @@ int main() {
         //addPrimitive(x + 96,96,0,64,64,0,255,255);
 
 
-        //draw_tilemap_no_wrap(tiles_fpg, 1, &colisionTilemap, bgbx, bgby, 0); //Front
+        //draw_tilemap_no_wrap(tiles_fpg, 1, &collisionTilemap, bgbx, bgby, 0); //Front
         draw_tilemap_no_wrap(tiles_fpg, 1, &bgaTilemap, bgbx, bgby, 0); //Front
 
         //draw_tilemap(tiles_fpg, bgb_map, &bgbTilemap, bgbx>>1, bgby>>1, 1); //BK

@@ -48,6 +48,10 @@ inline static uint8_t* getTileAt(TileMap* tileMap, int tileX, int tileY) {
     return (uint8_t*)&tileMap->map[tileX + tileY * tileMap->numCols];
 }
 
+inline static void setTileAt(TileMap* tileMap, int tileX, int tileY, int value) {
+    *getTileAt(tileMap, tileX, tileY) = value;
+}
+
 inline static Tile getTileInfo(TileMap* tileMap, int tileX, int tileY) {
     tileX = CLAMP(tileX, 0, tileMap->numCols - 1);
     tileY = CLAMP(tileY, 0, tileMap->numRows - 1);

@@ -39,79 +39,122 @@ static fix32 posy = FIX32(128);
 static fix32 speedX = FIX32(0);
 static fix32 speedY = FIX32(0);
 
-static TileMap colisionTilemap;
+static TileMap collisionTilemap;
+static PlayerEventHandler *playerEventHandler;
 
-#define GROUND_HIGH_Z FIX32(MAP_HEIGHT - 48)
-#define GROUND_LOW_Z FIX32(MAP_HEIGHT - 40)
+inline static fix32 tilePosToWorldPos(int tileXorY) {
+    return FIX32(tileXorY << 4);
+}
 
-//interp = (a*(256 - x) + b*x) >> 8
-#define LinearInterpolate(X,Y,Z,UNIT) (X*(UNIT-Z)+Y*Z)
-#define LinearInterpolateFIX32(X,Y,Z) ((X)*(FIX32(1)-(Z))+(Y)*(Z))
+inline static fix32 getGroundTileY(Tile tile) {
+    return tilePosToWorldPos(tile.tileY - 1);
+}
 
-inline fix32 linearInterpolateFix32(int a, int b, fix32 t) {
-    return (a*(FIX32(1)-t)+b*t);
+inline static Tile getTileInfoFromCollisionMap(fix32 x, fix32 y) {
+    return getTileInfo(&collisionTilemap, fix32ToInt(x) >> 4, fix32ToInt(y) >> 4);
+}
+
+inline static fix32 getGroundCollisionYOrOriginalY(Tile tile, fix32 y, fix32 sensorHeight) {
+    if (tile.id > 0) {
+        return getGroundTileY(tile);
+    }
+    return y + 1;
 }
 
 static fix32 getGroundXY(fix32 x, fix32 y) {
-    Tile tile = getTileInfo(&colisionTilemap, fix32ToInt(x) >> 4, fix32ToInt(y) >> 4);
+    Tile tile = getTileInfoFromCollisionMap(x, y);
     if (tile.id > 0) {
-        return FIX32( (tile.tileY - 1) << 4 );
+        return getGroundTileY(tile);
     }
     return y + 1; //return ground is down the player
 }
 
-static fix32 getCeiling(fix32 x, fix32 y, fix32 sensorHeight) {
-    Tile tile = getTileInfo(&colisionTilemap, fix32ToInt(x) >> 4, fix32ToInt(y - sensorHeight) >> 4);
+inline static Tile getGroundTile(fix32 x, fix32 y, fix32 sensorHeight) {
+    return getTileInfoFromCollisionMap(x, y + sensorHeight);
+}
+
+static fix32 getGround(fix32 x, fix32 y, fix32 sensorHeight) {
+    Tile tile = getGroundTile(x, y, sensorHeight);
+    return getGroundCollisionYOrOriginalY(tile, y, sensorHeight);
+}
+
+inline static Tile getCeilingTile(fix32 x, fix32 y, fix32 sensorHeight) {
+    return getTileInfoFromCollisionMap(x, y - sensorHeight);
+}
+
+inline static fix32 getCeilingTileY(Tile tile, fix32 sensorHeight) {
+    return tilePosToWorldPos(tile.tileY + 1) + sensorHeight;
+}
+
+inline static fix32 getCeilingCollisionYOrOriginalY(Tile tile, fix32 y, fix32 sensorHeight) {
     if (tile.id == 1) {
-        return FIX32( (tile.tileY + 1) << 4 ) + sensorHeight;
+        return getCeilingTileY(tile, sensorHeight);
     }
     return y;
 }
 
+static fix32 getCeiling(fix32 x, fix32 y, fix32 sensorHeight) {
+    Tile tile = getCeilingTile(x, y, sensorHeight);
+    return getCeilingCollisionYOrOriginalY(tile, y, sensorHeight);
+}
+
 static fix32 getWallRight(fix32 x, fix32 y, fix32 sensorWidth) {
-    Tile tile = getTileInfo(&colisionTilemap, fix32ToInt(x + sensorWidth) >> 4, fix32ToInt(y) >> 4);
+    Tile tile = getTileInfoFromCollisionMap(x + sensorWidth, y);
     if (tile.id == 1) {
-        return FIX32( (tile.tileX) << 4 ) - sensorWidth;
+        return tilePosToWorldPos(tile.tileX) - sensorWidth;
     }
     return x;
 }
 static fix32 getWallLeft(fix32 x, fix32 y, fix32 sensorWidth) {
-    Tile tile = getTileInfo(&colisionTilemap, fix32ToInt(x - sensorWidth) >> 4, fix32ToInt(y) >> 4);
+    Tile tile = getTileInfoFromCollisionMap(x - sensorWidth, y);
     if (tile.id == 1) {
-        return FIX32( (tile.tileX + 1) << 4 ) + sensorWidth;
+        return tilePosToWorldPos(tile.tileX + 1) + sensorWidth;
     }
     return x;
 }
 
-
-static bool checkGround(fix32 x, fix32 y) {
-    int tx = CLAMP(fix32ToInt(x) >> 4, 0, colisionTilemap.numCols - 1);
-    int ty = CLAMP(fix32ToInt(y) >> 4, 0, colisionTilemap.numRows - 1);
-    return (colisionTilemap.map [tx + ty * colisionTilemap.numCols] > 0);
+inline static fix32 checkGroundY(fix32 sensorWidth, fix32 sensorHeight){
+    //TODO: needs 3 sensors because player width = 1+9+9 and tilewidth=16
+    int groundY = getGroundXY(posx, posy + sensorHeight);
+    int groundYL = getGroundXY(posx  - sensorWidth, posy + sensorHeight);
+    int groundYR = getGroundXY(posx + sensorWidth, posy + sensorHeight);
+    return MIN(groundY, MIN(groundYL, groundYR));
 }
 
-static fix32 getGroundYFake(fix32 x) {
-    x = fix32ToInt(x) % MAP_WIDTH;
-    if(x < 96) return GROUND_HIGH_Z;
-    if(x > 176 && x<400) return GROUND_HIGH_Z;
-    if(x > 496) return GROUND_HIGH_Z;
-    //x 136 and 456
+inline static Tile checkGroundTile(fix32 sensorWidth, fix32 sensorHeight) {
+    Tile ceiling = getGroundTile(posx, posy, sensorHeight);
+    Tile ceilingL = getGroundTile(posx - sensorWidth, posy, sensorHeight);
+    Tile ceilingR = getGroundTile(posx + sensorWidth, posy, sensorHeight);
+    int ceilY = getCeilingCollisionYOrOriginalY(ceiling, posy, sensorHeight);
+    int ceilYL = getCeilingCollisionYOrOriginalY(ceilingL, posy, sensorHeight);
+    int ceilYR = getCeilingCollisionYOrOriginalY(ceilingR, posy, sensorHeight);
+    int winner = MAX(ceilY, MAX(ceilYL, ceilYR));
 
-    //interp = (a*(256 - x) + b*x) >> 8
-    if(x<136) {
-        int dist = 136 - x;
-        int relativePosition = FIX32(dist) / 40;
-        return linearInterpolateFix32(fix32ToInt(GROUND_LOW_Z), fix32ToInt(GROUND_HIGH_Z), relativePosition);
-    }
-    if(x<=176) {
-        int dist = 176 - x;
-        int relativePosition = FIX32(dist) / 40;
-        return linearInterpolateFix32(fix32ToInt(GROUND_HIGH_Z), fix32ToInt(GROUND_LOW_Z), relativePosition);
-    }
-
-    return GROUND_LOW_Z;
+    if(winner == ceilY) return ceiling;
+    if(winner == ceilYL) return ceilingL;
+    return ceilingR;
 }
 
+inline static fix32 checkCeiling(fix32 sensorWidth, fix32 sensorHeight) {
+    int wallY = getCeiling(posx, posy, sensorHeight);
+    int wallYL = getCeiling(posx - sensorWidth, posy, sensorHeight);
+    int wallYR = getCeiling(posx + sensorWidth, posy, sensorHeight);
+    return MAX(wallY, MAX(wallYL, wallYR));
+}
+
+inline static Tile checkCeilingTile(fix32 sensorWidth, fix32 sensorHeight) {
+    Tile ceiling = getCeilingTile(posx, posy, sensorHeight);
+    Tile ceilingL = getCeilingTile(posx - sensorWidth, posy, sensorHeight);
+    Tile ceilingR = getCeilingTile(posx + sensorWidth, posy, sensorHeight);
+    int ceilY = getCeilingCollisionYOrOriginalY(ceiling, posy, sensorHeight);
+    int ceilYL = getCeilingCollisionYOrOriginalY(ceilingL, posy, sensorHeight);
+    int ceilYR = getCeilingCollisionYOrOriginalY(ceilingR, posy, sensorHeight);
+    int winner = MAX(ceilY, MAX(ceilYL, ceilYR));
+
+    if(winner == ceilY) return ceiling;
+    if(winner == ceilYL) return ceilingL;
+    return ceilingR;
+}
 
 static u16 input = 0;
 static u16 just_pressed = 0;
@@ -134,20 +177,6 @@ static void handleInput(u16 inputState){
 #define FALSE (0)
 #define TRUE (!FALSE)
 
-inline static fix32 checkGroundY(fix32 sensorWidth, fix32 sensorHeight){
-    //TODO: needs 3 sensors because player width = 1+9+9 and tilewidth=16
-    int groundY = getGroundXY(posx, posy + sensorHeight);
-    int groundYL = getGroundXY(posx  - sensorWidth, posy + sensorHeight);
-    int groundYR = getGroundXY(posx + sensorWidth, posy + sensorHeight);
-    return MIN(groundY, MIN(groundYL, groundYR));
-}
-
-inline static fix32 checkCeiling(fix32 sensorWidth, fix32 sensorHeight) {
-    int wallY = getCeiling(posx, posy, sensorHeight);
-    int wallYL = getCeiling(posx - sensorWidth, posy, sensorHeight);
-    int wallYR = getCeiling(posx + sensorWidth, posy, sensorHeight);
-    return MAX(wallY, MAX(wallYL, wallYR));
-}
 
 static void updateMovement() {
     if (input & BUTTON_RIGHT && !(input & BUTTON_LEFT))
@@ -182,12 +211,75 @@ static void updateMovement() {
     posy += speedY;
 }
 
-CREATE_STATE_MACHINE(StateMachine, Grounded, Jumping)
+CREATE_STATE_MACHINE(StateMachine, Grounded, Jumping, FallingOffLedge)
 
-inline static void jump(){
-    speedY = JUMP_SPEED;
+inline static void jump(fix32 jumpSpeed){
+    speedY = jumpSpeed;
     StateMachine.setJumping();
     //SND_startPlayPCM_XGM(SFX_JUMP, 1, SOUND_PCM_CH2);
+}
+
+inline static void doRebound() {
+    if(input & (BUTTON_A | BUTTON_B | BUTTON_C)) {
+        jump(-speedY);
+    } else {
+        jump(JUMP_MIN_SPEED);
+    }
+}
+
+inline static void checkWalls(){
+    if((input & BUTTON_NOCLIP)) return;
+
+    if (speedX > 0) {
+        int wallX = getWallRight(posx, posy, FIX32(10));
+        if (posx > wallX) speedX = 0;
+        posx = MIN(posx, wallX);
+    }
+    if (speedX < 0) {
+        int wallX = getWallLeft(posx, posy,  FIX32(10));
+        if (posx < wallX) speedX = 0;
+        posx = MAX(posx, wallX);
+    }
+}
+
+inline static void checkCeilings() {
+    if((input & BUTTON_NOCLIP)) return;
+
+    if(speedY<0) {
+        Tile tile = checkCeilingTile(FIX32(9), FIX32(10));
+        if (tile.id == 1) {
+            int ceilingY = tilePosToWorldPos(tile.tileY + 1) + FIX32(10);;
+            if (posy < ceilingY) {
+                playerEventHandler->onColidedWithCeilingTile(playerEventHandler, tile);
+                speedY = 0;
+            }
+            posy = MAX(posy, ceilingY);
+        }
+    }
+}
+
+static void checkGroundOnAir() {
+    fix32 groundY = checkGroundY(FIX32(9), FIX32(16));
+    if (speedY > 0 && posy >= groundY) {
+        //printf("Grounded from %i %i\n", fix32ToInt(posy)>>4, fix32ToInt(groundY)>>4);
+        //printf("Grounded from %i %i\n", fix32ToInt(posy), fix32ToInt(groundY));
+        if(StateMachine.isJumping()) {
+            Tile tile = checkGroundTile(FIX32(9), FIX32(16));
+            bool processed = playerEventHandler->onColidedWithFloorTile(playerEventHandler, tile);
+
+            if (!processed) {
+                posy = groundY;
+                speedY = 0;
+                StateMachine.setGrounded();
+            }
+        } else {
+            posy = groundY;
+            speedY = 0;
+            StateMachine.setGrounded();
+        }
+    } else {
+        speedY += GRAVITY;
+    }
 }
 
 static void stateJumping() {
@@ -198,43 +290,22 @@ static void stateJumping() {
             speedY = JUMP_MIN_SPEED;
         }
     }
-    if(!(input & BUTTON_NOCLIP)) {
 
-        if (speedX > 0) {
-            int wallX = getWallRight(posx, posy, FIX32(10));
-            if (posx > wallX) speedX = 0;
-            posx = MIN(posx, wallX);
-        }
-        if (speedX < 0) {
-            int wallX = getWallLeft(posx, posy, FIX32(10));
-            if (posx < wallX) speedX = 0;
-            posx = MAX(posx, wallX);
-        }
-        if(speedY<0) {
-            int ceilingY = checkCeiling(FIX32(9), FIX32(10));
-            if (posy < ceilingY) speedY = 0;
-            posy = MAX(posy, ceilingY);
-        }
-    }
+    checkWalls();
+    checkCeilings();
+    checkGroundOnAir();
+}
 
-    fix32 groundY = checkGroundY(FIX32(9), FIX32(16));
-
-    if (speedY > 0 && posy >= groundY)
-    {
-        //printf("Grounded from %i %i\n", fix32ToInt(posy)>>4, fix32ToInt(groundY)>>4);
-        //printf("Grounded from %i %i\n", fix32ToInt(posy), fix32ToInt(groundY));
-        posy = groundY;
-        speedY = 0;
-        StateMachine.setGrounded();
-    } else {
-        speedY += GRAVITY;
-        //printf("Falling\n");
-    }
+static void stateFallingOffLedge() {
+    updateMovement();
+    checkWalls();
+    checkCeilings();
+    checkGroundOnAir();
 }
 
 static void stateGrounded() {
-    if(just_pressed & (BUTTON_A | BUTTON_B | BUTTON_C)){
-        jump();
+    if (just_pressed & (BUTTON_A | BUTTON_B | BUTTON_C)) {
+        jump(JUMP_SPEED);
         return;
     }
 
@@ -245,24 +316,13 @@ static void stateGrounded() {
 
     if (groundY > posy + FIX32(16)) {
         speedY = GRAVITY;
-        StateMachine.setJumping();
+        StateMachine.setFallingOffLedge();
         //printf("Falling from %i %i\n", fix32ToInt(posy)>>4, fix32ToInt(groundY)>>4);
     } else if(groundYStep<groundY) {
         posy = groundYStep;
     }
 
-    if(!(input & BUTTON_NOCLIP)) {
-        if (speedX > 0) {
-            int wallX = getWallRight(posx, posy, FIX32(10));
-            if (posx > wallX) speedX = 0;
-            posx = MIN(posx, wallX);
-        }
-        if (speedX < 0) {
-            int wallX = getWallLeft(posx, posy,  FIX32(10));
-            if (posx < wallX) speedX = 0;
-            posx = MAX(posx, wallX);
-        }
-    }
+    checkWalls();
 }
 
 ANIM(ANIM_STAND, 1)
@@ -286,7 +346,7 @@ static void updateAnim(Actor * actor)
             setAnimation(actor, ANIM_BRAKE, 4);//HGL_SPR_setAnim(spr, ANIM_BRAKE);
         else if ((speedX >= RUN_SPEED) || (speedX <= -RUN_SPEED))
             setAnimation(actor, ANIM_RUN, 4);//HGL_SPR_setAnim(spr, ANIM_RUN);
-        else if (speedX != 0) {
+        else if (speedX != 0 || ((input & BUTTON_LEFT) || (input & BUTTON_RIGHT))) {
             setAnimation(actor, ANIM_WALK, 4);//HGL_SPR_setAnim(spr, ANIM_WALK);
             setAnimationDelay(actor, 2 * (fix32ToInt(RUN_SPEED - abs(speedX))));
         }
@@ -323,6 +383,7 @@ static void constructor(Actor* actor) {
 
     SonicData* sonic = &actor->sonic;
     sonic->handleInput = handleInput;
+    sonic->doRebound = doRebound;
 
     setAnimation(actor, ANIM_STAND, 100);
 
@@ -333,7 +394,8 @@ static void constructor(Actor* actor) {
     //HGL_SPR_setPalette(actor->entity->spr, PAL0);
 }
 
-Actor* newSonic(int file, const fix32 x, const fix32 y, TileMap _colisionTilemap){
-    colisionTilemap = _colisionTilemap;
+Actor* newSonic(int file, const fix32 x, const fix32 y, TileMap _collisionTilemap, PlayerEventHandler *_playerEventHandler){
+    collisionTilemap = _collisionTilemap;
+    playerEventHandler = _playerEventHandler;
     return newActor(file, 1, x, y, constructor, update);
 }
