@@ -205,7 +205,7 @@ void draw_tilemap_no_wrap(int file, int base_map, TileMap *tilemap, int offsetX,
             int tileIndex = *tilePtr;
             if (drawTileWithIndex0 || tileIndex > 0) {
                 tilemapSprite.x = posXBase + (x << 4);
-                tilemapSprite.graph =  tileIndex + base_map - 1; //-1 because of tiled base_map is used to get the SPRITE later
+                tilemapSprite.graph = tileIndex + base_map - 1; //-1 because of tiled base_map is used to get the SPRITE later
 
                 //This could be optimized using SPRT_8 and SPRT_16
                 //draw_sprite_fast(&tilemapSprite);

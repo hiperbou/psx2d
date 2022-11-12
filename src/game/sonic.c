@@ -113,8 +113,7 @@ static fix32 getWallLeft(fix32 x, fix32 y, fix32 sensorWidth) {
     return x;
 }
 
-inline static fix32 checkGroundY(fix32 sensorWidth, fix32 sensorHeight){
-    //TODO: needs 3 sensors because player width = 1+9+9 and tilewidth=16
+inline static fix32 checkGroundY(fix32 sensorWidth, fix32 sensorHeight) {
     int groundY = getGroundXY(posx, posy + sensorHeight);
     int groundYL = getGroundXY(posx  - sensorWidth, posy + sensorHeight);
     int groundYR = getGroundXY(posx + sensorWidth, posy + sensorHeight);
@@ -261,8 +260,6 @@ inline static void checkCeilings() {
 static void checkGroundOnAir() {
     fix32 groundY = checkGroundY(FIX32(9), FIX32(16));
     if (speedY > 0 && posy >= groundY) {
-        //printf("Grounded from %i %i\n", fix32ToInt(posy)>>4, fix32ToInt(groundY)>>4);
-        //printf("Grounded from %i %i\n", fix32ToInt(posy), fix32ToInt(groundY));
         if(StateMachine.isJumping()) {
             Tile tile = checkGroundTile(FIX32(9), FIX32(16));
             bool processed = playerEventHandler->onColidedWithFloorTile(playerEventHandler, tile);
@@ -317,7 +314,6 @@ static void stateGrounded() {
     if (groundY > posy + FIX32(16)) {
         speedY = GRAVITY;
         StateMachine.setFallingOffLedge();
-        //printf("Falling from %i %i\n", fix32ToInt(posy)>>4, fix32ToInt(groundY)>>4);
     } else if(groundYStep<groundY) {
         posy = groundYStep;
     }
@@ -343,27 +339,31 @@ static void updateAnim(Actor * actor)
     else
     {
         if (((speedX >= BRAKE_SPEED) && (input & BUTTON_LEFT)) || ((speedX <= -BRAKE_SPEED) && (input & BUTTON_RIGHT)))
-            setAnimation(actor, ANIM_BRAKE, 4);//HGL_SPR_setAnim(spr, ANIM_BRAKE);
+            setAnimation(actor, ANIM_BRAKE, 4);
         else if ((speedX >= RUN_SPEED) || (speedX <= -RUN_SPEED))
-            setAnimation(actor, ANIM_RUN, 4);//HGL_SPR_setAnim(spr, ANIM_RUN);
-        else if (speedX != 0 || ((input & BUTTON_LEFT) || (input & BUTTON_RIGHT))) {
-            setAnimation(actor, ANIM_WALK, 4);//HGL_SPR_setAnim(spr, ANIM_WALK);
+            setAnimation(actor, ANIM_RUN, 4);
+        else if (speedX != 0 || ((input & BUTTON_LEFT) || (input & BUTTON_RIGHT)) || StateMachine.isFallingOffLedge()) {
+            setAnimation(actor, ANIM_WALK, 4);
             setAnimationDelay(actor, 2 * (fix32ToInt(RUN_SPEED - abs(speedX))));
         }
         else
         {
             if (input & BUTTON_UP)
-                setAnimation(actor, ANIM_UP, 4);//HGL_SPR_setAnim(spr, ANIM_UP);
+                setAnimation(actor, ANIM_UP, 4);
             else if (input & BUTTON_DOWN)
-                setAnimation(actor, ANIM_CROUCH, 4);//HGL_SPR_setAnim(spr, ANIM_CROUCH);
+                setAnimation(actor, ANIM_CROUCH, 4);
             else
-                setAnimation(actor, ANIM_STAND, 4);//HGL_SPR_setAnim(spr, ANIM_STAND);
+                setAnimation(actor, ANIM_STAND, 4);
         }
     }
 
     if (speedX > 0)
         HGL_SPR_setHFlip(actor->entity->spr, FALSE);
     else if (speedX < 0)
+        HGL_SPR_setHFlip(actor->entity->spr, TRUE);
+    else if ((input & BUTTON_RIGHT))
+        HGL_SPR_setHFlip(actor->entity->spr, FALSE);
+    else if ((input & BUTTON_LEFT))
         HGL_SPR_setHFlip(actor->entity->spr, TRUE);
 
 }

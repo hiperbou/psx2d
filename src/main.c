@@ -11,6 +11,7 @@
 #include "game/actors.h"
 #include "hgl_anim.h"
 #include "game/camera.h"
+#include "game/tileshader.h"
 
 #include <sys/types.h>	// This provides typedefs needed by libgte.h and libgpu.h
 #include <stdio.h>	// Not necessary but include it anyway
@@ -286,7 +287,7 @@ bool onPlayerCollidedWithFloorTile(PlayerEventHandler*playerEventHandler, Tile t
             int y = TILE_CENTER_Y_TO_SCREEN(tile.tileY);
             REPEAT25(new_Particle(x, y))
             return true;
-            break;
+            //break;
         default:
             break;
     }
@@ -396,7 +397,7 @@ int main() {
     PlayerEventHandler playerEventHandler;
     initPlayerEventHandler(&playerEventHandler, &bgaTilemap, &collisionTilemap);
 
-    Actor * sonic = newSonic(sonic_fpg, FIX32(128), FIX32(128), collisionTilemap, &playerEventHandler);
+    Actor * sonic = newSonic(sonic_fpg, TILE(6), TILE(25), collisionTilemap, &playerEventHandler);
     playerEventHandler.player = sonic;
 
 
@@ -406,6 +407,8 @@ int main() {
     newBee(enemies_fpg, TILE(130),TILE(19));
 
     Actor * camera = newCamera(sonic, FIX32(40), FIX32(128));
+
+    Actor * tileShader = newTileShader(&bgaTilemap);
 
     int cooldown = 0;
     while(1)
