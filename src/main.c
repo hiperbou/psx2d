@@ -340,7 +340,16 @@ int main() {
     int system_fpg = 0;
     //int girl_fpg = new_fpg();
     int sonic_fpg = new_fpg();
-    int tiles_fpg = new_fpg();
+
+    int tileset_fpgs[4];
+
+    tileset_fpgs[0] = new_fpg();
+    tileset_fpgs[1] = new_fpg();
+    tileset_fpgs[2] = new_fpg();
+    tileset_fpgs[3] = new_fpg();
+
+    int tiles_fpg = tileset_fpgs[0];
+
     int enemies_fpg = new_fpg();
     //int tiles2_fpg = new_fpg();
 
@@ -358,7 +367,15 @@ int main() {
     ////int bga_map = load_atlas(tiles_fpg, "art/bga", 16, 16, 10, 8);
     ////int bga_map = load_atlas(tiles_fpg, "art/ghz1tile", 8, 8, 26, 25);
     //int bga_map = load_atlas(tiles_fpg, "art/ghz16", 16, 16, 16, 15);
-    int bga_map = load_atlas(tiles_fpg, "art/smb3t", 16, 16, 11, 9);
+    int bga_map = load_atlas(tileset_fpgs[0], "art/smb3t" , 16, 16, 11, 9);
+    load_atlas(tileset_fpgs[1], "art/smb3t2", 16, 16, 11, 9);
+    load_atlas(tileset_fpgs[2], "art/smb3t3", 16, 16, 11, 9);
+    load_atlas(tileset_fpgs[3], "art/smb3t4", 16, 16, 11, 9);
+    
+    ANIM(TilesetAnimation, 0, 1, 2, 3)
+    static AnimationState* tilesetAnimationState;
+    tilesetAnimationState = HGL_ANIM_new();
+    SetAnimationState(tilesetAnimationState, TilesetAnimation, 8);
 
     int bgb_map = load_atlas(tiles_fpg, "art/bgb", 16, 16, 15, 13);
     int enemies_map = load_atlas(enemies_fpg, "art/enemies", 48, 32, 4, 2);
@@ -408,7 +425,7 @@ int main() {
 
     Actor * camera = newCamera(sonic, FIX32(40), FIX32(128));
 
-    Actor * tileShader = newTileShader(&bgaTilemap);
+    //Actor * tileShader = newTileShader(&bgaTilemap);
 
     int cooldown = 0;
     while(1)
@@ -505,7 +522,7 @@ int main() {
 
 
         //draw_tilemap_no_wrap(tiles_fpg, 1, &collisionTilemap, bgbx, bgby, 0); //Front
-        draw_tilemap_no_wrap(tiles_fpg, 1, &bgaTilemap, bgbx, bgby, 0); //Front
+        draw_tilemap_no_wrap(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTilemap, bgbx, bgby, 0); //Front
 
         //draw_tilemap(tiles_fpg, bgb_map, &bgbTilemap, bgbx>>1, bgby>>1, 1); //BK
         //draw_tilemap_no_wrap(tiles_fpg, bgb_map, &bgbTilemap, 0, 0, 1); //BK
