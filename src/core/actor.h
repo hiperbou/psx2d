@@ -13,6 +13,13 @@ typedef struct{
 }EnemyData;
 
 typedef struct{
+	s16 direction;
+    s16 min;
+    s16 max;
+	
+}BlockData;
+
+typedef struct{
 	fun2 (handleInput, u16);
     fun (doRebound);
 }SonicData;

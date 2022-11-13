@@ -10,6 +10,7 @@
 
 #include "game/actors.h"
 #include "hgl_anim.h"
+#include "hgl_command.h"
 #include "game/camera.h"
 #include "game/tileshader.h"
 
@@ -242,9 +243,13 @@ void wait(u_char *message) {
     }
 }
 
+
+
+
 #define TILE_SIZE 16
 #define HALF_TILE_SIZE (TILE_SIZE/2)
 #define TILE(X) FIX32(X*TILE_SIZE)
+#define TILE_CENTER(X) FIX32(X*TILE_SIZE + HALF_TILE_SIZE)
 #define TILE_X_TO_SCREEN(X) ((X*TILE_SIZE) - camposx)
 #define TILE_CENTER_X_TO_SCREEN(X) ((X*TILE_SIZE) + HALF_TILE_SIZE - camposx)
 #define TILE_Y_TO_SCREEN(X) ((X*TILE_SIZE) - camposy)
@@ -262,11 +267,32 @@ void onPlayerCollidedWithCeilingTile(PlayerEventHandler*playerEventHandler, Tile
     switch (tile.id) {
         case 0: break;
         case 1:
-            setTileAt(playerEventHandler->collisionTilemap, tile.tileX, tile.tileY, 0);
-            setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 1);
-            int x = TILE_CENTER_X_TO_SCREEN(tile.tileX);
-            int y = TILE_CENTER_Y_TO_SCREEN(tile.tileY);
-            REPEAT25(new_Particle(x, y))
+            uint8_t tileId = *getTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY);
+            switch (tileId) {
+                case 42:
+                case 77:
+                    setTileAt(playerEventHandler->collisionTilemap, tile.tileX, tile.tileY, 0);
+                    setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 1);
+                    int x = TILE_CENTER_X_TO_SCREEN(tile.tileX);
+                    int y = TILE_CENTER_Y_TO_SCREEN(tile.tileY);
+                    REPEAT25(new_Particle(x, y))
+                    break;
+                case 96:
+                    break;
+                default:
+                    setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 1);
+                    //spawn block
+                    newBlock(2, 1, TILE_CENTER(tile.tileX), TILE_CENTER(tile.tileY), 0);
+
+                    DelayedCommand * command = HGL_COMMAND_new();
+                    *command = (DelayedCommand) {
+                            .delay = 10,
+                            .callback = SetUint8,
+                            .target = getTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY),
+                            .data = 96
+                    };
+                    break;
+            }
             break;
         default:
             break;
@@ -332,6 +358,7 @@ int main() {
 
     init();
 
+    HGL_COMMAND_init();
     HGL_ANIM_init();
     HGL_SPR_init();
     HGL_ENT_init();
@@ -497,6 +524,7 @@ int main() {
         sonic->sonic.handleInput(btn);
         //updatePhysic(spriteGirl/*HGL_Entity *ent*/, btn);
 
+        HGL_COMMAND_updateAll();
         HGL_ANIM_updateAll();
 
         bgbx = camposx;

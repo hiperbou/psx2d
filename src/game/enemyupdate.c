@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include "hgl_ent.h"
 #include "actor.h"
+#include "enemyupdate.h"
 
 #define MIN_POSX        FIX32(10)
 #define MAX_POSX        FIX32(400)
@@ -26,4 +27,27 @@ void updatePhysicsActorSimple(Actor *actor, fix32 speed) {
 void faceDirectionAnim(Actor * actor){
     HGL_Entity *entity = actor->entity;
     HGL_SPR_setHFlip(entity->spr, actor->enemy.direction > 0 ? true : false);
+}
+
+
+enum UpAndDownState updateUpAndDown(Actor *actor, fix32 UP_SPEED, fix32 DOWN_SPEED) {
+    enum UpAndDownState state = UpAndDownState_updating;
+    fix32 y = actor->entity->y;
+    if(actor->enemy.direction == 0) {
+        y -= UP_SPEED;
+        if(y <= actor->enemy.min) {
+            y = actor->enemy.min;
+            actor->enemy.direction = 1;
+            state = UpAndDownState_up;
+        }
+    } else if (actor->enemy.direction == 1) {
+        y += DOWN_SPEED;
+        if(y >= actor->enemy.max) {
+            y = actor->enemy.max;
+            actor->enemy.direction = 2;
+            state = UpAndDownState_down;
+        }
+    }
+    HGL_ENT_setPosition(actor->entity, actor->entity->x , y);
+    return state;
 }

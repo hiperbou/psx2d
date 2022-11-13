@@ -65,6 +65,11 @@ HGL_Sprite* HGL_SPR_new(const int file, const int graph, const s16 x, const s16 
 }
 
 void HGL_SPR_delete(HGL_Sprite * sprite) {
+    //Clear object
+    if (sprite->spr) {
+        delete_sprite(sprite->spr);
+        sprite->spr = NULL;
+    }
     ObjectPool_free(spritePool, sprite);
 }
 

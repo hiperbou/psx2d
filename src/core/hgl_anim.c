@@ -10,15 +10,21 @@ void HGL_ANIM_init()
     animationStatePool = new_ObjectPool(MAX_NUM_ANIMATION_STATES, sizeof(AnimationState));
 }
 
+ANIM(Empty, 0)
+inline static void HGL_ANIM_reset(AnimationState *animationState) {
+    SetAnimationState(animationState, Empty, 32);
+}
+
 AnimationState* HGL_ANIM_new()
 {
     PoolElement * elem = ObjectPool_get(animationStatePool);
+    HGL_ANIM_reset(elem->data);
     return elem->data;
 }
 
-void HGL_ANIM_delete(AnimationState *e)
+void HGL_ANIM_delete(AnimationState *animationState)
 {
-    ObjectPool_free(animationStatePool, e);
+    ObjectPool_free(animationStatePool, animationState);
 }
 
 void SetAnimationState(AnimationState * animationState, const int* data, int delay) {

@@ -8,14 +8,7 @@
 #include "enemyupdate.h" //setAnimation
 
 
-#define TILE_QUESTIONBOX 10
-#define TILE_BRICK 77
 
-ANIM(Brick, 92,93,94,95)
-ANIM(Pipe, 8,11,9)
-
-static AnimationState* animationState;
-static AnimationState* animationState2;
 
 static TileMap* tileMap;
 
@@ -35,7 +28,7 @@ static void update(Actor* actor) {
     AnimatedTile * animatedTilePtr = animatedTiles;
 
     while(tilesToAnimate>0) {
-        if (*(animatedTilePtr->tilePtr) <= 1) { //Remove deleted tiles
+        if (*(animatedTilePtr->tilePtr) <= 1) { //Remove deleted tiles TODO: don't depend on tile id
             AnimatedTile* lastAnimatedTilePtr = animatedTiles + (numAnimatedTiles-1);
             (*animatedTilePtr) = *lastAnimatedTilePtr; //Replace current animated tile by the last one
             numAnimatedTiles--;
@@ -47,15 +40,32 @@ static void update(Actor* actor) {
     }
 }
 
+#define TILE_ANIMATOR(ANIMATIONSTATE, ANIM, DELAY)\
+static AnimationState* ANIMATIONSTATE;\
+ANIMATIONSTATE = HGL_ANIM_new();\
+SetAnimationState(ANIMATIONSTATE, ANIM, DELAY);\
+
+#define ANIMATED_TILE(TILE, ANIMATIONSTATE) \
+        case TILE: \
+        animatedTilePtr->tilePtr = tilePtr;\
+        animatedTilePtr->tileId = *tilePtr;\
+        animatedTilePtr->currentFramePtr = &ANIMATIONSTATE->currentFrame;\
+        animatedTilePtr++;\
+        numAnimatedTiles++;\
+        break;
+
+#define TILE_QUESTIONBOX 10
+#define TILE_BRICK 77
+
+
 static void constructor(Actor* actor) {
 
-    animationState = HGL_ANIM_new();
-    SetAnimationState(animationState, Brick, 6);
+    ANIM(Brick, 92,93,94,95)
+    ANIM(Pipe, 8,11,9)
 
-    animationState2 = HGL_ANIM_new();
-    SetAnimationState(animationState2, Pipe, 10);
+    TILE_ANIMATOR(BrickAnimator, Brick, 6)
+    TILE_ANIMATOR(PipeAnimator, Pipe, 10)
     
-
     int numCols = tileMap->numCols;
     int numRows = tileMap->numRows;
     int numTiles = numCols * numRows;
@@ -66,26 +76,15 @@ static void constructor(Actor* actor) {
     uint8_t *tilePtr = (uint8_t*)tileMap->map;
     AnimatedTile * animatedTilePtr = animatedTiles;
 
+
     while(numTiles>0) {
         switch (*tilePtr)
         {
         case 0:
             break;
-        
-        case TILE_QUESTIONBOX:
-            animatedTilePtr->tilePtr = tilePtr;
-            animatedTilePtr->tileId = *tilePtr;
-            animatedTilePtr->currentFramePtr = &animationState2->currentFrame;
-            animatedTilePtr++;
-            numAnimatedTiles++;
-            break;
-        case TILE_BRICK:
-            animatedTilePtr->tilePtr = tilePtr;
-            animatedTilePtr->tileId = *tilePtr;
-            animatedTilePtr->currentFramePtr = &animationState->currentFrame;
-            animatedTilePtr++;
-            numAnimatedTiles++;
-        break;
+        ANIMATED_TILE(TILE_QUESTIONBOX, PipeAnimator)
+        ANIMATED_TILE(TILE_BRICK,       BrickAnimator)
+
 
         default:
             break;
