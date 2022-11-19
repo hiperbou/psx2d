@@ -59,8 +59,8 @@ void initPALDisplay() {
 
 void initClearColor() {
     // Specifies the clear color of the DRAWENV
-    setRGB0(&draw[0], 63, 0, 127);
-    setRGB0(&draw[1], 63, 0, 127);
+    setRGB0(&draw[0], 175, 249, 240);
+    setRGB0(&draw[1], 175, 249, 240);
     // Enable background clear
     draw[0].isbg = 1;
     draw[1].isbg = 1;

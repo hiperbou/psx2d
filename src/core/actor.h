@@ -16,8 +16,14 @@ typedef struct{
 	s16 direction;
     s16 min;
     s16 max;
-	
 }BlockData;
+
+
+typedef struct{
+    fix32 speed;
+    fix32 groundY;
+    fix32 gravity;
+}PhysicsObjectData;
 
 typedef struct{
 	fun2 (handleInput, u16);
@@ -33,6 +39,7 @@ typedef struct Actor {
     AnimationState *animationState;
 	union {
 		EnemyData enemy;
+        PhysicsObjectData physics;
 		SonicData sonic;
 	};
     ActorUpdateCallback *updateCallback;

@@ -12,6 +12,8 @@ enum UpAndDownState {
     UpAndDownState_updating, UpAndDownState_start, UpAndDownState_up, UpAndDownState_down
 };
 
+enum UpAndDownState updatePhysicsObject(Actor *actor);
+
 enum UpAndDownState updateUpAndDown(Actor *actor, fix32 UP_SPEED, fix32 DOWN_SPEED);
 
 static inline void setAnimation(Actor * actor, const int * data, int delay) {
