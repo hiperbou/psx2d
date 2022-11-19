@@ -7,14 +7,21 @@
 
 static ObjectPool * commandPool;
 
-
 void SetUint8(DelayedCommand * data) {
     uint8_t* dest = data->target;
     uint8_t value = data->data;
     *dest = value;
 }
 
-
+void newSetUint8DelayedCommand(int delay, uint8_t *target, uint8_t value) {
+    DelayedCommand * command = HGL_COMMAND_new();
+    *command = (DelayedCommand) {
+            .delay = delay,
+            .callback = SetUint8,
+            .target = target,
+            .data = value
+    };
+}
 
 void HGL_COMMAND_init()
 {
@@ -56,6 +63,12 @@ static inline void updateCommandState(DelayedCommand * delayedCommand) {
 void HGL_COMMAND_updateAll() {
     OBJECTPOOL_ITERATOR_ALLOCATED_START(commandPool, DelayedCommand)
         updateCommandState(it);
+    OBJECTPOOL_ITERATOR_ALLOCATED_END
+}
+
+void HGL_COMMAND_deleteAll() {
+    OBJECTPOOL_ITERATOR_ALLOCATED_START(commandPool, DelayedCommand)
+        HGL_COMMAND_delete(it);
     OBJECTPOOL_ITERATOR_ALLOCATED_END
 }
 

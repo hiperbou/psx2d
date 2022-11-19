@@ -40,6 +40,7 @@ typedef struct Actor {
 
 void        HGL_ACTOR_init();
 void        HGL_ACTOR_updateAll();
+void        HGL_ACTOR_deleteAll();
 
 Actor* newActor(int file, int graph, fix32 x, fix32 y, ActorConstructorCallback* constructorCB, ActorUpdateCallback* updateCB);
 void deleteActor(Actor *actor);

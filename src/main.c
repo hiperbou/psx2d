@@ -37,6 +37,8 @@ void updatePhysic(Tsprite * spr/*HGL_Entity *ent*/, u16 input);
 
 //#include "ghz1.h"
 #include "ghz16.h"
+#include "hgl_mem.h"
+#include "memory.h"
 //int bgaMap[] = { 0,0,0,0,0,0,1,2,3,4,0,0,0,0,0,0,1,2,3,4,0,0,0,0,0,0,1,2,3,4,0,0,0,0,0,0,1,2,3,4,0,0,0,0,0,5,6,7,8,9,0,0,0,0,0,5,6,7,8,9,0,0,0,0,0,5,6,7,8,9,0,0,0,0,0,5,6,7,8,9,0,0,0,0,0,10,11,12,13,14,0,1,2,3,4,10,11,12,13,14,0,0,0,0,0,10,11,12,13,14,0,1,2,3,4,10,11,12,13,14,0,0,0,0,0,0,15,16,17,18,5,6,7,8,9,0,15,16,17,18,0,0,0,0,0,0,15,16,17,18,5,6,7,8,9,0,15,16,17,18,0,0,0,0,0,0,19,20,21,0,10,11,12,13,14,0,19,20,21,0,0,0,0,0,0,0,19,20,21,0,10,11,12,13,14,0,19,20,21,0,0,0,0,0,0,0,0,20,21,0,0,15,16,17,18,0,0,20,21,0,0,0,0,0,0,0,0,20,21,0,0,15,16,17,18,0,0,20,21,0,0,0,0,0,0,0,0,20,21,0,0,19,20,21,0,0,0,20,21,0,0,0,0,0,0,0,0,20,21,0,0,19,20,21,0,0,0,20,21,0,0,0,0,0,22,23,24,20,21,0,0,0,20,21,0,0,0,20,21,0,0,0,0,0,22,23,24,20,21,0,0,0,20,21,0,0,0,20,21,0,0,0,0,0,25,26,27,20,21,0,0,0,20,21,0,0,0,20,21,0,0,0,0,0,25,26,27,20,21,0,0,0,20,21,0,0,0,20,21,0,0,0,0,0,28,29,30,20,31,32,33,32,34,21,0,0,0,20,21,0,0,0,0,0,28,29,30,20,31,32,33,32,34,21,0,0,0,20,21,0,0,0,0,0,28,35,30,20,36,37,38,37,39,21,0,0,0,20,21,0,0,0,0,0,28,35,30,20,36,37,38,37,39,21,0,0,0,20,21,0,40,41,42,40,43,44,30,20,45,46,47,46,48,49,40,40,40,50,49,40,40,41,42,40,43,44,30,20,45,46,47,46,48,49,40,40,40,50,49,40,51,52,53,51,54,55,56,57,58,59,60,61,62,63,51,51,51,64,63,51,51,52,53,51,54,55,56,57,58,59,60,61,62,63,51,51,51,64,63,51,65,65,65,65,65,66,67,68,69,70,71,72,73,65,65,65,65,65,65,65,65,65,65,65,65,66,67,68,69,70,71,72,73,65,65,65,65,65,65,65 };
 //int bgaNumCols = 40;
 //int bgaNumRows = 14;
@@ -234,6 +236,18 @@ TileMap fromTiledBinScene(const uint8_t *tmx, int padding) {
     };
 }
 
+TileMap cloneTilemap(TileMap * original) {
+    size_t size = sizeof(uint8_t) * original->numRows * original->numCols;
+    uint8_t * newMap =  HGL_malloc(size);
+    HGL_memcpy(newMap, (uint8_t*)original->map, size);
+
+    return (TileMap) {
+            .map = newMap,
+            .numCols = original->numCols,
+            .numRows = original->numRows
+    };
+}
+
 void wait(u_char *message) {
     int wait = 20;
     while(wait) {
@@ -283,14 +297,7 @@ void onPlayerCollidedWithCeilingTile(PlayerEventHandler*playerEventHandler, Tile
                     setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 1);
                     //spawn block
                     newBlock(2, 1, TILE_CENTER(tile.tileX), TILE_CENTER(tile.tileY), 0);
-
-                    DelayedCommand * command = HGL_COMMAND_new();
-                    *command = (DelayedCommand) {
-                            .delay = 10,
-                            .callback = SetUint8,
-                            .target = getTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY),
-                            .data = 96
-                    };
+                    newSetUint8DelayedCommand(10, getTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY), 96);
                     break;
             }
             break;
@@ -349,6 +356,145 @@ void checkCoin(TileMap* tileMap, Actor * actor) {
     }
 }
 
+#include "fsm.h"
+CREATE_STATE_MACHINE(GameStateMachine, Menu, LoadLevel, StartGame, Game, UnloadLevel)
+
+static void drawMenu() {
+    FntPrint("\n\n\n\n\n\n\n\n\t\tPRESS START TO PLAY!\n");
+}
+
+static int bgbx = 0;
+static int bgby = 0;
+static Actor * sonic;
+static TileMap bgaTilemap;
+static TileMap collisionTilemap;
+static int tileset_fpgs[4];
+static AnimationState* tilesetAnimationState;
+
+static int sonic_fpg, enemies_fpg;
+static PlayerEventHandler playerEventHandler;
+
+static void loadLevel() {
+    bgaTilemap = fromTiledBinScene(smb3scene,28);
+    collisionTilemap = fromTiledBinScene(smb3col,32);
+
+    bgaTilemap = cloneTilemap(&bgaTilemap);
+    collisionTilemap = cloneTilemap(&collisionTilemap);
+
+    bgbx = 0;
+    bgby = 0;
+
+    initPlayerEventHandler(&playerEventHandler, &bgaTilemap, &collisionTilemap);
+
+    sonic = newSonic(sonic_fpg, TILE(6), TILE(25), collisionTilemap, &playerEventHandler);
+    playerEventHandler.player = sonic;
+
+    newMotobug(enemies_fpg, TILE(20),TILE(25));
+    newMotobug(enemies_fpg, TILE(64),TILE(24));
+    newMotobug (enemies_fpg, TILE(90), TILE(25));
+    newBee(enemies_fpg, TILE(130),TILE(19));
+
+    newCamera(sonic, FIX32(40), FIX32(128));
+
+    //Actor * tileShader = newTileShader(&bgaTilemap);
+}
+
+static void unloadLevel() {
+    HGL_ACTOR_deleteAll();
+    HGL_COMMAND_deleteAll();
+    remove_Particles();
+    HGL_free((void*)bgaTilemap.map);
+    HGL_free((void*)collisionTilemap.map);
+}
+
+static void stateMenu() {
+    drawMenu();
+    unsigned short btn = getButtons(0);
+    if (btn & PAD_START) {
+        GameStateMachine.setLoadLevel();
+    }
+}
+
+static void stateLoadLevel() {
+    loadLevel();
+    GameStateMachine.setStartGame();
+}
+
+static void stateUnloadLevel() {
+    unloadLevel();
+    GameStateMachine.setMenu();
+}
+
+static void stateStartGame() {
+    drawMenu();
+    unsigned short btn = getButtons(0);
+    if (!(btn & PAD_START)) {
+        GameStateMachine.setGame();
+    }
+}
+
+static void stateGame() {
+    unsigned short btn = getButtons(0);
+    if (btn & PAD_START) {
+        GameStateMachine.setUnloadLevel();
+    }
+
+    sonic->sonic.handleInput(btn);
+
+    HGL_COMMAND_updateAll();
+    HGL_ANIM_updateAll();
+
+    bgbx = camposx;
+    bgby = camposy;
+
+    HGL_ENT_updateAll();
+    HGL_ACTOR_updateAll();
+
+    //Handle collisions
+    checkCoin(&bgaTilemap, sonic);
+
+    HGL_ENT_renderAll(bgbx,bgby);
+    HGL_SPR_renderAll();
+
+    draw_all_sprites_basic();
+
+    update_Particles();
+
+    //draw_tilemap_no_wrap(tiles_fpg, 1, &collisionTilemap, bgbx, bgby, 0); //Front
+    draw_tilemap_no_wrap(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTilemap, bgbx, bgby, 0); //Front
+
+    //draw_tilemap(tiles_fpg, bgb_map, &bgbTilemap, bgbx>>1, bgby>>1, 1); //BK
+    //draw_tilemap_no_wrap(tiles_fpg, bgb_map, &bgbTilemap, 0, 0, 1); //BK
+}
+
+
+
+void checkDebugInput() {
+    unsigned short btn = getButtons(0);
+    if(btn & PAD_UP) {
+
+    }
+    else if(btn & PAD_DOWN) {
+
+    }
+    if(btn & PAD_LEFT) {
+
+    }
+    else if(btn & PAD_RIGHT) {
+
+    }
+
+    if(btn & PAD_CROSS) {
+
+    }
+    if(btn & PAD_SQUARE) {
+
+    }
+    if (btn & PAD_START) {
+        printf("START PRESSED!\n");
+    }
+}
+
 int main() {
     printf("Hello world demo\n");
     //printMapInfo(&smb3ma2);
@@ -365,10 +511,8 @@ int main() {
     HGL_ACTOR_init();
     
     int system_fpg = 0;
-    //int girl_fpg = new_fpg();
-    int sonic_fpg = new_fpg();
 
-    int tileset_fpgs[4];
+    sonic_fpg = new_fpg();
 
     tileset_fpgs[0] = new_fpg();
     tileset_fpgs[1] = new_fpg();
@@ -377,7 +521,7 @@ int main() {
 
     int tiles_fpg = tileset_fpgs[0];
 
-    int enemies_fpg = new_fpg();
+    enemies_fpg = new_fpg();
     //int tiles2_fpg = new_fpg();
 
     //int texture64_map = load_map_from_memory(system_fpg, texture64);
@@ -400,161 +544,18 @@ int main() {
     load_atlas(tileset_fpgs[3], "art/smb3t4", 16, 16, 11, 9);
     
     ANIM(TilesetAnimation, 0, 1, 2, 3)
-    static AnimationState* tilesetAnimationState;
+
     tilesetAnimationState = HGL_ANIM_new();
     SetAnimationState(tilesetAnimationState, TilesetAnimation, 8);
 
     int bgb_map = load_atlas(tiles_fpg, "art/bgb", 16, 16, 15, 13);
     int enemies_map = load_atlas(enemies_fpg, "art/enemies", 48, 32, 4, 2);
-    /*TileMap bgbTilemap;
-    bgbTilemap.map = bgbMap;
-    bgbTilemap.numCols = bgbNumCols;
-    bgbTilemap.numRows = bgbNumRows;  */
 
-    /*TileMap bgaTilemap;
-    bgaTilemap.map = bgaMap;
-    bgaTilemap.numCols = bgaNumCols;
-    bgaTilemap.numRows = bgaNumRows;*/
+    initGameStateMachine();
 
-    ///TileMap bgaTilemap = fromTiledBinOpt(&smb3ma2);
-    TileMap bgaTilemap = fromTiledBinScene(smb3scene,28);
-    TileMap collisionTilemap = fromTiledBinScene(smb3col,32);
-
-
-    //Tsprite* spriteQuad = new_sprite(32, 32, 0, system_fpg, texture64_map);
-    //Tsprite* spriteQuad2 = new_sprite(128, 128, 0, system_fpg, texture64_map);
-    //Tsprite* spriteQuad3 = new_sprite(256, 256, 0, system_fpg, texture64_map);
-    //Tsprite* spriteGirl = new_sprite(64, 64, 0, girl_fpg, girl01_map);
-    Tsprite* spriteGirl = new_sprite(64, 64, 0, sonic_fpg, sonic_map);
-    
-    int x = 0;
-    int y = 0;
-
-    int matri = 0;
-
-    int bgbx = 0;
-    int bgby = 0;
-
-    fix32 mx = FIX32(128);
-    fix32 my = FIX32(180);
-
-    PlayerEventHandler playerEventHandler;
-    initPlayerEventHandler(&playerEventHandler, &bgaTilemap, &collisionTilemap);
-
-    Actor * sonic = newSonic(sonic_fpg, TILE(6), TILE(25), collisionTilemap, &playerEventHandler);
-    playerEventHandler.player = sonic;
-
-
-    newMotobug(enemies_fpg, TILE(20),TILE(25));
-    newMotobug(enemies_fpg, TILE(64),TILE(24));
-    newMotobug (enemies_fpg, TILE(90), TILE(25));
-    newBee(enemies_fpg, TILE(130),TILE(19));
-
-    Actor * camera = newCamera(sonic, FIX32(40), FIX32(128));
-
-    //Actor * tileShader = newTileShader(&bgaTilemap);
-
-    int cooldown = 0;
     while(1)
     {
-        FntPrint("HELLO WORLD!\n");
-
-        unsigned short btn = getButtons(0);
-        if(btn & PAD_UP)
-        {
-            //bgby++;
-            //y--;
-            spriteGirl->flags = spriteGirl->flags | 2;
-        }
-        else if(btn & PAD_DOWN)
-        {
-            //bgby--;
-            //y++;
-            spriteGirl->flags = spriteGirl->flags & ~2;
-        }
-        if(btn & PAD_LEFT)
-        {
-            //printf("leftttt\n");
-            //bgbx++;
-            //x--;
-            spriteGirl->flags = spriteGirl->flags | 1;
-        }
-        else if(btn & PAD_RIGHT)
-        {
-            //printf("righttt\n");
-            //bgbx--;
-            //x++;
-            spriteGirl->flags = spriteGirl->flags & ~1;
-        }
-
-        if(btn & PAD_CROSS)
-        {
-            //spriteGirl->file = system_fpg;
-        }
-        if(btn & PAD_SQUARE)
-        {
-            //spriteGirl->file = girl_fpg;
-            if (cooldown==0) {
-                newMotobug(enemies_fpg, FIX32(128 + 64), my);
-                cooldown = 30;
-            }
-            cooldown--;
-        }
-
-        int extraRotation = x << 4;
-        int extraSize = x << 3;
-
-        //spriteGirl->x = 32 + x;
-        //spriteGirl->y = 32 + y;
-        spriteGirl->angle = extraRotation;
-        spriteGirl->size_x = 4096 + extraSize;
-
-        matri++;
-        matri = matri % (6<<0);
-        if(matri==0) {
-            spriteGirl->graph++;
-            if(spriteGirl->graph>22) {
-                spriteGirl->graph = 1;
-            }
-            //new_Particle(spriteGirl->x, spriteGirl->y);
-            //printf("active particles %i iterations %i\n", active_particles, maxIterations);
-        }
-        //new_Particle(spriteGirl->x, spriteGirl->y);
-
-        sonic->sonic.handleInput(btn);
-        //updatePhysic(spriteGirl/*HGL_Entity *ent*/, btn);
-
-        HGL_COMMAND_updateAll();
-        HGL_ANIM_updateAll();
-
-        bgbx = camposx;
-        bgby = camposy;
-
-        HGL_ENT_updateAll();
-        HGL_ACTOR_updateAll();
-
-        //Handle collisions
-        checkCoin(&bgaTilemap, sonic);
-
-
-        HGL_ENT_renderAll(bgbx,bgby);
-        HGL_SPR_renderAll();
-
-        draw_all_sprites_basic();
-
-        update_Particles();
-
-        //addPrimitive(x + 32,32,0,64,64,255,255,0);
-        //addPrimitive(x + 64,64,0,64,64,255,0,255);
-        //addPrimitive(x + 96,96,0,64,64,0,255,255);
-
-
-        //draw_tilemap_no_wrap(tiles_fpg, 1, &collisionTilemap, bgbx, bgby, 0); //Front
-        draw_tilemap_no_wrap(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTilemap, bgbx, bgby, 0); //Front
-
-        //draw_tilemap(tiles_fpg, bgb_map, &bgbTilemap, bgbx>>1, bgby>>1, 1); //BK
-        //draw_tilemap_no_wrap(tiles_fpg, bgb_map, &bgbTilemap, 0, 0, 1); //BK
-
+        GameStateMachine.update();
         frame();
     }
 

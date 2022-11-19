@@ -19,6 +19,7 @@ static void update(Actor* actor) {
 
 static void constructor(Actor* actor) {
     setAnimation(actor, anim_patrol, 2);
+    actor->enemy.direction = 0;
     actor->enemy.min = actor->entity->x - FIX32(128);
     actor->enemy.max = actor->entity->x + FIX32(128);
 }

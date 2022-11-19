@@ -23,6 +23,7 @@ CLionSources:
 	@echo CLION_SRCS := src/main.c \
     src/core/hgl.c \
     src/core/hgl_anim.c \
+    src/core/hgl_command.c \
     src/core/hgl_ent.c \
     src/core/hgl_mem.c \
     src/core/hgl_pool.c \
@@ -32,9 +33,11 @@ CLionSources:
     src/game/actors.c \
     src/game/camera.c \
     src/game/bee.c \
+    src/game/block.c \
     src/game/enemyupdate.c \
     src/game/motobug.c \
     src/game/sonic.c \
+    src/game/tileshader.c \
     src/media/fpg.c \
     src/pool/FixedPool.c \
     src/pool/ObjectPool.c \

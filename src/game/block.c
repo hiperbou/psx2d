@@ -76,24 +76,19 @@ static void update(Actor* actor) {
     }
 }
 
-Actor* newBlock(int file, int graph, const fix32 x, const fix32 y, int type) {
-    ActorConstructorCallback* constructorCB = constructor;
-    ActorUpdateCallback* updateCB = update;
-    switch(type) {
-        case 0:
-            constructorCB = constructor;
-            updateCB = update;
-        break;
-        case 1:
-            constructorCB = constructorCoin;
-            updateCB = updateCoin;
-        break;
-        case 2:
-            constructorCB = constructorScore;
-            updateCB = updateScore;
-        break;
-    }
+typedef struct ActorCallbacks {
+    ActorConstructorCallback *constructor;
+    ActorUpdateCallback* update;
+}ActorCallbacks;
 
-	return newActor(file,graph, x, y, constructorCB, updateCB);
+struct ActorCallbacks boxCallbacks[] = {
+        { constructor, update },
+        { constructorCoin, updateCoin },
+        { constructorScore, updateScore }
+};
+
+Actor* newBlock(int file, int graph, const fix32 x, const fix32 y, int type) {
+    ActorCallbacks* callbacks = &boxCallbacks[type];
+	return newActor(file,graph, x, y, callbacks->constructor, callbacks->update);
 }
 

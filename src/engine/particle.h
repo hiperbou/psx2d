@@ -31,6 +31,7 @@ typedef struct Particle{
 
 void init_particles();
 void update_Particles();
+void remove_Particles();
 
 Particle * new_Particle(int x, int y);
 

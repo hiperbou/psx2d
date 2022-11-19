@@ -267,32 +267,46 @@ void sortRotSprite(int x, int y, int angle, int scale, int flags, SPRITE *sprite
     int top = -centerYScaled + pivotYOffset;
     int bottom = centerYScaled + pivotYOffset;
 
-    SVECTOR	s[4];
     SVECTOR	v[4];
 
-    s[0].vx = left;
-    s[0].vy = top;
+    if(angle == 0) {
+        v[0].vx = left + x;
+        v[0].vy = top + y;
 
-    s[1].vx = right;
-    s[1].vy = top;
+        v[1].vx = right + x;
+        v[1].vy = v[0].vy;
 
-    s[2].vx = left;
-    s[2].vy = bottom;
+        v[2].vx = v[0].vx;
+        v[2].vy = bottom + y;
 
-    s[3].vx = right;
-    s[3].vy = bottom;
-    
-    int cosAngle = ccos( angle );
-    int sinAngle = csin( angle );
-    
-    for(int i=0; i<4; i++)
-    {
-        v[i].vx = (((s[i].vx * cosAngle)
-            -(s[i].vy * sinAngle))>>12) + x;
-        v[i].vy = (((s[i].vy * cosAngle)
-            +(s[i].vx * sinAngle))>>12) + y;
+        v[3].vx = v[1].vx;
+        v[3].vy = v[2].vy;
+    } else {
+        SVECTOR	s[4];
+
+        s[0].vx = left;
+        s[0].vy = top;
+
+        s[1].vx = right;
+        s[1].vy = top;
+
+        s[2].vx = left;
+        s[2].vy = bottom;
+
+        s[3].vx = right;
+        s[3].vy = bottom;
+
+        int cosAngle = ccos( angle );
+        int sinAngle = csin( angle );
+        for(int i=0; i<4; i++)
+        {
+            v[i].vx = (((s[i].vx * cosAngle)
+                        -(s[i].vy * sinAngle))>>12) + x;
+            v[i].vy = (((s[i].vy * cosAngle)
+                        +(s[i].vx * sinAngle))>>12) + y;
+        }
     }
-
+    
     POLY_FT4 *quad = (POLY_FT4*)nextpri;
     setPolyFT4( quad );
 

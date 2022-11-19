@@ -63,3 +63,10 @@ void HGL_ACTOR_updateAll() {
     OBJECTPOOL_ITERATOR_ALLOCATED_END
 }
 
+void HGL_ACTOR_deleteAll() {
+    OBJECTPOOL_ITERATOR_ALLOCATED_START(actorPool, Actor)
+            deleteActor(it);
+    OBJECTPOOL_ITERATOR_ALLOCATED_END
+}
+
+

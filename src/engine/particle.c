@@ -7,7 +7,6 @@
 #include "ObjectPool.h"
 
 #define MAX_NUM_PARTICLES 128
-#define FIX32(X) ((int)((X) * 4096))
 
 static ObjectPool * particlePool;
 
@@ -104,6 +103,13 @@ static inline void particleUpdater(Particle * particle) {
 void update_Particles() {
     OBJECTPOOL_ITERATOR_ALLOCATED_START(particlePool, Particle)
     particleUpdater(it);
+    OBJECTPOOL_ITERATOR_ALLOCATED_END
+    //printf("iterations %i\n", _i);
+}
+
+void remove_Particles() {
+    OBJECTPOOL_ITERATOR_ALLOCATED_START(particlePool, Particle)
+            remove_Particle(it);
     OBJECTPOOL_ITERATOR_ALLOCATED_END
     //printf("iterations %i\n", _i);
 }
