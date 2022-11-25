@@ -365,8 +365,8 @@ static void drawMenu() {
 
 static int bgbx = 0;
 static int bgby = 0;
-static Actor * sonic;
-static Actor * goal;
+static Actor * sonic = NULL;
+//static Actor * goal = NULL;
 static TileMap bgaTilemap;
 static TileMap collisionTilemap;
 static int tileset_fpgs[4];
@@ -374,6 +374,11 @@ static AnimationState* tilesetAnimationState;
 
 static int sonic_fpg, enemies_fpg;
 static PlayerEventHandler playerEventHandler;
+
+Actor* spawnGoal(int tileX, int tileY) {
+    return newGoalActivated(tileset_fpgs[0], TILE_CENTER(tileX), TILE_CENTER(tileY), sonic);
+}
+
 
 static void loadLevel() {
     bgaTilemap = fromTiledBinScene(smb3scene,28);
@@ -395,8 +400,10 @@ static void loadLevel() {
     newMotobug (enemies_fpg, TILE(90), TILE(25));
     newBee(enemies_fpg, TILE(130),TILE(19));
 
-    //goal = newGoal(tileset_fpgs[0], TILE(10), TILE(20), sonic);
-    goal = newGoal(tileset_fpgs[0], TILE_CENTER(174), TILE_CENTER(21), sonic);
+    //goal = newGoal(tileset_fpgs[0], TILE_CENTER(10), TILE_CENTER(21), sonic);
+    //deleteActor(goal);
+    newGoal(tileset_fpgs[0], TILE_CENTER(174), TILE_CENTER(21), sonic);
+    //spawnGoal(174, 21);
 
     newCamera(sonic, FIX32(40), FIX32(128));
 

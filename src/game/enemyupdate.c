@@ -29,15 +29,16 @@ enum UpAndDownState updatePhysicsObject(Actor *actor) {
     enum UpAndDownState state = UpAndDownState_updating;
 
     fix32 y = actor->entity->y;
-    fix32 speed = actor->physics.speed;
+    fix32 speed = actor->physics.speedY;
     y += speed;
 
-    actor->physics.speed += actor->physics.gravity;
-    if(speed<0 && actor->physics.speed >= 0) {
+    actor->physics.speedY += actor->physics.gravity;
+    if(speed<0 && actor->physics.speedY >= 0) {
         state = UpAndDownState_up;
     }
 
     if(y >= actor->physics.groundY) {
+        y = actor->physics.groundY;
         state = UpAndDownState_down;
     }
 

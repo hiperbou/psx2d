@@ -63,7 +63,7 @@ void update_particle(Particle *particle) {
     particle->angle += particle->incrAngle;
     //printf("particle %i\n", particle);
     //printf("particle.x %i\n", particle->pos.x);
-    //printf("particle.v.x %i\n", particle->speed.x);
+    //printf("particle.v.x %i\n", particle->speedY.x);
     particle->pos.x += particle->speed.x;
     particle->pos.y += particle->speed.y;
 

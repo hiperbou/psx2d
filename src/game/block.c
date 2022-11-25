@@ -16,7 +16,7 @@ static void constructorScore(Actor* actor) {
     setAnimation(actor, AnimScore, 32);
     setZ(actor, 1);
     actor->physics = (PhysicsObjectData) {
-        .speed = -FIX32(1.8),
+        .speedY = -FIX32(1.8),
         .gravity = FIX32(0.05),
         .groundY = actor->entity->y
     };
@@ -32,7 +32,7 @@ static void constructorCoin(Actor* actor) {
     setAnimation(actor, AnimCoin, 8);
     setZ(actor, 1);
     actor->physics = (PhysicsObjectData) {
-        .speed = -FIX32(9.5),
+        .speedY = -FIX32(9.5),
         .gravity = FIX32(1),
         .groundY = actor->entity->y
     };
@@ -45,16 +45,20 @@ static void updateCoin(Actor* actor) {
     }
 }
 
+#define POS_TO_TILE_16(X) (fix32ToInt(X)>>4)//main.c
+Actor* spawnGoal(int tileX, int tileY); //main.c
+
 static void constructor(Actor* actor) {
     setAnimation(actor, AnimBlock, 32); //Needs animation defaults to Empty animation!
     setZ(actor, 1);
     actor->physics = (PhysicsObjectData) {
-        .speed = -FIX32(4.5),
+        .speedY = -FIX32(4.5),
         .gravity = FIX32(1),
         .groundY = actor->entity->y
     };
 
-    newBlock(2, 1, actor->entity->x, actor->entity->y - FIX32(16), 1);
+    //newBlock(2, 1, actor->entity->x, actor->entity->y - FIX32(16), 1);
+    spawnGoal(POS_TO_TILE_16(actor->entity->x), POS_TO_TILE_16(actor->entity->y) - 1);
 }
 
 static void update(Actor* actor) {

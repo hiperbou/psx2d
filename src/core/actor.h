@@ -13,17 +13,16 @@ typedef struct{
 }EnemyData;
 
 typedef struct{
-	s16 direction;
-    s16 min;
-    s16 max;
-}BlockData;
-
-
-typedef struct{
-    fix32 speed;
+    fix32 speedY;
     fix32 groundY;
     fix32 gravity;
 }PhysicsObjectData;
+
+typedef struct {
+    PhysicsObjectData physicsObjectData;
+    Actor* targetActor;
+    void * sm;
+}GoalData;
 
 typedef struct{
 	fun2 (handleInput, u16);
@@ -41,6 +40,7 @@ typedef struct Actor {
 		EnemyData enemy;
         PhysicsObjectData physics;
 		SonicData sonic;
+        GoalData goal;
 	};
     ActorUpdateCallback *updateCallback;
 }Actor;

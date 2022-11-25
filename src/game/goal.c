@@ -9,65 +9,89 @@
 
 ANIM(anim_idle, 2, 5, 6)
 ANIM(anim_activated, 5)
+ANIM(anim_activated2, 98,5,99,5)
 ANIM(anim_dead, 0)
+ANIM(anim_star, 98,99)
 
-#include "fsm.h"
-CREATE_STATE_MACHINE(GoalStateMachine, Idle, Activated, Dead)
+#include "engine/actor_fsm.h"
+#include "hgl_mem.h"
 
-Actor* goalActor;
-Actor* targetActor;
-#define SCORE_JUMP_HEIGHT        FIX32(64)
-#define SCORE_UP_SPEED        FIX32(2)
-#define SCORE_DOWN_SPEED        FIX32(2)
+ACTOR_CREATE_STATE_MACHINE(GoalStateMachine, Idle, Activated, Star, Float, Dead)
 
-
-bool checkColision() {
-    if(targetActor->entity->x < goalActor->entity->x - FIX32(16) ||
-        targetActor->entity->x > goalActor->entity->x + FIX32(16) ||
-        targetActor->entity->y < goalActor->entity->y - FIX32(16) ||
-        targetActor->entity->y > goalActor->entity->y + FIX32(16)) return false;
+bool checkColision(Actor * actor, Actor * targetActor) {
+    if(targetActor->entity->x < actor->entity->x - FIX32(16) ||
+       targetActor->entity->x > actor->entity->x + FIX32(16) ||
+       targetActor->entity->y < actor->entity->y - FIX32(16) ||
+       targetActor->entity->y > actor->entity->y + FIX32(16)) return false;
     return true;
 }
 
-
-
-static void stateIdle() {
-    if(checkColision()) {
-        GoalStateMachine.setActivated();
+static void stateIdle(GoalStateMachine * sm, Actor *actor) {
+    if(checkColision(actor, actor->goal.targetActor)) {
+        setActivated(sm);
     }
 }
 
-static void stateActivated() {
-    Actor * actor = goalActor;
+static void stateActivated(GoalStateMachine * sm, Actor *actor) {
     setAnimation(actor, anim_activated, 6);
 
     if(updatePhysicsObject(actor) == UpAndDownState_up) {
-        setAnimation(goalActor, anim_dead, 6);
-        GoalStateMachine.setDead();
+        setAnimation(actor, anim_activated2, 3);
+        setStar(sm);
     }
 }
 
-static void stateDead() {
+static void stateStar(GoalStateMachine * sm, Actor *actor) {
+    if(updatePhysicsObject(actor) == UpAndDownState_down) {
+        setAnimation(actor, anim_star, 6);
+        setFloat(sm);
+    }
+}
 
+static void stateFloat(GoalStateMachine * sm, Actor *actor) {
+    if(checkColision(actor, actor->goal.targetActor)) {
+        setAnimation(actor, anim_dead, 6);
+        setDead(sm);
+    }
+}
+
+static void stateDead(GoalStateMachine * sm, Actor *actor) {
 }
 
 static void update(Actor* actor) {
-    updateGoalStateMachine();
+    updateGoalStateMachine(actor->goal.sm, actor);
 }
 
+static Actor* targetActor;
+
 static void constructor(Actor* actor) {
-    goalActor = actor;
-    initGoalStateMachine();
+    GoalStateMachine *goalStateMachine = HGL_malloc(sizeof (GoalStateMachine));
+    initGoalStateMachine(goalStateMachine);
     setAnimation(actor, anim_idle, 6);
     setZ(actor, 1);
-    actor->physics = (PhysicsObjectData) {
-            .speed = -FIX32(4),
-            .gravity = FIX32(0.1),
-            .groundY = actor->entity->y
+    actor->goal = (GoalData) {
+        .physicsObjectData = (PhysicsObjectData) {
+                .speedY = -FIX32(4),
+                .gravity = FIX32(0.1),
+                .groundY = actor->entity->y
+        },
+        .targetActor = targetActor,
+        .sm = goalStateMachine
     };
+}
+
+static void constructorActivated(Actor* actor) {
+    constructor(actor);
+    GoalStateMachine *sm = actor->goal.sm;
+    sm->setActivated(sm);
 }
 
 Actor* newGoal(int file, const fix32 x, const fix32 y, Actor * target) {
     targetActor = target;
     return newActor(file,1, x, y,constructor,update);
+}
+
+Actor* newGoalActivated(int file, const fix32 x, const fix32 y, Actor * target) {
+    targetActor = target;
+    return newActor(file,1, x, y,constructorActivated,update);
 }
