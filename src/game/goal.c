@@ -56,6 +56,7 @@ static void stateFloat(GoalStateMachine * sm, Actor *actor) {
 }
 
 static void stateDead(GoalStateMachine * sm, Actor *actor) {
+    deleteActor(actor);
 }
 
 static void update(Actor* actor) {
@@ -63,6 +64,10 @@ static void update(Actor* actor) {
 }
 
 static Actor* targetActor;
+
+static void destructor(Actor *actor) {
+    HGL_free(actor->goal.sm);
+}
 
 static void constructor(Actor* actor) {
     GoalStateMachine *goalStateMachine = HGL_malloc(sizeof (GoalStateMachine));
@@ -88,10 +93,10 @@ static void constructorActivated(Actor* actor) {
 
 Actor* newGoal(int file, const fix32 x, const fix32 y, Actor * target) {
     targetActor = target;
-    return newActor(file,1, x, y,constructor,update);
+    return newActorWithDestructor(file,1, x, y,constructor,update, destructor);
 }
 
 Actor* newGoalActivated(int file, const fix32 x, const fix32 y, Actor * target) {
     targetActor = target;
-    return newActor(file,1, x, y,constructorActivated,update);
+    return newActorWithDestructor(file,1, x, y,constructorActivated,update, destructor);
 }

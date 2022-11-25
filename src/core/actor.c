@@ -37,11 +37,20 @@ Actor* newActor(int file, int graph, const fix32 x, const fix32 y, ActorConstruc
 	actor->entity = createEntity(file, graph, x, y);
     if(updateCB) actor->updateCallback = updateCB;
 	if(constructorCB) constructorCB(actor);
+    actor->destructorCallback = NULL;
 	return actor;
+}
+
+Actor* newActorWithDestructor(int file, int graph, fix32 x, fix32 y, ActorConstructorCallback* constructorCB, ActorUpdateCallback* updateCB, ActorDestructorCallback* destructorCB) {
+    Actor * actor = newActor(file, graph, x, y ,constructorCB, updateCB);
+    actor->destructorCallback = destructorCB;
+    return actor;
 }
 
 void deleteActor(Actor *actor)
 {
+    if (actor->destructorCallback) actor->destructorCallback(actor);
+
     if (actor->entity) HGL_ENT_delete(actor->entity);
     if (actor->animationState) HGL_ANIM_delete(actor->animationState);
     ObjectPool_free(actorPool, actor);

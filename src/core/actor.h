@@ -32,6 +32,7 @@ typedef struct{
 typedef struct Actor Actor;
 typedef void ActorConstructorCallback(Actor* actor);
 typedef void ActorUpdateCallback(Actor* actor);
+typedef void ActorDestructorCallback(Actor* actor);
 
 typedef struct Actor {
 	HGL_Entity *entity;
@@ -43,6 +44,7 @@ typedef struct Actor {
         GoalData goal;
 	};
     ActorUpdateCallback *updateCallback;
+    ActorDestructorCallback *destructorCallback;
 }Actor;
 
 void        HGL_ACTOR_init();
@@ -50,6 +52,7 @@ void        HGL_ACTOR_updateAll();
 void        HGL_ACTOR_deleteAll();
 
 Actor* newActor(int file, int graph, fix32 x, fix32 y, ActorConstructorCallback* constructorCB, ActorUpdateCallback* updateCB);
+Actor* newActorWithDestructor(int file, int graph, fix32 x, fix32 y, ActorConstructorCallback* constructorCB, ActorUpdateCallback* updateCB, ActorDestructorCallback* destructorCB);
 void deleteActor(Actor *actor);
 
 #endif
