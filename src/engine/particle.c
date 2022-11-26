@@ -17,9 +17,6 @@ typedef struct ParticleItem {
 
 static void initPool() {
     particlePool = new_ObjectPool(MAX_NUM_PARTICLES, sizeof(Particle));
-    /*ObjectPool_initialize(particlePool, &(Particle) {
-            .active = 0
-    }, sizeof(Particle));*/
 }
 
 void init_particles() {
@@ -34,9 +31,6 @@ int random(int min, int max) {
 
 void init_particle(Particle *particle, int x, int y) {
     *particle = (Particle) {
-            //.id = particle->id,
-
-            //.active = 1,
             .pos.x = FIX32(x),
             .pos.y = FIX32(y),
             .speed.x = random(FIX32(-2), FIX32(2)),
@@ -61,9 +55,7 @@ void update_particle(Particle *particle) {
     particle->life -= particle->fade;
     particle->size += particle->incrSize;
     particle->angle += particle->incrAngle;
-    //printf("particle %i\n", particle);
-    //printf("particle.x %i\n", particle->pos.x);
-    //printf("particle.v.x %i\n", particle->speedY.x);
+
     particle->pos.x += particle->speed.x;
     particle->pos.y += particle->speed.y;
 
@@ -90,11 +82,11 @@ void remove_Particle(Particle *particle) {
 
 static inline void particleUpdater(Particle * particle) {
     update_particle(particle);
-    draw_particle(particle);
+    draw_particle(2, 42, particle);
     if (particle->life <= 0 ||
         particle->pos.x < 0 || particle->pos.x > FIX32(320) ||
         particle->pos.y < 0 || particle->pos.y > FIX32(240)) {
-        //particle->active = 0;
+
         remove_Particle(particle);
     }
 }
@@ -102,14 +94,12 @@ static inline void particleUpdater(Particle * particle) {
 
 void update_Particles() {
     OBJECTPOOL_ITERATOR_ALLOCATED_START(particlePool, Particle)
-    particleUpdater(it);
+        particleUpdater(it);
     OBJECTPOOL_ITERATOR_ALLOCATED_END
-    //printf("iterations %i\n", _i);
 }
 
 void remove_Particles() {
     OBJECTPOOL_ITERATOR_ALLOCATED_START(particlePool, Particle)
-            remove_Particle(it);
+        remove_Particle(it);
     OBJECTPOOL_ITERATOR_ALLOCATED_END
-    //printf("iterations %i\n", _i);
 }

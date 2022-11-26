@@ -73,7 +73,7 @@ void draw_tilemap_no_wrap8(int file, int base_map, TileMap *tilemap, int offsetX
 void draw_tilemap(int file, int base_map, TileMap *tilemap, int offsetX, int offsetY, int flags);
 void draw_tilemap8(int file, int base_map, TileMap *tilemap, int offsetX, int offsetY, int flags);
 
-void draw_particle(Particle *p);
+void draw_particle(int file, int graph, Particle *p);
 void draw_sprite(Tsprite * spr);
 void draw_sprite_fast(Tsprite * spr);
 

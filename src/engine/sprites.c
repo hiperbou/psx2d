@@ -148,7 +148,7 @@ void draw_tilemap_with_sprites(int file, int base_map, TileMap *tilemap) {
     }
 }
 
-Tsprite tilemapSprite;
+static Tsprite tilemapSprite;
 
 
 static inline int mod_floor(int a, int n) {
@@ -394,9 +394,9 @@ void draw_tilemap8(int file, int base_map, TileMap *tilemap, int offsetX, int of
     sortTpage(sprite->tpage, tilemapSprite.z);
 }
 
-void draw_particle(Particle *p) {
-    int file = 2;
-    int base_map = 42;
+void draw_particle(int file, int graph, Particle *p) {
+    //int file = 2;
+    int base_map = graph;
     tilemapSprite.file = file;
     tilemapSprite.graph = base_map;
     tilemapSprite.x = p->pos.x >> 12;

@@ -31,10 +31,6 @@
 //#include "smb3ma2.h"
 #include "smb3scene.h"
 #include "smb3col.h"
-
-void updatePhysic(Tsprite * spr/*HGL_Entity *ent*/, u16 input);
-
-
 //#include "ghz1.h"
 #include "ghz16.h"
 #include "hgl_mem.h"
@@ -48,8 +44,6 @@ int bgbMap[] = { 0,1,2,3,4,5,0,0,0,0,1,2,3,4,5,0,6,7,8,9,0,1,2,3,4,5,0,0,0,0,1,2
 int bgbNumCols = 40;
 int bgbNumRows = 14;
 
-extern   int active_particles;
-extern   int maxIterations;
 /*
 typedef struct {
     uint8_t version;
@@ -508,7 +502,7 @@ void checkDebugInput() {
 }
 
 int main() {
-    printf("Hello world demo\n");
+    printf("Hello world demod\n");
     //printMapInfo(&smb3ma2);
 
     int result = someCppFunction(1,2);

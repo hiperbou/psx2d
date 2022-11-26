@@ -18,7 +18,7 @@ ANIM(anim_star, 98,99)
 
 ACTOR_CREATE_STATE_MACHINE(GoalStateMachine, Idle, Activated, Star, Float, Dead)
 
-bool checkColision(Actor * actor, Actor * targetActor) {
+static bool checkColision(Actor * actor, Actor * targetActor) {
     if(targetActor->entity->x < actor->entity->x - FIX32(16) ||
        targetActor->entity->x > actor->entity->x + FIX32(16) ||
        targetActor->entity->y < actor->entity->y - FIX32(16) ||
@@ -87,16 +87,18 @@ static void constructor(Actor* actor) {
 
 static void constructorActivated(Actor* actor) {
     constructor(actor);
-    GoalStateMachine *sm = actor->goal.sm;
-    sm->setActivated(sm);
+    setActivated(actor->goal.sm);
+}
+
+inline static Actor* newGoalBuilder(int file, const fix32 x, const fix32 y, Actor * target, ActorConstructorCallback* constructorCB) {
+    targetActor = target;
+    return newActorWithDestructor(file,1, x, y,constructorCB,update, destructor);
 }
 
 Actor* newGoal(int file, const fix32 x, const fix32 y, Actor * target) {
-    targetActor = target;
-    return newActorWithDestructor(file,1, x, y,constructor,update, destructor);
+    return newGoalBuilder(file, x, y, target, constructor);
 }
 
 Actor* newGoalActivated(int file, const fix32 x, const fix32 y, Actor * target) {
-    targetActor = target;
-    return newActorWithDestructor(file,1, x, y,constructorActivated,update, destructor);
+    return newGoalBuilder(file, x, y, target, constructorActivated);
 }

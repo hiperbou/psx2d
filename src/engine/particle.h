@@ -12,7 +12,6 @@ typedef struct
 }COLOR;
 
 typedef struct Particle{
-    //int active;
     VECTOR2D pos;
     VECTOR2D speed;
     VECTOR2D gravity;

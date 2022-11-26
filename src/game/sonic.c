@@ -23,6 +23,10 @@
 #define ACCEL           FIX32(0.1)
 #define DE_ACCEL        FIX32(0.15)
 
+#define JUMP_WIN_SPEED  FIX32(-1)
+#define GRAVITY_WIN     FIX32(0.025)
+
+
 //#define MIN_POSX        FIX32(10.0)
 //#define MAX_POSX        FIX32(400.0)
 //#define MAX_POSY        FIX32(156.0)
@@ -173,6 +177,7 @@ static void handleInput(u16 inputState){
 #define BUTTON_UP PAD_UP
 #define BUTTON_DOWN PAD_DOWN
 #define BUTTON_NOCLIP PAD_SQUARE
+#define BUTTON_WIN PAD_TRIANGLE
 #define FALSE (0)
 #define TRUE (!FALSE)
 
@@ -210,7 +215,7 @@ static void updateMovement() {
     posy += speedY;
 }
 
-CREATE_STATE_MACHINE(StateMachine, Grounded, Jumping, FallingOffLedge)
+CREATE_STATE_MACHINE(StateMachine, Grounded, Jumping, FallingOffLedge, WinEnter, Win, WinExit)
 
 inline static void jump(fix32 jumpSpeed){
     speedY = jumpSpeed;
@@ -306,6 +311,11 @@ static void stateGrounded() {
         return;
     }
 
+    if (just_pressed & BUTTON_WIN) {
+        setWinEnter();
+        return;
+    }
+
     updateMovement();
 
     int groundY = checkGroundY(FIX32(9), FIX32(16));;
@@ -321,6 +331,37 @@ static void stateGrounded() {
     checkWalls();
 }
 
+static int timer = 0;
+static void stateWinEnter() {
+    timer++;
+    if (timer > 20) {
+        timer = 0;
+        jump(JUMP_WIN_SPEED);
+        setWin();
+        posy -= FIX32(4);
+    }
+}
+
+static void stateWin() {
+    if (just_pressed & (BUTTON_A | BUTTON_B | BUTTON_C)) {
+        jump(JUMP_SPEED);
+        return;
+    }
+    if (speedY > 0) {
+        StateMachine.setWinExit();
+    } else {
+        posy += speedY;
+        speedY += GRAVITY_WIN;
+    }
+}
+
+static void stateWinExit() {
+    if (just_pressed & (BUTTON_A | BUTTON_B | BUTTON_C)) {
+        jump(JUMP_SPEED);
+        return;
+    }
+}
+
 ANIM(ANIM_STAND, 1)
 ANIM(ANIM_WAIT, 21, 22)
 ANIM(ANIM_WALK, 2, 3, 4, 5, 6, 7)
@@ -329,15 +370,22 @@ ANIM(ANIM_BRAKE, 12, 13)
 ANIM(ANIM_UP, 14)
 ANIM(ANIM_CROUCH, 15)
 ANIM(ANIM_ROLL, 16, 17, 18, 19, 20)
+ANIM(ANIM_WIN_ENTER, 23)
+ANIM(ANIM_WIN, 24, 25, 25, 25, 25, 25)
+ANIM(ANIM_WIN_LOOP, 25)
 
 static void updateAnim(Actor * actor)
 {
     if (StateMachine.isJumping()) {
         setAnimation(actor, ANIM_ROLL, 4);
         setAnimationDelay(actor, 1 * (fix32ToInt(MAX_SPEED - abs(speedX))));
-    }
-    else
-    {
+    } else if (StateMachine.isWinEnter()) {
+        setAnimation(actor, ANIM_WIN_ENTER, 8);
+    } else if (StateMachine.isWin()) {
+        setAnimation(actor, ANIM_WIN, 8);
+    } else if (StateMachine.isWinExit()) {
+        setAnimation(actor, ANIM_WIN_LOOP, 8);
+    } else {
         if (((speedX >= BRAKE_SPEED) && (input & BUTTON_LEFT)) || ((speedX <= -BRAKE_SPEED) && (input & BUTTON_RIGHT)))
             setAnimation(actor, ANIM_BRAKE, 4);
         else if ((speedX >= RUN_SPEED) || (speedX <= -RUN_SPEED))
