@@ -48,11 +48,10 @@ static void stateStar(GoalStateMachine * sm, Actor *actor) {
     }
 }
 
-
-void onPlayerReachedGoal(); //main.c
 static void stateFloat(GoalStateMachine * sm, Actor *actor) {
-    if(checkColision(actor, actor->goal.targetActor)) {
-        onPlayerReachedGoal();
+    Actor * player = actor->goal.targetActor;
+    if (checkColision(actor, player)) {
+        player->sonic.onPlayerReachedGoal(player);
         setAnimation(actor, anim_dead, 6);
         setDead(sm);
     }

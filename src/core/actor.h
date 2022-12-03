@@ -28,9 +28,8 @@ typedef struct {
 
 typedef struct{
 	fun2 (handleInput, u16);
-    fun (doRebound);
-    fun (doWinAnimation);
-    boolFun (isGrounded);
+    fun  (doRebound);
+    fun2 (onPlayerReachedGoal, Actor*);
 }SonicData;
 
 typedef struct Actor Actor;

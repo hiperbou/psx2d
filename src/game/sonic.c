@@ -238,6 +238,30 @@ inline static void doWinAnimation() {
     setWinEnter();
 }
 
+void doPlayerWinAnimationParticles(Actor*player); //main.c
+static bool onPlayerGroundedAfterGoalReached(PlayerEventHandler*playerEventHandler, Tile tile) {
+    doWinAnimation();
+    doPlayerWinAnimationParticles(playerEventHandler->player);
+    return true;
+}
+
+inline static void startWinAnimation() {
+    speedX = 0;
+    speedY = 0;
+    playerEventHandler->onGrounded = onPlayerGroundedAfterGoalReached;
+    //Disable input
+}
+
+static void onPlayerReachedGoal(Actor *player) {
+    if (isGrounded()) {
+        doWinAnimation();
+        doPlayerWinAnimationParticles(player);
+    } else {
+        startWinAnimation();
+    }
+}
+
+
 inline static void checkWalls(){
     if((input & BUTTON_NOCLIP)) return;
 
@@ -448,8 +472,7 @@ static void constructor(Actor* actor) {
     SonicData* sonic = &actor->sonic;
     sonic->handleInput = handleInput;
     sonic->doRebound = doRebound;
-    sonic->doWinAnimation = doWinAnimation;
-    sonic->isGrounded = isGrounded;
+    sonic->onPlayerReachedGoal = onPlayerReachedGoal;
 
     setAnimation(actor, ANIM_STAND, 100);
 

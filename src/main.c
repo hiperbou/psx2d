@@ -338,17 +338,11 @@ void newGoToMainMenuCommand(int delay, uint8_t *target, uint8_t value) {
     };
 }
 
-void doPlayerWinAnimation(Actor*player) {
-    player->sonic.doWinAnimation();
+void doPlayerWinAnimationParticles(Actor*player) {
     int x = TILE_CENTER_X_TO_SCREEN(POS_TO_TILE_16(player->entity->x));
     int y = TILE_CENTER_Y_TO_SCREEN(POS_TO_TILE_16(player->entity->y));
     REPEAT25(new_Particle(x, y))
     newGoToMainMenuCommand(120, NULL, NULL);
-}
-
-bool onPlayerGroundedAfterGoalReached(PlayerEventHandler*playerEventHandler, Tile tile) {
-    doPlayerWinAnimation(playerEventHandler->player);
-    return true;
 }
 
 void initPlayerEventHandler(PlayerEventHandler*playerEventHandler, TileMap *tilemap, TileMap* collisionTilemap) {
@@ -401,14 +395,6 @@ static PlayerEventHandler playerEventHandler;
 
 Actor* spawnGoal(int tileX, int tileY) {
     return newGoalActivated(tileset_fpgs[0], TILE_CENTER(tileX), TILE_CENTER(tileY), sonic);
-}
-
-void onPlayerReachedGoal() {
-    if (playerEventHandler.player->sonic.isGrounded()) {
-        doPlayerWinAnimation(playerEventHandler.player);
-    } else {
-        playerEventHandler.onGrounded = onPlayerGroundedAfterGoalReached;
-    }
 }
 
 static void loadLevel() {
