@@ -29,7 +29,7 @@ typedef struct {
 typedef struct{
 	fun2 (handleInput, u16);
     fun  (doRebound);
-    fun2 (onPlayerReachedGoal, Actor*);
+    fun  (onPlayerReachedGoal);
 }SonicData;
 
 typedef struct Actor Actor;

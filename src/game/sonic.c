@@ -215,7 +215,7 @@ static void updateMovement() {
     posy += speedY;
 }
 
-CREATE_STATE_MACHINE(StateMachine, Grounded, Jumping, FallingOffLedge, WinEnter, Win, WinExit)
+CREATE_STATE_MACHINE(StateMachine, Grounded, Jumping, FallingOffLedge, GoalReached, WinEnter, Win, WinExit)
 
 inline static void jump(fix32 jumpSpeed){
     speedY = jumpSpeed;
@@ -230,37 +230,6 @@ inline static void doRebound() {
         jump(JUMP_MIN_SPEED);
     }
 }
-
-inline static void doWinAnimation() {
-    posy = checkGroundY(FIX32(9), FIX32(16));;
-    speedX = 1; //Hack to face right and deactivate left/right turning animation
-    speedY = 0;
-    setWinEnter();
-}
-
-void doPlayerWinAnimationParticles(Actor*player); //main.c
-static bool onPlayerGroundedAfterGoalReached(PlayerEventHandler*playerEventHandler, Tile tile) {
-    doWinAnimation();
-    doPlayerWinAnimationParticles(playerEventHandler->player);
-    return true;
-}
-
-inline static void startWinAnimation() {
-    speedX = 0;
-    speedY = 0;
-    playerEventHandler->onGrounded = onPlayerGroundedAfterGoalReached;
-    //Disable input
-}
-
-static void onPlayerReachedGoal(Actor *player) {
-    if (isGrounded()) {
-        doWinAnimation();
-        doPlayerWinAnimationParticles(player);
-    } else {
-        startWinAnimation();
-    }
-}
-
 
 inline static void checkWalls(){
     if((input & BUTTON_NOCLIP)) return;
@@ -371,6 +340,22 @@ static void stateGrounded() {
     checkWalls();
 }
 
+void doPlayerWinAnimationParticles(Actor*player); //main.c
+static void stateGoalReached() {
+    posy += speedY;
+
+    fix32 groundY = checkGroundY(FIX32(9), FIX32(16));
+    if (speedY > 0 && posy >= groundY) {
+        posy = groundY;
+        speedX = 1;
+        speedY = 0;
+        setWinEnter();
+        doPlayerWinAnimationParticles(playerEventHandler->player);
+    } else {
+        speedY += GRAVITY;
+    }
+}
+
 static int timer = 0;
 static void stateWinEnter() {
     timer++;
@@ -472,7 +457,7 @@ static void constructor(Actor* actor) {
     SonicData* sonic = &actor->sonic;
     sonic->handleInput = handleInput;
     sonic->doRebound = doRebound;
-    sonic->onPlayerReachedGoal = onPlayerReachedGoal;
+    sonic->onPlayerReachedGoal = setGoalReached;
 
     setAnimation(actor, ANIM_STAND, 100);
 
