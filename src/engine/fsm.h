@@ -2,24 +2,25 @@
 #ifndef DEMO_FINITESTATEMACHINE_H
 #define DEMO_FINITESTATEMACHINE_H
 
+#include <stdbool.h>
 
 #define FSM_STATE(X) \
 	void (*X)();\
-	uint8_t (*is##X)();\
-	uint8_t (*isNot##X)();\
+	bool (*is##X)();\
+	bool (*isNot##X)();\
 	void (*set##X)();
 
 #define FSM_STATE_FUNCS(X) \
 	static void state##X();\
-	inline static uint8_t is##X(){ return fsmState == StateMachine.X; }\
-	inline static uint8_t isNot##X() { return fsmState != StateMachine.X; }\
+	inline static bool is##X(){ return fsmState == StateMachine.X; }\
+	inline static bool isNot##X() { return fsmState != StateMachine.X; }\
 	inline static void set##X() {fsmState = StateMachine.X;}
 
 //Allow to define struct name
 #define FSM_STATE_FUNCTIONS(S,X) \
 	static void state##X();\
-	inline static uint8_t is##X(){ return fsmState == S.X; }\
-	inline static uint8_t isNot##X() { return fsmState != S.X; }\
+	inline static bool is##X(){ return fsmState == S.X; }\
+	inline static bool isNot##X() { return fsmState != S.X; }\
 	inline static void set##X() {fsmState = S.X;}
 
 #define FSM_STATE_INIT(X) \

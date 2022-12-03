@@ -13,6 +13,7 @@ typedef struct PlayerEventHandler{
     Actor * player;
     void (*onColidedWithCeilingTile)(PlayerEventHandler*, Tile);
     bool (*onColidedWithFloorTile)(PlayerEventHandler*, Tile);
+    bool (*onGrounded)(PlayerEventHandler*, Tile);
 }PlayerEventHandler;
 
 Actor* newSonic(int file, fix32 x, fix32 y, TileMap _collisionTilemap, PlayerEventHandler* playerEventHandler);

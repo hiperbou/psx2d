@@ -321,12 +321,42 @@ bool onPlayerCollidedWithFloorTile(PlayerEventHandler*playerEventHandler, Tile t
     return false;
 }
 
+bool onPlayerGrounded(PlayerEventHandler*playerEventHandler, Tile tile) {
+    return false;
+}
+
+void goToMainMenu();
+
+
+void newGoToMainMenuCommand(int delay, uint8_t *target, uint8_t value) {
+    DelayedCommand * command = HGL_COMMAND_new();
+    *command = (DelayedCommand) {
+            .delay = delay,
+            .callback = goToMainMenu,
+            .target = target,
+            .data = value
+    };
+}
+
+void doPlayerWinAnimation(Actor*player) {
+    player->sonic.doWinAnimation();
+    int x = TILE_CENTER_X_TO_SCREEN(POS_TO_TILE_16(player->entity->x));
+    int y = TILE_CENTER_Y_TO_SCREEN(POS_TO_TILE_16(player->entity->y));
+    REPEAT25(new_Particle(x, y))
+    newGoToMainMenuCommand(120, NULL, NULL);
+}
+
+bool onPlayerGroundedAfterGoalReached(PlayerEventHandler*playerEventHandler, Tile tile) {
+    doPlayerWinAnimation(playerEventHandler->player);
+    return true;
+}
+
 void initPlayerEventHandler(PlayerEventHandler*playerEventHandler, TileMap *tilemap, TileMap* collisionTilemap) {
     playerEventHandler->collisionTilemap = collisionTilemap;
     playerEventHandler->tilemap = tilemap;
     playerEventHandler->onColidedWithCeilingTile = onPlayerCollidedWithCeilingTile;
     playerEventHandler->onColidedWithFloorTile = onPlayerCollidedWithFloorTile;
-    //playerEventHandler->player = player;
+    playerEventHandler->onGrounded = onPlayerGrounded;
 }
 
 
@@ -373,6 +403,13 @@ Actor* spawnGoal(int tileX, int tileY) {
     return newGoalActivated(tileset_fpgs[0], TILE_CENTER(tileX), TILE_CENTER(tileY), sonic);
 }
 
+void onPlayerReachedGoal() {
+    if (playerEventHandler.player->sonic.isGrounded()) {
+        doPlayerWinAnimation(playerEventHandler.player);
+    } else {
+        playerEventHandler.onGrounded = onPlayerGroundedAfterGoalReached;
+    }
+}
 
 static void loadLevel() {
     bgaTilemap = fromTiledBinScene(smb3scene,28);
@@ -473,6 +510,9 @@ static void stateGame() {
     //draw_tilemap_no_wrap(tiles_fpg, bgb_map, &bgbTilemap, 0, 0, 1); //BK
 }
 
+void goToMainMenu() {
+    GameStateMachine.setUnloadLevel();
+}
 
 
 void checkDebugInput() {

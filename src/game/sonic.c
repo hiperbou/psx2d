@@ -231,6 +231,13 @@ inline static void doRebound() {
     }
 }
 
+inline static void doWinAnimation() {
+    posy = checkGroundY(FIX32(9), FIX32(16));;
+    speedX = 1; //Hack to face right and deactivate left/right turning animation
+    speedY = 0;
+    setWinEnter();
+}
+
 inline static void checkWalls(){
     if((input & BUTTON_NOCLIP)) return;
 
@@ -267,7 +274,11 @@ static void checkGroundOnAir() {
     if (speedY > 0 && posy >= groundY) {
         if(StateMachine.isJumping()) {
             Tile tile = checkGroundTile(FIX32(9), FIX32(16));
-            bool processed = playerEventHandler->onColidedWithFloorTile(playerEventHandler, tile);
+
+            bool processed = playerEventHandler->onGrounded(playerEventHandler, tile);
+            if (!processed) {
+                processed = playerEventHandler->onColidedWithFloorTile(playerEventHandler, tile);
+            }
 
             if (!processed) {
                 posy = groundY;
@@ -275,9 +286,14 @@ static void checkGroundOnAir() {
                 StateMachine.setGrounded();
             }
         } else {
-            posy = groundY;
-            speedY = 0;
-            StateMachine.setGrounded();
+            Tile tile = checkGroundTile(FIX32(9), FIX32(16));
+            bool processed = playerEventHandler->onGrounded(playerEventHandler, tile);
+
+            if (!processed) {
+                posy = groundY;
+                speedY = 0;
+                StateMachine.setGrounded();
+            }
         }
     } else {
         speedY += GRAVITY;
@@ -432,6 +448,8 @@ static void constructor(Actor* actor) {
     SonicData* sonic = &actor->sonic;
     sonic->handleInput = handleInput;
     sonic->doRebound = doRebound;
+    sonic->doWinAnimation = doWinAnimation;
+    sonic->isGrounded = isGrounded;
 
     setAnimation(actor, ANIM_STAND, 100);
 

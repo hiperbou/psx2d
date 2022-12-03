@@ -1,10 +1,12 @@
 #ifndef ACTOR_H
 #define ACTOR_H
 
+#include <stdbool.h>
 #include "hgl_ent.h"
 
 #define fun(X) void (*X)(void)
 #define fun2(X,Y) void (*X)(Y)
+#define boolFun(X) bool (*X)(void)
 
 typedef struct{
 	s16 direction;
@@ -27,6 +29,8 @@ typedef struct {
 typedef struct{
 	fun2 (handleInput, u16);
     fun (doRebound);
+    fun (doWinAnimation);
+    boolFun (isGrounded);
 }SonicData;
 
 typedef struct Actor Actor;

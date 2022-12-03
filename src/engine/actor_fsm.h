@@ -2,24 +2,25 @@
 #ifndef DEMO_ACTOR_FINITESTATEMACHINE2_H
 #define DEMO_ACTOR_FINITESTATEMACHINE2_H
 
+#include <stdbool.h>
 
 #define ACTOR_FSM_STATE(N,X) \
 	void (*X)(N *, Actor *);\
-	uint8_t (*is##X)(N *);\
-	uint8_t (*isNot##X)(N *);\
+	bool (*is##X)(N *);\
+	bool (*isNot##X)(N *);\
 	void (*set##X)(N *);
 
 #define ACTOR_FSM_STATE_FUNCS(N, X) \
 	static void state##X(N *sm, Actor *actor);\
-	inline static uint8_t is##X(N *sm){ return sm->sm->fsmState == sm->sm->X; }\
-	inline static uint8_t isNot##X(N *sm) { return sm->sm->fsmState != sm->sm->X; }\
+	inline static bool is##X(N *sm){ return sm->sm->fsmState == sm->sm->X; }\
+	inline static bool isNot##X(N *sm) { return sm->sm->fsmState != sm->sm->X; }\
 	inline static void set##X(N *sm) {sm->sm->fsmState = sm->sm->X;}
 
 //Allow to define struct name
 #define ACTOR_FSM_STATE_FUNCTIONS(S,X) \
 	static void state##X(S *sm, Actor * actor);\
-	inline static uint8_t is##X(S *sm){ return sm->fsmState == sm->X; }\
-	inline static uint8_t isNot##X(S *sm) { return sm->fsmState != sm->X; }\
+	inline static bool is##X(S *sm){ return sm->fsmState == sm->X; }\
+	inline static bool isNot##X(S *sm) { return sm->fsmState != sm->X; }\
 	inline static void set##X(S *sm) {sm->fsmState = sm->X;}
 
 #define ACTOR_FSM_STATE_INIT(X) \
