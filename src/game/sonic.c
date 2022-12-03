@@ -358,8 +358,6 @@ static void stateGoalReached() {
     fix32 groundY = checkGroundY(FIX32(9), FIX32(16));
     if (speedY > 0 && posy >= groundY) {
         posy = groundY;
-        speedX = 1;
-        speedY = 0;
         setWinEnter();
         doPlayerWinAnimationParticles(playerEventHandler->player);
     } else {
@@ -473,7 +471,7 @@ static void stateAnimWin(AnimStateMachine * sm, Actor *actor) {
 static void update(Actor* actor) {
     StateMachine.update();
     HGL_ENT_setPosition(actor->entity, posx , posy);
-    animStateMachine.update(&animStateMachine, actor);
+    updateAnimStateMachine(&animStateMachine, actor);
 }
 
 static void constructor(Actor* actor) {
