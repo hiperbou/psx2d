@@ -217,6 +217,12 @@ static void updateMovement() {
 
 CREATE_STATE_MACHINE(StateMachine, Grounded, Jumping, FallingOffLedge, GoalReached, WinEnter, Win, WinExit)
 
+#include "engine/actor_fsm.h"
+ACTOR_CREATE_STATE_MACHINE(AnimStateMachine, AnimNormal, AnimWin)
+
+static AnimStateMachine animStateMachine;
+
+
 inline static void jump(fix32 jumpSpeed){
     speedY = jumpSpeed;
     StateMachine.setJumping();
@@ -340,6 +346,11 @@ static void stateGrounded() {
     checkWalls();
 }
 
+static void onPlayerReachedGoal() {
+    setAnimWin(&animStateMachine);
+    setGoalReached();
+}
+
 void doPlayerWinAnimationParticles(Actor*player); //main.c
 static void stateGoalReached() {
     posy += speedY;
@@ -367,11 +378,18 @@ static void stateWinEnter() {
     }
 }
 
-static void stateWin() {
+inline static bool debugBreakWinState(){
     if (just_pressed & (BUTTON_A | BUTTON_B | BUTTON_C)) {
+        setAnimNormal(&animStateMachine);
         jump(JUMP_SPEED);
-        return;
+        return true;
     }
+    return false;
+}
+
+static void stateWin() {
+    if (debugBreakWinState()) return;
+
     if (speedY > 0) {
         StateMachine.setWinExit();
     } else {
@@ -381,10 +399,7 @@ static void stateWin() {
 }
 
 static void stateWinExit() {
-    if (just_pressed & (BUTTON_A | BUTTON_B | BUTTON_C)) {
-        jump(JUMP_SPEED);
-        return;
-    }
+    if (debugBreakWinState()) return;
 }
 
 ANIM(ANIM_STAND, 1)
@@ -404,12 +419,6 @@ static void updateAnim(Actor * actor)
     if (StateMachine.isJumping()) {
         setAnimation(actor, ANIM_ROLL, 4);
         setAnimationDelay(actor, 1 * (fix32ToInt(MAX_SPEED - abs(speedX))));
-    } else if (StateMachine.isWinEnter()) {
-        setAnimation(actor, ANIM_WIN_ENTER, 8);
-    } else if (StateMachine.isWin()) {
-        setAnimation(actor, ANIM_WIN, 8);
-    } else if (StateMachine.isWinExit()) {
-        setAnimation(actor, ANIM_WIN_LOOP, 8);
     } else {
         if (((speedX >= BRAKE_SPEED) && (input & BUTTON_LEFT)) || ((speedX <= -BRAKE_SPEED) && (input & BUTTON_RIGHT)))
             setAnimation(actor, ANIM_BRAKE, 4);
@@ -441,10 +450,30 @@ static void updateAnim(Actor * actor)
 
 }
 
+static void updateWinAnim(Actor * actor)
+{
+    if (StateMachine.isWinEnter()) {
+        setAnimation(actor, ANIM_WIN_ENTER, 8);
+    } else if (StateMachine.isWin()) {
+        setAnimation(actor, ANIM_WIN, 8);
+    } else if (StateMachine.isWinExit()) {
+        setAnimation(actor, ANIM_WIN_LOOP, 8);
+    }
+}
+
+
+static void stateAnimNormal(AnimStateMachine * sm, Actor *actor) {
+    updateAnim(actor);
+}
+
+static void stateAnimWin(AnimStateMachine * sm, Actor *actor) {
+    updateWinAnim(actor);
+}
+
 static void update(Actor* actor) {
     StateMachine.update();
     HGL_ENT_setPosition(actor->entity, posx , posy);
-    updateAnim(actor);
+    animStateMachine.update(&animStateMachine, actor);
 }
 
 static void constructor(Actor* actor) {
@@ -457,13 +486,14 @@ static void constructor(Actor* actor) {
     SonicData* sonic = &actor->sonic;
     sonic->handleInput = handleInput;
     sonic->doRebound = doRebound;
-    sonic->onPlayerReachedGoal = setGoalReached;
+    sonic->onPlayerReachedGoal = onPlayerReachedGoal;
 
     setAnimation(actor, ANIM_STAND, 100);
 
     setZ(actor, 0);
 
     initStateMachine();
+    initAnimStateMachine(&animStateMachine);
 
     //HGL_SPR_setPalette(actor->entity->spr, PAL0);
 }
