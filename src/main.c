@@ -230,7 +230,7 @@ TileMap fromTiledBinScene(const uint8_t *tmx, int padding) {
     };
 }
 
-TileMap cloneTilemap(TileMap * original) {
+TileMap cloneTileMap(TileMap * original) {
     size_t size = sizeof(uint8_t) * original->numRows * original->numCols;
     uint8_t * newMap =  HGL_malloc(size);
     HGL_memcpy(newMap, (uint8_t*)original->map, size);
@@ -279,7 +279,7 @@ void onPlayerCollidedWithCeilingTile(PlayerEventHandler*playerEventHandler, Tile
             switch (tileId) {
                 case 42:
                 case 77:
-                    setTileAt(playerEventHandler->collisionTilemap, tile.tileX, tile.tileY, 0);
+                    setTileAt(playerEventHandler->collisionTileMap, tile.tileX, tile.tileY, 0);
                     setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 1);
                     int x = TILE_CENTER_X_TO_SCREEN(tile.tileX);
                     int y = TILE_CENTER_Y_TO_SCREEN(tile.tileY);
@@ -308,7 +308,7 @@ bool onPlayerCollidedWithFloorTile(PlayerEventHandler*playerEventHandler, Tile t
         case 77:
             playerEventHandler->player->sonic.doRebound();
 
-            setTileAt(playerEventHandler->collisionTilemap, tile.tileX, tile.tileY, 0);
+            setTileAt(playerEventHandler->collisionTileMap, tile.tileX, tile.tileY, 0);
             setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 1);
             int x = TILE_CENTER_X_TO_SCREEN(tile.tileX);
             int y = TILE_CENTER_Y_TO_SCREEN(tile.tileY);
@@ -345,8 +345,8 @@ void doPlayerWinAnimationParticles(Actor*player) {
     newGoToMainMenuCommand(120, NULL, NULL);
 }
 
-void initPlayerEventHandler(PlayerEventHandler*playerEventHandler, TileMap *tilemap, TileMap* collisionTilemap) {
-    playerEventHandler->collisionTilemap = collisionTilemap;
+void initPlayerEventHandler(PlayerEventHandler*playerEventHandler, TileMap *tilemap, TileMap* collisionTileMap) {
+    playerEventHandler->collisionTileMap = collisionTileMap;
     playerEventHandler->tilemap = tilemap;
     playerEventHandler->onColidedWithCeilingTile = onPlayerCollidedWithCeilingTile;
     playerEventHandler->onColidedWithFloorTile = onPlayerCollidedWithFloorTile;
@@ -385,8 +385,8 @@ static int bgbx = 0;
 static int bgby = 0;
 static Actor * sonic = NULL;
 //static Actor * goal = NULL;
-static TileMap bgaTilemap;
-static TileMap collisionTilemap;
+static TileMap bgaTileMap;
+static TileMap collisionTileMap;
 static int tileset_fpgs[4];
 static AnimationState* tilesetAnimationState;
 
@@ -398,18 +398,18 @@ Actor* spawnGoal(int tileX, int tileY) {
 }
 
 static void loadLevel() {
-    bgaTilemap = fromTiledBinScene(smb3scene,28);
-    collisionTilemap = fromTiledBinScene(smb3col,32);
+    bgaTileMap = fromTiledBinScene(smb3scene,28);
+    collisionTileMap = fromTiledBinScene(smb3col,32);
 
-    bgaTilemap = cloneTilemap(&bgaTilemap);
-    collisionTilemap = cloneTilemap(&collisionTilemap);
+    bgaTileMap = cloneTileMap(&bgaTileMap);
+    collisionTileMap = cloneTileMap(&collisionTileMap);
 
     bgbx = 0;
     bgby = 0;
 
-    initPlayerEventHandler(&playerEventHandler, &bgaTilemap, &collisionTilemap);
+    initPlayerEventHandler(&playerEventHandler, &bgaTileMap, &collisionTileMap);
 
-    sonic = newSonic(sonic_fpg, TILE(6), TILE(25), collisionTilemap, &playerEventHandler);
+    sonic = newSonic(sonic_fpg, TILE(6), TILE(25), collisionTileMap, &playerEventHandler);
     playerEventHandler.player = sonic;
 
     newMotobug(enemies_fpg, TILE(20),TILE(25));
@@ -424,15 +424,15 @@ static void loadLevel() {
 
     newCamera(sonic, FIX32(40), FIX32(128));
 
-    //Actor * tileShader = newTileShader(&bgaTilemap);
+    //Actor * tileShader = newTileShader(&bgaTileMap);
 }
 
 static void unloadLevel() {
     HGL_ACTOR_deleteAll();
     HGL_COMMAND_deleteAll();
     remove_Particles();
-    HGL_free((void*)bgaTilemap.map);
-    HGL_free((void*)collisionTilemap.map);
+    HGL_free((void*)bgaTileMap.map);
+    HGL_free((void*)collisionTileMap.map);
 }
 
 static void stateMenu() {
@@ -479,7 +479,7 @@ static void stateGame() {
     HGL_ACTOR_updateAll();
 
     //Handle collisions
-    checkCoin(&bgaTilemap, sonic);
+    checkCoin(&bgaTileMap, sonic);
     //checkGoal( goal, sonic);
 
     HGL_ENT_renderAll(bgbx,bgby);
@@ -489,11 +489,11 @@ static void stateGame() {
 
     update_Particles();
 
-    //draw_tilemap_no_wrap(tiles_fpg, 1, &collisionTilemap, bgbx, bgby, 0); //Front
-    draw_tilemap_no_wrap(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTilemap, bgbx, bgby, 0); //Front
+    //draw_tilemap_no_wrap(tiles_fpg, 1, &collisionTileMap, bgbx, bgby, 0); //Front
+    draw_tilemap_no_wrap(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
 
-    //draw_tilemap(tiles_fpg, bgb_map, &bgbTilemap, bgbx>>1, bgby>>1, 1); //BK
-    //draw_tilemap_no_wrap(tiles_fpg, bgb_map, &bgbTilemap, 0, 0, 1); //BK
+    //draw_tilemap(tiles_fpg, bgb_map, &bgbTileMap, bgbx>>1, bgby>>1, 1); //BK
+    //draw_tilemap_no_wrap(tiles_fpg, bgb_map, &bgbTileMap, 0, 0, 1); //BK
 }
 
 void goToMainMenu() {

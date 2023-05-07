@@ -57,8 +57,8 @@ static void constructor(Actor* actor) {
         .groundY = actor->entity->y
     };
 
-    //newBlock(2, 1, actor->entity->x, actor->entity->y - FIX32(16), 1);
-    spawnGoal(POS_TO_TILE_16(actor->entity->x), POS_TO_TILE_16(actor->entity->y) - 1);
+    newBlock(2, 1, actor->entity->x, actor->entity->y - FIX32(16), 1);
+    //spawnGoal(POS_TO_TILE_16(actor->entity->x), POS_TO_TILE_16(actor->entity->y) - 1);
 }
 
 static void update(Actor* actor) {

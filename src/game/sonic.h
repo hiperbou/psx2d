@@ -9,14 +9,14 @@ typedef struct PlayerEventHandler PlayerEventHandler;
 
 typedef struct PlayerEventHandler{
     TileMap *tilemap;
-    TileMap *collisionTilemap;
+    TileMap *collisionTileMap;
     Actor * player;
     void (*onColidedWithCeilingTile)(PlayerEventHandler*, Tile);
     bool (*onColidedWithFloorTile)(PlayerEventHandler*, Tile);
     bool (*onGrounded)(PlayerEventHandler*, Tile);
 }PlayerEventHandler;
 
-Actor* newSonic(int file, fix32 x, fix32 y, TileMap _collisionTilemap, PlayerEventHandler* playerEventHandler);
+Actor* newSonic(int file, fix32 x, fix32 y, TileMap _collisionTileMap, PlayerEventHandler* playerEventHandler);
 
 
 #endif //DEMO_SONIC_H

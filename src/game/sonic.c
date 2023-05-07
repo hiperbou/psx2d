@@ -43,7 +43,7 @@ static fix32 posy = FIX32(128);
 static fix32 speedX = FIX32(0);
 static fix32 speedY = FIX32(0);
 
-static TileMap collisionTilemap;
+static TileMap collisionTileMap;
 static PlayerEventHandler *playerEventHandler;
 
 inline static fix32 tilePosToWorldPos(int tileXorY) {
@@ -55,7 +55,7 @@ inline static fix32 getGroundTileY(Tile tile) {
 }
 
 inline static Tile getTileInfoFromCollisionMap(fix32 x, fix32 y) {
-    return getTileInfo(&collisionTilemap, fix32ToInt(x) >> 4, fix32ToInt(y) >> 4);
+    return getTileInfo(&collisionTileMap, fix32ToInt(x) >> 4, fix32ToInt(y) >> 4);
 }
 
 inline static fix32 getGroundCollisionYOrOriginalY(Tile tile, fix32 y, fix32 sensorHeight) {
@@ -370,9 +370,9 @@ static void stateWinEnter() {
     timer++;
     if (timer > 20) {
         timer = 0;
-        jump(JUMP_WIN_SPEED);
-        setWin();
         posy -= FIX32(4);
+        speedY = JUMP_WIN_SPEED;
+        setWin();
     }
 }
 
@@ -496,8 +496,8 @@ static void constructor(Actor* actor) {
     //HGL_SPR_setPalette(actor->entity->spr, PAL0);
 }
 
-Actor* newSonic(int file, const fix32 x, const fix32 y, TileMap _collisionTilemap, PlayerEventHandler *_playerEventHandler){
-    collisionTilemap = _collisionTilemap;
+Actor* newSonic(int file, const fix32 x, const fix32 y, TileMap _collisionTileMap, PlayerEventHandler *_playerEventHandler){
+    collisionTileMap = _collisionTileMap;
     playerEventHandler = _playerEventHandler;
     return newActor(file, 1, x, y, constructor, update);
 }
