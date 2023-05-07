@@ -190,7 +190,7 @@ void draw_tilemap_no_wrap(int file, int base_map, TileMap *tilemap, int offsetX,
     int posXBase = destX - offsetX;
     int posYBase = destY - offsetY;
 
-    tilemapSprite.z = 7;
+    tilemapSprite.z = 6;
     tilemapSprite.file = file;
     tilemapSprite.uploadTpage = 0;
     tilemapSprite.fast = 1;

@@ -35,6 +35,7 @@ CLionSources:
     src/game/bee.c \
     src/game/block.c \
     src/game/enemyupdate.c \
+    src/game/fallToBackgroundScript.c \
     src/game/goal.c \
     src/game/motobug.c \
     src/game/sonic.c \

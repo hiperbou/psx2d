@@ -215,7 +215,7 @@ static void updateMovement() {
     posy += speedY;
 }
 
-CREATE_STATE_MACHINE(StateMachine, Grounded, Jumping, FallingOffLedge, GoalReached, WinEnter, Win, WinExit)
+CREATE_STATE_MACHINE(StateMachine, Grounded, Jumping, FallingOffLedge, FallToBackground, GoalReached, WinEnter, Win, WinExit)
 
 #include "engine/actor_fsm.h"
 ACTOR_CREATE_STATE_MACHINE(AnimStateMachine, AnimNormal, AnimWin)
@@ -235,6 +235,13 @@ inline static void doRebound() {
     } else {
         jump(JUMP_MIN_SPEED);
     }
+}
+
+inline static void doFallToBackground() {
+    setZ(playerEventHandler->player, 7);
+    posy = posy + FIX32(1);
+    speedY = GRAVITY;
+    StateMachine.setFallToBackground();
 }
 
 inline static void checkWalls(){
@@ -318,6 +325,14 @@ static void stateFallingOffLedge() {
     checkWalls();
     checkCeilings();
     checkGroundOnAir();
+}
+
+static void stateFallToBackground() {
+    posy += speedY;
+    speedY += GRAVITY;
+    if(speedY > FIX32(4)) {
+        StateMachine.setFallingOffLedge();
+    }
 }
 
 static void stateGrounded() {
@@ -485,6 +500,7 @@ static void constructor(Actor* actor) {
     sonic->handleInput = handleInput;
     sonic->doRebound = doRebound;
     sonic->onPlayerReachedGoal = onPlayerReachedGoal;
+    sonic->doFallToBackground = doFallToBackground;
 
     setAnimation(actor, ANIM_STAND, 100);
 

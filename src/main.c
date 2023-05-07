@@ -5,6 +5,7 @@
 #include "fpg.h"
 
 #include "game/sonic.h"
+#include "game/fallToBackgroundScript.h"
 #include "cppfunction.h"
 #include "hgl_types.h"
 
@@ -384,6 +385,7 @@ static void drawMenu() {
 static int bgbx = 0;
 static int bgby = 0;
 static Actor * sonic = NULL;
+static Actor * fallToBackgroundScript = NULL;
 //static Actor * goal = NULL;
 static TileMap bgaTileMap;
 static TileMap collisionTileMap;
@@ -411,6 +413,8 @@ static void loadLevel() {
 
     sonic = newSonic(sonic_fpg, TILE(6), TILE(25), collisionTileMap, &playerEventHandler);
     playerEventHandler.player = sonic;
+
+    fallToBackgroundScript = newFallToBackgroundScript(&playerEventHandler);
 
     newMotobug(enemies_fpg, TILE(20),TILE(25));
     newMotobug(enemies_fpg, TILE(64),TILE(24));
@@ -468,6 +472,7 @@ static void stateGame() {
     }
 
     sonic->sonic.handleInput(btn);
+    fallToBackgroundScript->sonic.handleInput(btn);
 
     HGL_COMMAND_updateAll();
     HGL_ANIM_updateAll();

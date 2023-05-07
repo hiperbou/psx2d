@@ -30,6 +30,7 @@ typedef struct{
 	fun2 (handleInput, u16);
     fun  (doRebound);
     fun  (onPlayerReachedGoal);
+    fun  (doFallToBackground);
 }SonicData;
 
 typedef struct Actor Actor;
