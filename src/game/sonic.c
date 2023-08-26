@@ -1,13 +1,14 @@
 #include <stdbool.h>
 #include "sonic.h"
 
-#include "hgl.h"
-#include "input.h"
-#include "sprites.h"
-#include "hgl_types.h"
-#include "game/enemyupdate.h"
-#include "abs.h"
-#include "fsm.h"
+#include "../core/hgl.h"
+#include "../input/input.h"
+#include "../engine/sprites.h"
+#include "../core/hgl_types.h"
+#include "enemyupdate.h"
+#include <stdlib.h> //abs
+//#include "abs.h"
+#include "../engine/fsm.h"
 
 #define SFX_JUMP        64
 #define SFX_ROLL        65
@@ -217,7 +218,7 @@ static void updateMovement() {
 
 CREATE_STATE_MACHINE(StateMachine, Grounded, Jumping, FallingOffLedge, FallToBackground, GoalReached, WinEnter, Win, WinExit)
 
-#include "engine/actor_fsm.h"
+#include "../engine/actor_fsm.h"
 ACTOR_CREATE_STATE_MACHINE(AnimStateMachine, AnimNormal, AnimWin)
 
 static AnimStateMachine animStateMachine;

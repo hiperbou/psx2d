@@ -1,7 +1,7 @@
 TARGET = Demo
 TYPE = ps-exe
 
-MODULES = core engine game media pool psx utils
+MODULES = core core/psx engine engine/psx game input input/psx media media/psx pool psx utils
 SOURCES	= src $(addprefix src/,$(MODULES))
 
 CFILES		= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
@@ -21,15 +21,17 @@ CLionSources:
 	@echo $(INCLUDES)
 	@echo CLION_CPPFLAGS := -Isrc -Isrc/core -Isrc/engine -Isrc/game -Isrc/media -Isrc/pool -Isrc/psx -Isrc/utils
 	@echo CLION_SRCS := src/main.c \
+    src/gamemain.c \
     src/core/hgl.c \
     src/core/hgl_anim.c \
     src/core/hgl_command.c \
     src/core/hgl_ent.c \
-    src/core/hgl_mem.c \
+    src/core/psx/hgl_mem.c \
     src/core/hgl_pool.c \
     src/core/hgl_spr.c \
     src/engine/particle.c \
     src/engine/sprites.c \
+    src/engine/tilemap.c \
     src/game/actors.c \
     src/game/camera.c \
     src/game/bee.c \
@@ -40,10 +42,10 @@ CLionSources:
     src/game/motobug.c \
     src/game/sonic.c \
     src/game/tileshader.c \
+    src/input/psx/input.c \
     src/media/fpg.c \
     src/pool/FixedPool.c \
     src/pool/ObjectPool.c \
-    src/psx/input.c \
     src/psx/system.c \
     src/psx/systemcd.c \
     src/psx/systemmem.c \
@@ -54,6 +56,7 @@ SRCS = ${OBJECTS} \
 $(CPPOBJECTS) \
 ../third_party/common/syscalls/printf.s \
 ../third_party/common/crt0/crt0.s
+CPPFLAGS += -DPSX
 CPPFLAGS += -I../third_party/common
 CPPFLAGS += -I../third_party/psyq/include
 CPPFLAGS += $(INCLUDES)

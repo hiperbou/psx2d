@@ -1,7 +1,7 @@
 #include "ObjectPool.h"
-#include "hgl_mem.h"
+#include "../core/hgl_mem.h"
 #include "stdio.h"
-#include "hgl_types.h"
+#include "../core/hgl_types.h"
 
 
 

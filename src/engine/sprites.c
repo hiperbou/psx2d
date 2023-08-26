@@ -1,16 +1,6 @@
-#include "hgl.h"
-#include "system.h"
-#include "input.h"
 #include "sprites.h"
-#include "fpg.h"
-#include "particle.h"
-#include "hgl_types.h"
-
-#include <sys/types.h>	// This provides typedefs needed by libgte.h and libgpu.h
-#include <stdio.h>	// Not necessary but include it anyway
-#include <libetc.h>	// Includes some functions that controls the display
-#include <libgte.h>	// GTE header, not really used but libgpu.h depends on it
-#include <libgpu.h>	// GPU library header
+#include "../engine/tilemap.h"
+#include "../media/fpg.h"
 
 #define MAX_SPRITES 1024
 
@@ -87,29 +77,6 @@ void delete_sprite(Tsprite * spr) {
     }
 }
 
-void draw_sprite(Tsprite * spr) {
-    if (spr->graph <= 0 || spr->id < 0) return;
-    SPRITE* sprite = fpg[spr->file]->map[spr->graph]->image;
-    addRotSprite(spr->x, spr->y, spr->z, spr->angle, spr->size_x, spr->flags, sprite, spr->uploadTpage);
-}
-
-void draw_sprite_fast(Tsprite * spr) {
-    if (spr->graph < 0 || spr->id < 0) return;
-    SPRITE* sprite = fpg[spr->file]->map[spr->graph]->image;
-    addSprite(spr->x, spr->y, spr->z, sprite, spr->uploadTpage);
-}
-
-void draw_tile16_fast(Tsprite * spr) {
-    if (spr->graph < 0 || spr->id < 0) return;
-    SPRITE* sprite = fpg[spr->file]->map[spr->graph]->image;
-    addTile16(spr->x, spr->y, spr->z, sprite);
-}
-
-void draw_tile8_fast(Tsprite * spr) {
-    if (spr->graph < 0 || spr->id < 0) return;
-    SPRITE* sprite = fpg[spr->file]->map[spr->graph]->image;
-    addTile8(spr->x, spr->y, spr->z, sprite);
-}
 
 void draw_all_sprites_basic(){
     Tsprite * sprite;
@@ -217,8 +184,10 @@ void draw_tilemap_no_wrap(int file, int base_map, TileMap *tilemap, int offsetX,
         tilePtr += lineIncrement;
     }
 
+#ifdef PSX
     SPRITE* sprite = fpg[file]->map[base_map]->image;
     sortTpage(sprite->tpage, tilemapSprite.z);
+#endif
 }
 
 void draw_tilemap_no_wrap8(int file, int base_map, TileMap *tilemap, int offsetX, int offsetY, int flags) {
@@ -282,9 +251,10 @@ void draw_tilemap_no_wrap8(int file, int base_map, TileMap *tilemap, int offsetX
         step = 60;
         printf("tiles drawn %i\n", counter);
     }
-
+#ifdef PSX
     SPRITE* sprite = fpg[file]->map[base_map]->image;
     sortTpage(sprite->tpage, tilemapSprite.z);
+#endif
 }
 
 void draw_tilemap(int file, int base_map, TileMap *tilemap, int offsetX, int offsetY, int flags) {
@@ -332,9 +302,10 @@ void draw_tilemap(int file, int base_map, TileMap *tilemap, int offsetX, int off
             }
         }    
     }
-
+#ifdef PSX
     SPRITE* sprite = fpg[file]->map[base_map]->image;
     sortTpage(sprite->tpage, tilemapSprite.z);
+#endif
 }
 
 void draw_tilemap8(int file, int base_map, TileMap *tilemap, int offsetX, int offsetY, int flags) {
@@ -390,8 +361,10 @@ void draw_tilemap8(int file, int base_map, TileMap *tilemap, int offsetX, int of
         step = 60;
         printf("tiles drawn %i\n", counter);
     }
+#ifdef PSX
     SPRITE* sprite = fpg[file]->map[base_map]->image;
     sortTpage(sprite->tpage, tilemapSprite.z);
+#endif
 }
 
 void draw_particle(int file, int graph, Particle *p) {
@@ -409,6 +382,8 @@ void draw_particle(int file, int graph, Particle *p) {
     tilemapSprite.fast = 0;
     draw_sprite(&tilemapSprite);
     //draw_sprite_fast(&tilemapSprite);
+#ifdef PSX
     SPRITE* sprite = fpg[file]->map[base_map]->image;
     sortTpage(sprite->tpage, tilemapSprite.z);
+#endif
 }

@@ -1,14 +1,12 @@
-#include "hgl_types.h"
+#include "../core/hgl_types.h"
+#include "../core/hgl_file.h"
+
 #include "fpg.h"
-#include "sprites.h"
-#include "FixedPool.h"
+#include "fpgInternal.h"
+#include "../engine/sprites.h"
+#include "../pool/FixedPool.h"
 
-#include <sys/types.h>	// This provides typedefs needed by libgte.h and libgpu.h
-#include <stdio.h>	// Not necessary but include it anyway
-#include <libetc.h>	// Includes some functions that controls the display
-#include <libgte.h>	// GTE header, not really used but libgpu.h depends on it
-#include <libgpu.h>	// GPU library header
-
+#include <stdint.h>
 
 div_fpg *fpg[MAX_NUM_FPGS];
 
@@ -20,6 +18,7 @@ FixedPool *psxSpritePool;
 static void init_pools() {
     fpgPool = new_FixedPool(MAX_NUM_FPGS, sizeof(div_fpg));
     mapPool = new_FixedPool(MAX_NUM_MAPS, sizeof(div_map));
+
     psxSpritePool = new_FixedPool(MAX_NUM_MAPS, sizeof(SPRITE));
 }
 
@@ -75,41 +74,41 @@ int new_map(int file,int graph) {
     //fpg[file]->map[graph]->th=0;
     //fpg[file]->map[graph]->tile_text=NULL;
     //fpg[file]->map[graph]->tsize=0;
-           
+
     //fpg[file]->map[graph]->posx=0; //pos inicial para texturas de opengl
     //fpg[file]->map[graph]->posy=0;
-    
+
     fpg[file]->total_mapas++;
     if(fpg[file]->map[graph+1]==NULL){
-       fpg[file]->mapa_libre=graph+1;
+        fpg[file]->mapa_libre=graph+1;
     }
 
     return graph;
 }
 
-
-void CopySprite(SPRITE *original, SPRITE *sprite) {
-    sprite->tpage = original->tpage;
-    sprite->clut = original->clut;
-    sprite->w = original->w;
-    sprite->h = original->h;    
-    sprite->u = original->u;
-    sprite->v = original->v ;
-    sprite->col.r = original->col.r;
-    sprite->col.g = original->col.g;
-    sprite->col.b = original->col.b;
+int get_free_map(int file) {
+    if (fpg[file] == NULL) return 0;
+    if (fpg[file]->map[fpg[file]->mapa_libre] == NULL) return fpg[file]->mapa_libre;
+    for (int i=1; i<MAX_NUM_MAPS; i++) {
+        if (fpg[file]->map[i] == NULL) {
+            return i;
+        }
+    }   
+    return 0;
 }
+
+
 
 int load_atlas(int file, char *filename, int tileWidth, int tileHeight, int numCols, int numRows) {
     int atlas_map;
     int map;
-    SPRITE * atlas_sprite = NULL; 
+    SPRITE * atlas_sprite = NULL;
     SPRITE * sprite = NULL;
 
     //printf("load_atlas\n");
 
-    for (int y=0; y < numRows; y++) {     
-        for(int x=0; x < numCols; x++) {   
+    for (int y=0; y < numRows; y++) {
+        for(int x=0; x < numCols; x++) {
             if (atlas_sprite == NULL) {
                 //printf("load_map %i %s %i %i\n", file, filename,x,y);
                 atlas_map = load_map(file, filename);
@@ -135,9 +134,9 @@ int load_atlas(int file, char *filename, int tileWidth, int tileHeight, int numC
 int load_map(int file, char *filename) {
     int mapa = 1;
     if (fpg[file]->map[fpg[file]->mapa_libre] == NULL) {
-        mapa = fpg[file]->mapa_libre;              
+        mapa = fpg[file]->mapa_libre;
     } else {
-        mapa = get_free_map(file);     
+        mapa = get_free_map(file);
     }
     if (mapa > 0) {
         new_map(file,mapa);
@@ -156,16 +155,16 @@ int load_map(int file, char *filename) {
     }
 }
 
-int load_map_from_memory(int file, u_char *data){
+int load_map_from_memory(int file, uint8_t *data){
     int mapa = 1;
     if (fpg[file]->map[fpg[file]->mapa_libre] == NULL) {
-        mapa = fpg[file]->mapa_libre;              
+        mapa = fpg[file]->mapa_libre;
     } else {
-        mapa = get_free_map(file);     
+        mapa = get_free_map(file);
     }
     if (mapa > 0) {
         new_map(file,mapa);
-        GetSpriteFromMemory(data, fpg[file]->map[mapa]->image);   
+        GetSpriteFromMemory(data, fpg[file]->map[mapa]->image);
 
         //load_gl_texture2(name,file,mapa);
         //if(CENTER_LOADED_IMAGES==1){
@@ -178,15 +177,4 @@ int load_map_from_memory(int file, u_char *data){
         printf("DEMASIADOS MAPAS EN EL FPG, cree uno nuevo y use load_map(int file,char name)!!\n");
         return 0;
     }
-}
-
-int get_free_map(int file) {
-    if (fpg[file] == NULL) return 0;
-    if (fpg[file]->map[fpg[file]->mapa_libre] == NULL) return fpg[file]->mapa_libre;
-    for (int i=1; i<MAX_NUM_MAPS; i++) {
-        if (fpg[file]->map[i] == NULL) {
-            return i;
-        }
-    }   
-    return 0;
 }

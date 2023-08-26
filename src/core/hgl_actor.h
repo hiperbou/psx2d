@@ -1,5 +1,5 @@
-#ifndef ACTOR_H
-#define ACTOR_H
+#ifndef __HGL_ACTOR_H
+#define __HGL_ACTOR_H
 
 #include <stdbool.h>
 #include "hgl_ent.h"
@@ -59,4 +59,4 @@ Actor* newActor(int file, int graph, fix32 x, fix32 y, ActorConstructorCallback*
 Actor* newActorWithDestructor(int file, int graph, fix32 x, fix32 y, ActorConstructorCallback* constructorCB, ActorUpdateCallback* updateCB, ActorDestructorCallback* destructorCB);
 void deleteActor(Actor *actor);
 
-#endif
+#endif //__HGL_ACTOR_H

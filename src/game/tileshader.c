@@ -1,14 +1,11 @@
 #include <stdbool.h>
 #include "tileshader.h"
-#include "actor.h"
-#include "hgl_mem.h"
+#include "../core/hgl_actor.h"
+#include "../core/hgl_mem.h"
 
-#include "sprites.h" //TileMap
-#include "hgl_anim.h"
+#include "../engine/tilemap.h"
+#include "../core/hgl_anim.h"
 #include "enemyupdate.h" //setAnimation
-
-
-
 
 static TileMap* tileMap;
 

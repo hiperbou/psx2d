@@ -1,6 +1,6 @@
 #include "FixedPool.h"
 #include "stdio.h"
-#include "hgl_mem.h"
+#include "../core/hgl_mem.h"
 
 static void *allocateBlock(int mChunksPerBlock, int chunkSize) {
     int blockSize = mChunksPerBlock * chunkSize;

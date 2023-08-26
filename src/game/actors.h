@@ -1,7 +1,7 @@
 #ifndef ACTORS_H
 #define ACTORS_H
 
-#include "actor.h"
+#include "../core/hgl_actor.h"
 
 Actor* newBee(int file, fix32 x, fix32 y);
 Actor* newMotobug(int file, fix32 x, fix32 y);

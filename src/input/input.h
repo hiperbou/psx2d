@@ -1,8 +1,7 @@
 #ifndef __INPUT_H__
 #define __INPUT_H__
 
-#include <libapi.h>     // API header, has InitPAD() and StartPAD() defs
-
+#include "stdint.h"
 
 #define PAD_SELECT      1
 #define PAD_L3          2
@@ -33,6 +32,6 @@ typedef struct _PADSTATE
 
 void initInput();
 PADSTATE * getPadState(int player);
-unsigned short getButtons(int player);
+uint16_t getButtons(int player);
 
 #endif

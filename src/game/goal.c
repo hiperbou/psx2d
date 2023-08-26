@@ -1,11 +1,11 @@
 #include <stdbool.h>
-#include "hgl.h"
-#include "hgl_spr.h"
-#include "hgl_ent.h"
+#include "../core/hgl.h"
+#include "../core/hgl_spr.h"
+#include "../core/hgl_ent.h"
 
 #include "enemyupdate.h"
-#include "actor.h"
-#include "hgl_anim.h"
+#include "../core/hgl_actor.h"
+#include "../core/hgl_anim.h"
 
 ANIM(anim_idle, 2, 5, 6)
 ANIM(anim_activated, 5)
@@ -13,8 +13,8 @@ ANIM(anim_activated2, 98,5,99,5)
 ANIM(anim_dead, 0)
 ANIM(anim_star, 98,99)
 
-#include "engine/actor_fsm.h"
-#include "hgl_mem.h"
+#include "../engine/actor_fsm.h"
+#include "../core/hgl_mem.h"
 
 ACTOR_CREATE_STATE_MACHINE(GoalStateMachine, Idle, Activated, Star, Float, Dead)
 

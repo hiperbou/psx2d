@@ -1,7 +1,7 @@
 
 #include <stdbool.h>
-#include "hgl_ent.h"
-#include "actor.h"
+#include "../core/hgl_ent.h"
+#include "../core/hgl_actor.h"
 #include "enemyupdate.h"
 
 void updatePhysicsActorSimple(Actor *actor, fix32 speed) {

@@ -2,9 +2,10 @@
 #include "particle.h"
 //#include "pool.h"
 #include "sprites.h"
-#include "rand.h"
-#include "hgl_pool.h"
-#include "ObjectPool.h"
+#include <stdlib.h> //rand
+//#include "rand.h"
+#include "../core/hgl_pool.h"
+#include "../pool/ObjectPool.h"
 
 #define MAX_NUM_PARTICLES 128
 
@@ -20,7 +21,7 @@ static void initPool() {
 }
 
 void init_particles() {
-    printf("init Particles\n");
+    //printf("init Particles\n");
     //srand(123);
     initPool();
 }

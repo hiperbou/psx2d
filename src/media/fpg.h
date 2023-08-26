@@ -1,8 +1,16 @@
 #ifndef __HGL_FPG__
 #define __HGL_FPG__
 
-#include "system.h"
-#include <sys/types.h>	// This provides typedefs needed by libgte.h and libgpu.h
+#ifdef PSX
+#include "psx/psx_fpg.h"
+#else
+#include "ctoy/ctoy_fpg.h"
+#endif
+
+#include <stdint.h>
+//#include "system.h"
+//#include <sys/types.h>	// This provides typedefs needed by libgte.h and libgpu.h
+#include "../pool/FixedPool.h"
 
 #define MAX_NUM_FPGS 8
 #define MAX_NUM_MAPS 1024
@@ -35,13 +43,14 @@ typedef struct{
 
 extern div_fpg *fpg[MAX_NUM_FPGS];
 
+extern FixedPool *mapPool;
 
 int init_fpgs();
 int new_fpg();
 void unload_fpg( int pos );
 
 int load_map(int file, char *filename);
-int load_map_from_memory(int file,u_char *data);
+int load_map_from_memory(int file, uint8_t *data);
 //inline int load_map(u_char *data){return load_map(0,name);}  
 
 int load_atlas(int file, char *filename, int tileWidth, int tileHeight, int numCols, int numRows);

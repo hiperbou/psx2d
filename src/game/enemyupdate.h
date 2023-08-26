@@ -1,8 +1,8 @@
 #ifndef ENEMYUPDATE_H_
 #define ENEMYUPDATE_H_
 
-#include "hgl_ent.h"
-#include "actor.h"
+#include "../core/hgl_ent.h"
+#include "../core/hgl_actor.h"
 
 void updatePhysicsActorSimple(Actor *ent, fix32 speed);
 void faceDirectionAnim(Actor * entity);

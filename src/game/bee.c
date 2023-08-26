@@ -1,10 +1,10 @@
-#include "hgl.h"
-#include "hgl_spr.h"
-#include "hgl_ent.h"
+#include "../core/hgl.h"
+#include "../core/hgl_spr.h"
+#include "../core/hgl_ent.h"
 
 #include "enemyupdate.h"
-#include "actor.h"
-#include "hgl_anim.h"
+#include "../core/hgl_actor.h"
+#include "../core/hgl_anim.h"
 
 ANIM(anim_patrol, 1, 2)
 
@@ -13,7 +13,7 @@ static void updatePhysics(Actor *actor) {
 }
 
 static void update(Actor* actor) {
-	updatePhysics(actor);
+    updatePhysics(actor);
 	faceDirectionAnim(actor);//TODO: call faceDirection only on direction change :D
 }
 

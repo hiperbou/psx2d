@@ -2,7 +2,7 @@
 #define __HGL_OBJECTPOOL_H__
 
 #include <stddef.h>
-#include "hgl_pool.h"
+#include "../core/hgl_pool.h"
 #include "memory.h"
 
 typedef struct{

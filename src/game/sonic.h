@@ -2,8 +2,8 @@
 #define DEMO_SONIC_H
 
 #include <stdbool.h>
-#include "actor.h"
-
+#include "../core/hgl_actor.h"
+#include "../engine/tilemap.h"
 
 typedef struct PlayerEventHandler PlayerEventHandler;
 

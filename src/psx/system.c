@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+//#include <string.h>
 #include <strings.h>
 #include <ctype.h>
 
@@ -430,19 +431,8 @@ void GetSprite(TIM_IMAGE *tim, SPRITE *sprite) {
 }
 
 
-void replace_char(char* str, char find, char replace) {
-    char *current_pos = strchr(str,find);
-    for (char* p = current_pos; (current_pos = strchr(str, find)) != NULL; *current_pos = replace);
-}
 
-void to_uppercase(char * str) {
-  char *s = str;
-  while (*s) {
-    *s = toupper((unsigned char) *s);
-    s++;
-  }
-}
-
+/*
 void GetSpriteFromDisc(char *filename, SPRITE *sprite) {
     TIM_IMAGE timImage;
 
@@ -462,4 +452,4 @@ void GetSpriteFromMemory(u_char *data, SPRITE *sprite) {
     LoadTexture((u_long *)data, &timImage);
     GetSprite(&timImage, sprite);
 }
-
+*/

@@ -1,14 +1,14 @@
 #include "fallToBackgroundScript.h"
-#include "actor.h"
+#include "../core/hgl_actor.h"
 #include "sonic.h" //PlayerEventHandler
-#include "input.h"
-#include "game/enemyupdate.h" //setZ
+#include "../input/input.h"
+#include "enemyupdate.h" //setZ
 
 static PlayerEventHandler *myPlayerEventHandler;
 
 static u16 input = 0;
 
-static void handleInput(u16 inputState){
+static void fallToBackgroundHandleInput(u16 inputState){
     input = inputState;
 }
 
@@ -21,7 +21,7 @@ static int restoreCounter = 0;
 
 static void constructor(Actor* actor) {
     SonicData* sonic = &actor->sonic;
-    sonic->handleInput = handleInput;
+    sonic->handleInput = fallToBackgroundHandleInput;
 
     activateCounter = 0;
     restoreCounter = 0;

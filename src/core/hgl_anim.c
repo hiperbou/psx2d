@@ -1,5 +1,5 @@
 #include "hgl_anim.h"
-#include "ObjectPool.h"
+#include "../pool/ObjectPool.h"
 
 #define MAX_NUM_ANIMATION_STATES 64
 

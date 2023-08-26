@@ -3,7 +3,7 @@
 #include "sprites.h"
 #include "fpg.h"
 
-void init() {
+void HGL_init() {
     initDisplay();
     initCD();
     initMemory();
@@ -17,7 +17,7 @@ void init() {
 
 }
 
-void frame() {
+void HGL_frame() {
     drawTexts();
     display();
 }

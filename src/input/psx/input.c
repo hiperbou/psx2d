@@ -1,5 +1,9 @@
 #include <sys/types.h>	// This provides typedefs needed by libgte.h and libgpu.h
-#include "input.h"
+#include <libapi.h>     // API header, has InitPAD() and StartPAD() defs
+
+#include "../input.h"
+
+
 
 //Controller	Type Value
 //Mouse	0x1
@@ -30,7 +34,7 @@ PADSTATE * getPadState(int player) {
     return (PADSTATE*)padbuff[player];
 }
 
-unsigned short getButtons(int player) {
+uint16_t getButtons(int player) {
     PADSTATE *pad = (PADSTATE*)padbuff[player];
     if (pad->stat != 0) return 0;
     // Only parse when a digital pad, 

@@ -1,12 +1,12 @@
 #include "hgl_spr.h"
-#include "ObjectPool.h"
+#include "../pool/ObjectPool.h"
 
-#define MAX_SPRITES 40
+#define MAX_HGL_SPRITES 40
 
 static ObjectPool * spritePool;
 
 void HGL_SPR_init() {
-    spritePool = new_ObjectPool(MAX_SPRITES, sizeof(HGL_Sprite));
+    spritePool = new_ObjectPool(MAX_HGL_SPRITES, sizeof(HGL_Sprite));
 }
 
 void HGL_SPR_update() {

@@ -1,10 +1,10 @@
-#include "hgl.h"
-#include "hgl_spr.h"
-#include "hgl_ent.h"
+#include "../core/hgl.h"
+#include "../core/hgl_spr.h"
+#include "../core/hgl_ent.h"
 
 #include "enemyupdate.h"
-#include "actor.h"
-#include "hgl_anim.h"
+#include "../core/hgl_actor.h"
+#include "../core/hgl_anim.h"
 
 ANIM(anim_patrol, 5, 6, 7, 8)
 

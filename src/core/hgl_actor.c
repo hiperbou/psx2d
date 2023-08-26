@@ -2,8 +2,8 @@
 #include "hgl_spr.h"
 #include "hgl_ent.h"
 
-#include "actor.h"
-#include "ObjectPool.h"
+#include "hgl_actor.h"
+#include "../pool/ObjectPool.h"
 
 #define MAX_NUM_ACTORS 32
 

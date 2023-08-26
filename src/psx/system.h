@@ -8,13 +8,8 @@
 #include <libgpu.h>	// GPU library header
 #include <libcd.h>
 
-typedef struct _SPRITE {
-    u_short tpage;  // Tpage value
-    u_short clut;   // CLUT value
-    u_char  u,v;    // UV offset (useful for non page aligned TIMs)
-    u_char  w,h;    // Size (primitives can only draw 256x256 anyway)
-    CVECTOR col;
-} SPRITE;
+#include "../media/psx/psx_fpg.h"
+
 
 void initNTSCDisplay();
 void initPALDisplay();
@@ -28,8 +23,8 @@ void initFont();
 void LoadTexture(u_long * data, TIM_IMAGE * timImage);
 void LoadTextureFromDisc(char *filename, TIM_IMAGE * timImage);
 void GetSprite(TIM_IMAGE *tim, SPRITE *sprite);
-void GetSpriteFromDisc(char *filename, SPRITE *sprite);
-void GetSpriteFromMemory(u_char *data, SPRITE *sprite);
+//void GetSpriteFromDisc(char *filename, SPRITE *sprite);
+//void GetSpriteFromMemory(u_char *data, SPRITE *sprite);
 void drawTexts();
 void clearOrderingTable();
 void addPrimitive(int x, int y, int z, int w, int h, int r, int g, int b);

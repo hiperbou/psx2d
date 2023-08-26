@@ -1,7 +1,7 @@
 #ifndef __HGL_H__
 #define __HGL_H__
 
-void init();
-void frame();
+void HGL_init();
+void HGL_frame();
 
 #endif

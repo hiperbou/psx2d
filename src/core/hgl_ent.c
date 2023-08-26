@@ -1,5 +1,5 @@
 #include "hgl_ent.h"
-#include "ObjectPool.h"
+#include "../pool/ObjectPool.h"
 
 //TODO: replace this defines with a parameter in the HGL_XXX_init functions
 #define MAX_NUM_ENTITIES 40

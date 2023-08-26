@@ -3,7 +3,7 @@
 
 #include "hgl_pool.h"
 #include "hgl_types.h"
-#include "sprites.h"
+#include "../engine/sprites.h"
 
 typedef struct{
     int x;

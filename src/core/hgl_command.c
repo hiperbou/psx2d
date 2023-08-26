@@ -1,5 +1,5 @@
 #include "hgl_command.h"
-#include "ObjectPool.h"
+#include "../pool/ObjectPool.h"
 
 #include <stdio.h>	
 
