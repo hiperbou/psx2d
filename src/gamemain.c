@@ -61,7 +61,7 @@ void onPlayerCollidedWithCeilingTile(PlayerEventHandler*playerEventHandler, Tile
                 case 42:
                 case 77:
                     setTileAt(playerEventHandler->collisionTileMap, tile.tileX, tile.tileY, 0);
-                    setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 1);
+                    setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 0);
                     int x = TILE_CENTER_X_TO_SCREEN(tile.tileX);
                     int y = TILE_CENTER_Y_TO_SCREEN(tile.tileY);
                     REPEAT25(new_Particle(x, y))
@@ -69,7 +69,7 @@ void onPlayerCollidedWithCeilingTile(PlayerEventHandler*playerEventHandler, Tile
                 case 96:
                     break;
                 default:
-                    setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 1);
+                    setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 0);
                     //spawn block
                     newBlock(2, 1, TILE_CENTER(tile.tileX), TILE_CENTER(tile.tileY), 0);
                     newSetUint8DelayedCommand(10, getTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY), 96);
@@ -90,7 +90,7 @@ bool onPlayerCollidedWithFloorTile(PlayerEventHandler*playerEventHandler, Tile t
             playerEventHandler->player->sonic.doRebound();
 
             setTileAt(playerEventHandler->collisionTileMap, tile.tileX, tile.tileY, 0);
-            setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 1);
+            setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 0);
             int x = TILE_CENTER_X_TO_SCREEN(tile.tileX);
             int y = TILE_CENTER_Y_TO_SCREEN(tile.tileY);
             REPEAT25(new_Particle(x, y))
