@@ -25,7 +25,7 @@ void HGL_init() {
     //initInput();
 
     initSprites();
-    //init_particles();
+    init_particles();
     
     init_fpgs();
 
@@ -35,5 +35,6 @@ void HGL_frame() {
     //drawTexts();
     //display();
     ctoy_swap_buffer(&buffer);
+    clear(&buffer);
 }
 

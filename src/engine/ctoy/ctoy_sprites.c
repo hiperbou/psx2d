@@ -4,6 +4,7 @@
 
 
 extern struct m_image buffer;
+void clear(struct m_image *dest);
 void blit_ex(struct m_image *dest, const struct m_image *src, int px, int py, int sx, int sy, int w, int h);
 
 void draw_sprite(Tsprite * spr) {
