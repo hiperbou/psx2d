@@ -91,6 +91,38 @@ void draw_all_sprites_basic(){
     }
 }
 
+void insertsort(Tsprite*data[], int n){
+    Tsprite* tmp;
+    int i,j;
+
+    for(j=1; j<n; j++){
+        i = j-1;
+        tmp = data[j];
+        while((i>=0 && (tmp->z<data[i]->z))){
+            data[i+1]=data[i];
+            i--;
+        }
+        data[i+1]=tmp;
+    }
+}
+
+void draw_all_sprites_zorder(){
+    int n=0;
+    for (int i=0; n < num_procesos; i++) {
+        lista_z[n] = &proceso[i];
+        n++;
+    }
+    insertsort(lista_z, num_procesos);
+    for (int i = num_procesos-1; i >= 0; i--) {
+        Tsprite *sprite = lista_z[i];
+        if(sprite->fast) {
+            draw_sprite_fast(sprite);
+        } else {
+            draw_sprite(sprite);
+        }
+    }
+}
+
 void draw_tilemap_with_sprites(int file, int base_map, TileMap *tilemap) {
     Tsprite * tileB;
     Tsprite * firstTileB = NULL;

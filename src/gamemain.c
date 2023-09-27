@@ -271,15 +271,21 @@ static void stateGame() {
     HGL_ENT_renderAll(bgbx,bgby);
     HGL_SPR_renderAll();
 
+#ifdef PSX
     draw_all_sprites_basic();
-
     update_Particles();
-
+#endif
     //draw_tilemap_no_wrap(tiles_fpg, 1, &collisionTileMap, bgbx, bgby, 0); //Front
     draw_tilemap_no_wrap(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
 
     //draw_tilemap(tiles_fpg, bgb_map, &bgbTileMap, bgbx>>1, bgby>>1, 1); //BK
     //draw_tilemap_no_wrap(tiles_fpg, bgb_map, &bgbTileMap, 0, 0, 1); //BK
+
+    //CTOY
+#ifndef PSX
+    draw_all_sprites_zorder();
+    update_Particles();
+#endif
 }
 
 void goToMainMenu() {
