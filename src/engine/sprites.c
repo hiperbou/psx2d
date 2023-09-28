@@ -98,7 +98,7 @@ void insertsort(Tsprite*data[], int n){
     for(j=1; j<n; j++){
         i = j-1;
         tmp = data[j];
-        while((i>=0 && (tmp->z<data[i]->z))){
+        while((i>=0 && (tmp->z > data[i]->z))){
             data[i+1]=data[i];
             i--;
         }
@@ -113,7 +113,7 @@ void draw_all_sprites_zorder(){
         n++;
     }
     insertsort(lista_z, num_procesos);
-    for (int i = num_procesos-1; i >= 0; i--) {
+    for (int i = 0; i < num_procesos; i++) {
         Tsprite *sprite = lista_z[i];
         if(sprite->fast) {
             draw_sprite_fast(sprite);
