@@ -18,6 +18,7 @@
 #include "game/tileshader.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "smb3scene.h"
 #include "smb3col.h"
@@ -159,8 +160,29 @@ void checkCoin(TileMap* tileMap, Actor * actor) {
 CREATE_STATE_MACHINE(GameStateMachine, Menu, LoadLevel, StartGame, Game, UnloadLevel)
 
 
+static int font_atlas;
+
 static void drawMenu() {
     //FntPrint("\n\n\n\n\n\n\n\n\t\tPRESS START TO PLAY!\n");
+
+    draw_text8(0, font_atlas, "hello this is a direct drawing", 32, 128, 0, -1);
+
+    char * text = "hello this is a typewritter effect";
+
+    static int typewritter = 0;
+    static int typewritter1 = 0;
+    static int typewritter2 = 0;
+    static int typewritter3 = 0;
+
+    if (typewritter < strlen(text)<<0) typewritter++; else typewritter = 0;
+    if (typewritter1 < strlen(text)<<1) typewritter1++; else typewritter1 = 0;
+    if (typewritter2 < strlen(text)<<2) typewritter2++; else typewritter2 = 0;
+    if (typewritter3 < strlen(text)<<3) typewritter3++; else typewritter3 = 0;
+
+    draw_text8(0, font_atlas, text, 16, 160, 0, typewritter);
+    draw_text8(0, font_atlas, text, 16, 160+16, 0, typewritter1 >> 1);
+    draw_text8(0, font_atlas, text, 16, 160+32, 0, typewritter2 >> 2);
+    draw_text8(0, font_atlas, text, 16, 160+48, 0, typewritter3 >> 3);
 }
 
 static int bgbx = 0;
@@ -286,6 +308,10 @@ static void stateGame() {
     draw_all_sprites_zorder();
     update_Particles();
 #endif
+
+    draw_text8(0, font_atlas, "012345789", 8, 8, 0, -1);
+    draw_text8(0, font_atlas, "ABCDEFGHIJLMNOPQRSTUVWXYZ", 8, 16, 0, -1);
+    draw_text8(0, font_atlas, "Hello", 8, 24, 0, -1);
 }
 
 void goToMainMenu() {
@@ -347,6 +373,8 @@ int gameMain() {
     //int texture64_map = load_map_from_memory(system_fpg, texture64);
     //int girl01_map = load_map_from_memory(girl_fpg, girl01);
     //int girl02_map = load_map_from_memory(girl_fpg, girl02);
+
+    font_atlas = load_atlas(system_fpg, "art/gbs-mono", 8,8,16,14);
 
     int texture64_map = load_map(system_fpg, "art/texture6");
     printf("texture64_map %i\n", texture64_map);

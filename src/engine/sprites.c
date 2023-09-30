@@ -223,9 +223,16 @@ void draw_tilemap_no_wrap(int file, int base_map, TileMap *tilemap, int offsetX,
 }
 
 void draw_tilemap_no_wrap8(int file, int base_map, TileMap *tilemap, int offsetX, int offsetY, int flags) {
-    const uint8_t *tileMap = tilemap->map;
+
     int numCols = tilemap->numCols;
     int numRows = tilemap->numRows;
+
+    //destination rectangle
+    // NES RESOLUTION 256x224
+    /*int destX = 32;
+    int maxDestX = 256 + destX;
+    int destY = 8;
+    int maxDestY = 224 + destY;*/
 
     //destination rectangle
     int destX = 0;
@@ -245,44 +252,36 @@ void draw_tilemap_no_wrap8(int file, int base_map, TileMap *tilemap, int offsetX
     int initialY = CLAMP(minY, 0, numRows);
     int finalY = CLAMP(maxY, 0, numRows);
 
+    int posXBase = destX - offsetX;
+    int posYBase = destY - offsetY;
+
     tilemapSprite.z = 7;
     tilemapSprite.file = file;
     tilemapSprite.uploadTpage = 0;
     tilemapSprite.fast = 1;
 
     int drawTileWithIndex0 = flags;
-    static int step = 60;
-    int counter = 0;
-
-    int posXBase = destX - offsetX;
-    int posYBase = destY - offsetY;
-    int posYTile = 0;
-    int yMultipliedByCols = 0;
-    int tileIndex = 0;
+    const uint8_t *tilePtr = tilemap->map + initialX + initialY * numCols;
+    int lineIncrement = numCols - (finalX - initialX);
+    //printf("lineIncrement %i\n", lineIncrement);
     for(int y = initialY; y < finalY; y++) {
-        posYTile = (y << 3);
-        yMultipliedByCols = y * numCols;
         for(int x = initialX; x < finalX; x++) {
-            tileIndex = tileMap[x + yMultipliedByCols];
+            tilemapSprite.y = posYBase + (y << 3);
+            int tileIndex = *tilePtr;
             if (drawTileWithIndex0 || tileIndex > 0) {
                 tilemapSprite.x = posXBase + (x << 3);
-                tilemapSprite.y = posYBase + posYTile;
-                tilemapSprite.graph =  tileIndex + base_map;
-
+                tilemapSprite.graph = tileIndex + base_map - 1; //-1 because of tiled base_map is used to get the SPRITE later
+//printf("%i ", tilemapSprite.graph);
                 //This could be optimized using SPRT_8 and SPRT_16
                 //draw_sprite_fast(&tilemapSprite);
                 //draw_tile16_fast(&tilemapSprite); //SPRT_16
                 draw_tile8_fast(&tilemapSprite); //SPRT_8
-                counter++;
             }
+            tilePtr++;
         }
+        tilePtr += lineIncrement;
     }
-
-    step--;
-    if(step==0) {
-        step = 60;
-        printf("tiles drawn %i\n", counter);
-    }
+    //printf("\n");
 #ifdef PSX
     SPRITE* sprite = fpg[file]->map[base_map]->image;
     sortTpage(sprite->tpage, tilemapSprite.z);
@@ -414,6 +413,76 @@ void draw_particle(int file, int graph, Particle *p) {
     tilemapSprite.fast = 0;
     draw_sprite(&tilemapSprite);
     //draw_sprite_fast(&tilemapSprite);
+#ifdef PSX
+    SPRITE* sprite = fpg[file]->map[base_map]->image;
+    sortTpage(sprite->tpage, tilemapSprite.z);
+#endif
+}
+
+#include <string.h>
+
+void draw_text8(int file, int base_map, const char* text, int posX, int posY, int flags, int length) {
+    int offsetY = -posY;
+    int offsetX = -posX;
+
+    int numCols = length;
+    if (length<0) numCols = strlen(text);
+
+    int numRows = 1;
+
+    //destination rectangle
+    // NES RESOLUTION 256x224
+    /*int destX = 32;
+    int maxDestX = 256 + destX;
+    int destY = 8;
+    int maxDestY = 224 + destY;*/
+
+    //destination rectangle
+    int destX = 0;
+    int maxDestX = 320;
+    int destY = 0;
+    int maxDestY = 240;
+
+    int minX = offsetX >> 3;
+    int maxX = (((maxDestX - destX) + offsetX) >> 3) + 1;
+
+    int initialX = CLAMP(minX, 0, numCols);
+    int finalX = CLAMP(maxX, 0, numCols);
+
+    int minY = offsetY >> 3;
+    int maxY = (((maxDestY - destY) + offsetY) >> 3) + 1;
+
+    int initialY = CLAMP(minY, 0, numRows);
+    int finalY = CLAMP(maxY, 0, numRows);
+
+    int posXBase = destX - offsetX;
+    int posYBase = destY - offsetY;
+
+    tilemapSprite.z = 7;
+    tilemapSprite.file = file;
+    tilemapSprite.uploadTpage = 0;
+    tilemapSprite.fast = 1;
+
+    int drawTileWithIndex0 = flags;
+    const char *tilePtr = text + initialX + initialY * numCols;
+    int lineIncrement = numCols - (finalX - initialX);
+
+    for(int y = initialY; y < finalY; y++) {
+        for(int x = initialX; x < finalX; x++) {
+            tilemapSprite.y = posYBase + (y << 3);
+            int tileIndex = *tilePtr - 31;
+            if (drawTileWithIndex0 || tileIndex > 0) {
+                tilemapSprite.x = posXBase + (x << 3);
+                tilemapSprite.graph = tileIndex + base_map - 1; //-1 because of tiled base_map is used to get the SPRITE later
+                //This could be optimized using SPRT_8 and SPRT_16
+                //draw_sprite_fast(&tilemapSprite);
+                //draw_tile16_fast(&tilemapSprite); //SPRT_16
+                draw_tile8_fast(&tilemapSprite); //SPRT_8
+            }
+            tilePtr++;
+        }
+        tilePtr += lineIncrement;
+    }
 #ifdef PSX
     SPRITE* sprite = fpg[file]->map[base_map]->image;
     sortTpage(sprite->tpage, tilemapSprite.z);

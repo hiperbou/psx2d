@@ -43,4 +43,6 @@ void draw_sprite_fast(Tsprite * spr);
 void draw_tile16_fast(Tsprite * spr);
 void draw_tile8_fast(Tsprite * spr);
 
+void draw_text8(int file, int base_map, const char* text, int posX, int posY, int flags, int length);
+
 #endif
