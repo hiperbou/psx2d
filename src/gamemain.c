@@ -157,14 +157,27 @@ void checkCoin(TileMap* tileMap, Actor * actor) {
 }
 
 #include "engine/fsm.h"
-CREATE_STATE_MACHINE(GameStateMachine, Menu, LoadLevel, StartGame, Game, UnloadLevel)
+CREATE_STATE_MACHINE(GameStateMachine, LoadMenu, Menu, LoadLevel, StartGame, Game, UnloadLevel)
 
 
 static int font_atlas;
 
-static void drawMenu() {
-    //FntPrint("\n\n\n\n\n\n\n\n\t\tPRESS START TO PLAY!\n");
 
+
+static int bgbx = 0;
+static int bgby = 0;
+static Actor * sonic = NULL;
+static Actor * fallToBackgroundScript = NULL;
+//static Actor * goal = NULL;
+static TileMap bgaTileMap;
+static TileMap collisionTileMap;
+static int tileset_fpgs[4];
+static AnimationState* tilesetAnimationState;
+
+static int sonic_fpg, enemies_fpg;
+static PlayerEventHandler playerEventHandler;
+
+static void drawTestMenu() {
     draw_text8(0, font_atlas, "hello this is a direct drawing", 32, 128, 0, -1);
 
     char * text = "hello this is a typewritter effect";
@@ -185,18 +198,66 @@ static void drawMenu() {
     draw_text8(0, font_atlas, text, 16, 160+48, 0, typewritter3 >> 3);
 }
 
-static int bgbx = 0;
-static int bgby = 0;
-static Actor * sonic = NULL;
-static Actor * fallToBackgroundScript = NULL;
-//static Actor * goal = NULL;
-static TileMap bgaTileMap;
-static TileMap collisionTileMap;
-static int tileset_fpgs[4];
-static AnimationState* tilesetAnimationState;
+static void initMenu() {
+    int oneStarsPositions[] = { 10 };
+    int twoStarsPositions[] = { 9, 11 };
+    int threeStarsPositions[] = {8, 10, 12};
+    int fourStarsPositions[] = {7, 9, 11, 13};
+    int fiveStarsPositions[] = { 6, 8, 10, 12, 14};
+    int sixStarsPositions[] = {5, 7, 9, 11, 13, 15};
 
-static int sonic_fpg, enemies_fpg;
-static PlayerEventHandler playerEventHandler;
+    int* stars[6] = {
+        oneStarsPositions,
+        twoStarsPositions,
+        threeStarsPositions,
+        fourStarsPositions,
+        fiveStarsPositions,
+        sixStarsPositions
+    };
+
+    int numStars = 6;
+    int *starPos = stars[numStars - 1];
+    for (int i=0; i<numStars; i++) {
+        newMenuStar(tileset_fpgs[0], TILE(starPos[i]), TILE(4));
+    }
+    //printf("size of %i\n", sizeof (*starArray) / sizeof (int));
+
+    //odd
+    //newMenuStar(tileset_fpgs[0], TILE(9), TILE(4));
+    //newMenuStar(tileset_fpgs[0], TILE(11), TILE(4));
+    //newMenuStar(tileset_fpgs[0], TILE(7), TILE(4));
+    //newMenuStar(tileset_fpgs[0], TILE(13), TILE(4));
+    //newMenuStar(tileset_fpgs[0], TILE(5), TILE(4));
+    //newMenuStar(tileset_fpgs[0], TILE(15), TILE(4));
+
+    //even
+    //newMenuStar(tileset_fpgs[0], TILE(10), TILE(4));
+    //newMenuStar(tileset_fpgs[0], TILE(6), TILE(4));
+    //newMenuStar(tileset_fpgs[0], TILE(8), TILE(4));
+    //newMenuStar(tileset_fpgs[0], TILE(12), TILE(4));
+    //newMenuStar(tileset_fpgs[0], TILE(14), TILE(4));
+}
+
+static void drawMenu() {
+    //drawTestMenu();
+    int numberY = 32;
+    int missionY = 80;
+    int courseY = 192;
+
+    draw_text8(0, font_atlas, "1", 0, numberY, 0, -1);
+    draw_text8(0, font_atlas, "ROLL INTO THE CAGE", 0, missionY, 0, -1);
+    draw_text8(0, font_atlas, "TICK TOCK CLOCK", 0, courseY, 0, -1);
+
+
+
+    HGL_ANIM_updateAll();
+    HGL_ENT_updateAll();
+    HGL_ACTOR_updateAll();
+    HGL_ENT_renderAll(0, 0);
+    HGL_SPR_renderAll();
+    draw_all_sprites_basic();
+}
+
 
 Actor* spawnGoal(int tileX, int tileY) {
     return newGoalActivated(tileset_fpgs[0], TILE_CENTER(tileX), TILE_CENTER(tileY), sonic);
@@ -242,6 +303,11 @@ static void unloadLevel() {
     HGL_free((void*)collisionTileMap.map);
 }
 
+static void stateLoadMenu() {
+    initMenu();
+    GameStateMachine.setMenu();
+}
+
 static void stateMenu() {
     drawMenu();
     unsigned short btn = getButtons(0);
@@ -257,7 +323,7 @@ static void stateLoadLevel() {
 
 static void stateUnloadLevel() {
     unloadLevel();
-    GameStateMachine.setMenu();
+    GameStateMachine.setLoadMenu();
 }
 
 static void stateStartGame() {

@@ -26,6 +26,10 @@ typedef struct {
     void * sm;
 }GoalData;
 
+typedef struct {
+    void * sm;
+}MenuStarData;
+
 typedef struct{
 	fun2 (handleInput, u16);
     fun  (doRebound);
@@ -46,6 +50,7 @@ typedef struct Actor {
         PhysicsObjectData physics;
 		SonicData sonic;
         GoalData goal;
+        MenuStarData menuStar;
 	};
     ActorUpdateCallback *updateCallback;
     ActorDestructorCallback *destructorCallback;

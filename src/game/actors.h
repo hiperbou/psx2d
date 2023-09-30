@@ -13,5 +13,6 @@ Actor* newGoalActivated(int file, fix32 x, fix32 y, Actor * target);
 
 Actor* newCamera(Actor* cameraTarget, fix32 x, fix32 y);
 
+Actor* newMenuStar(int file, const fix32 x, const fix32 y);
 
 #endif

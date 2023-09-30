@@ -79,6 +79,22 @@
 #undef constructor
 #undef update
 
+#define constructor menustar_constructor
+#define destructor menustar_destructor
+#define update menustar_update
+#define Idle menustar_Idle
+#define Activated menustar_Activated
+#define stateIdle statemenustar_Idle
+#define stateActivated statemenustar_Activated
+#include "../game/menustar.c"
+#undef constructor
+#undef destructor
+#undef update
+#undef Idle
+#undef Activated
+#undef stateIdle
+#undef stateActivated
+
 #define playerEventHandler sonic_playerEventHandler
 #define input sonic_input
 #define constructor sonic_constructor
@@ -247,6 +263,7 @@ void blit_ex(struct m_image *dest, const struct m_image *src, int px, int py, in
                 src_pixel += src->comp;
             }
         }
+        //TODO: al salir el sprite por la derecha se corta mal (ver abeja)
     } else if (mirroredHorizontal) {
         for(int y = initialY; y < finalY; y++) {
             float *dest_pixel = ((float *)dest->data) + ((posYBase + y) * dest->width + posXBase + initialX) * dest->comp;
