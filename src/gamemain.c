@@ -2,6 +2,7 @@
 //#include "system.h"
 #include "input/input.h"
 #include "engine/sprites.h"
+#include "engine/text.h"
 #include "engine/tilemap.h"
 #include "media/fpg.h"
 
@@ -37,12 +38,12 @@ void wait(char *message) {
 
 #define TILE_SIZE 16
 #define HALF_TILE_SIZE (TILE_SIZE/2)
-#define TILE(X) FIX32(X*TILE_SIZE)
-#define TILE_CENTER(X) FIX32(X*TILE_SIZE + HALF_TILE_SIZE)
-#define TILE_X_TO_SCREEN(X) ((X*TILE_SIZE) - camposx)
-#define TILE_CENTER_X_TO_SCREEN(X) ((X*TILE_SIZE) + HALF_TILE_SIZE - camposx)
-#define TILE_Y_TO_SCREEN(X) ((X*TILE_SIZE) - camposy)
-#define TILE_CENTER_Y_TO_SCREEN(X) ((X*TILE_SIZE) + HALF_TILE_SIZE - camposy)
+#define TILE(X) FIX32((X)*TILE_SIZE)
+#define TILE_CENTER(X) FIX32((X)*TILE_SIZE + HALF_TILE_SIZE)
+#define TILE_X_TO_SCREEN(X) (((X)*TILE_SIZE) - camposx)
+#define TILE_CENTER_X_TO_SCREEN(X) (((X)*TILE_SIZE) + HALF_TILE_SIZE - camposx)
+#define TILE_Y_TO_SCREEN(X) (((X)*TILE_SIZE) - camposy)
+#define TILE_CENTER_Y_TO_SCREEN(X) (((X)*TILE_SIZE) + HALF_TILE_SIZE - camposy)
 #define POS_TO_TILE_16(X) (fix32ToInt(X)>>4)
 
 #define REPEAT5(X) X; X; X; X; X;
@@ -238,16 +239,61 @@ static void initMenu() {
     //newMenuStar(tileset_fpgs[0], TILE(14), TILE(4));
 }
 
+
+#include "input/buttonstate.h"
+
+static ButtonState buttonState;
+
+void menuInput() {
+    updateButtonState(&buttonState);
+
+    if (buttonState.just_pressed & PAD_LEFT) {
+        printf("left\n");
+    }
+    if (buttonState.just_pressed & PAD_RIGHT) {
+        printf("right\n");
+    }
+}
+
 static void drawMenu() {
     //drawTestMenu();
-    int numberY = 32;
-    int missionY = 80;
-    int courseY = 192;
+    menuInput();
 
-    draw_text8(0, font_atlas, "1", 0, numberY, 0, -1);
-    draw_text8(0, font_atlas, "ROLL INTO THE CAGE", 0, missionY, 0, -1);
-    draw_text8(0, font_atlas, "TICK TOCK CLOCK", 0, courseY, 0, -1);
+    static const int numberY = 32;
+    static const int missionY = 80;
+    static const int courseY = 192;
 
+    static const int oneStarsPositions[] = { 10 };
+    static const int twoStarsPositions[] = { 9, 11 };
+    static const int threeStarsPositions[] = {8, 10, 12};
+    static const int fourStarsPositions[] = {7, 9, 11, 13};
+    static const int fiveStarsPositions[] = { 6, 8, 10, 12, 14};
+    static const int sixStarsPositions[] = {5, 7, 9, 11, 13, 15};
+
+    static const int* stars[6] = {
+            oneStarsPositions,
+            twoStarsPositions,
+            threeStarsPositions,
+            fourStarsPositions,
+            fiveStarsPositions,
+            sixStarsPositions
+    };
+    static const char* numbers[] = { "1", "2", "3", "4", "5", "6" };
+    static const int numberXOffset = 4;
+
+    int numStars = 6;
+    const int *starPos = stars[numStars - 1];
+    for (int i=0; i<numStars; i++) {
+        draw_text8(0, font_atlas, numbers[i], (TILE_SIZE * starPos[i]) - numberXOffset, numberY, 0, -1);
+    }
+
+    //draw_text8(0, font_atlas, "1", 0, numberY, 0, -1);
+    static const int screenCenterX = 320 >> 1;
+    int textPosX = text_get_centered_position("ROLL INTO THE CAGE", screenCenterX);
+    int textPosX2 = text_get_centered_position("TICK TOCK CLOCK", screenCenterX);
+
+    draw_text8(0, font_atlas, "ROLL INTO THE CAGE", textPosX, missionY, 0, -1);
+    draw_text8(0, font_atlas, "TICK TOCK CLOCK", textPosX2, courseY, 0, -1);
 
 
     HGL_ANIM_updateAll();
@@ -412,7 +458,7 @@ void checkDebugInput() {
 }
 
 int gameMain() {
-    printf("Hello world demod\n");
+    printf("gameMain\n");
 
     HGL_init();
 
@@ -443,7 +489,7 @@ int gameMain() {
     font_atlas = load_atlas(system_fpg, "art/gbs-mono", 8,8,16,14);
 
     int texture64_map = load_map(system_fpg, "art/texture6");
-    printf("texture64_map %i\n", texture64_map);
+    //printf("texture64_map %i\n", texture64_map);
     //int girl01_map = load_map(girl_fpg, "art/girl01");
     //int girl02_map = load_map(girl_fpg, "art/girl02");
 

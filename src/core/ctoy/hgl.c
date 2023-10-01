@@ -31,6 +31,8 @@ void HGL_init() {
 
 }
 
+void clear(struct m_image *dest);
+
 void HGL_frame() {
     //drawTexts();
     //display();

@@ -8,10 +8,12 @@
 #include "../core/hgl_ent.h"
 #include "../core/hgl_spr.h"
 #include "../engine/sprites.h"
+#include "../engine/text.h"
 #include "../engine/tilemap.h"
 #include "../game/actors.h"
 #include "../game/camera.h"
 #include "../input/input.h"
+#include "../input/buttonstate.h"
 #include "../media/fpg.h"
 
 
@@ -28,12 +30,14 @@
 #include "../core/default/hgl_mem.c"
 #include "../core/ctoy/hgl_file.c"
 #include "../game/camera.c"
+#include "../input/buttonstate.c"
 #include "../input/ctoy/input.c"
 #include "../media/ctoy/ctoy_fpg.c"
 #include "../media/fpg.c"
 
 #include "../engine/tilemap.c"
 #include "../engine/sprites.c"
+#include "../engine/text.c"
 #define rand m_rand
 #include "../engine/particle.c"
 #undef rand
@@ -294,9 +298,9 @@ static int tileset_fpgs[4];
 
 static AnimationState* tilesetAnimationState;
 
-#define TILE_SIZE 16
-#define HALF_TILE_SIZE (TILE_SIZE/2)
-#define TILE(X) FIX32(X*TILE_SIZE)
+//#define TILE_SIZE 16
+//#define HALF_TILE_SIZE (TILE_SIZE/2)
+//#define TILE(X) FIX32(X*TILE_SIZE)
 
 void ctoy_begin(void)
 {
@@ -311,7 +315,7 @@ void ctoy_begin(void)
         persistent_memory = ctoy_retrieve_memory(); // retrieve persistent memory
     }
 
-    printf("Hello World! Game test\n");
+    printf("--- ctoy_begin ---\n");
 
     gameMain();
     return;
@@ -358,6 +362,7 @@ void ctoy_begin(void)
 
 void ctoy_end(void)
 {
+    printf("--- ctoy_end ---\n");
    //m_image_destroy(&sonic_image);
    //m_image_destroy(&buffer);
    //TODO: FREE ALL RESOURCES

@@ -32,12 +32,12 @@
 //#define MAX_POSX        FIX32(400.0)
 //#define MAX_POSY        FIX32(156.0)
 
-#define MAP_WIDTH           320 //10240
-#define MAP_HEIGHT          416//992//224 //1280
+//#define MAP_WIDTH           320 //10240
+//#define MAP_HEIGHT          416//992//224 //1280
 
-#define MIN_POSX            FIX32(10L)
-#define MAX_POSX            FIX32(MAP_WIDTH - 100)
-#define MAX_POSY            FIX32(MAP_HEIGHT - 48)
+//#define MIN_POSX            FIX32(10L)
+//#define MAX_POSX            FIX32(MAP_WIDTH - 100)
+//#define MAX_POSY            FIX32(MAP_HEIGHT - 48)
 
 static fix32 posx = FIX32(128);
 static fix32 posy = FIX32(128);
