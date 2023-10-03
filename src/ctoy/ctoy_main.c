@@ -242,7 +242,8 @@ void blit_ex(struct m_image *dest, const struct m_image *src, int px, int py, in
     } else if (mirroredHorizontal && mirroredVertical) { 
         for(int y = initialY; y < finalY; y++) {
             float *dest_pixel = ((float *)dest->data) + ((posYBase + y) * dest->width + posXBase + initialX) * dest->comp;
-            float *src_pixel = ((float *)src->data) + ((finalY - y + sy) * src->width + finalX + sx ) * src->comp;
+            float *src_pixel = ((float *)src->data) + ((h - 1 - y + sy) * src->width + (w - 1 + sx) ) * src->comp;
+            src_pixel -= initialX * src->comp;
             for(int x = initialX; x < finalX; x++) {
                 if (src_pixel[3] > 0.0 ) {
                     dest_pixel[0] = src_pixel[0];
@@ -256,7 +257,7 @@ void blit_ex(struct m_image *dest, const struct m_image *src, int px, int py, in
     } else if (mirroredVertical) {
         for(int y = initialY; y < finalY; y++) {
             float *dest_pixel = ((float *)dest->data) + ((posYBase + y) * dest->width + posXBase + initialX) * dest->comp;
-            float *src_pixel = ((float *)src->data) + ((finalY - y + sy) * src->width + initialX + sx ) * src->comp;
+            float *src_pixel = ((float *)src->data) + ((h - 1 - y + sy) * src->width + initialX + sx ) * src->comp;
             for(int x = initialX; x < finalX; x++) {
                 if (src_pixel[3] > 0.0 ) {
                     dest_pixel[0] = src_pixel[0];
@@ -271,7 +272,8 @@ void blit_ex(struct m_image *dest, const struct m_image *src, int px, int py, in
     } else if (mirroredHorizontal) {
         for(int y = initialY; y < finalY; y++) {
             float *dest_pixel = ((float *)dest->data) + ((posYBase + y) * dest->width + posXBase + initialX) * dest->comp;
-            float *src_pixel = ((float *)src->data) + ((y + sy) * src->width + finalX + sx ) * src->comp;
+            float *src_pixel = ((float *)src->data) + ((y + sy) * src->width + (w - 1 + sx) ) * src->comp;
+            src_pixel -= initialX * src->comp;
             for(int x = initialX; x < finalX; x++) {
                 if (src_pixel[3] > 0.0 ) {
                     dest_pixel[0] = src_pixel[0];
