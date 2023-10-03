@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include "hgl_ent.h"
+#include "../input/buttonstate.h"
 
 #define fun(X) void (*X)(void)
 #define fun2(X,Y) void (*X)(Y)
@@ -31,7 +32,7 @@ typedef struct {
 }MenuStarData;
 
 typedef struct{
-	fun2 (handleInput, u16);
+	fun2 (handleInput, ButtonState*);
     fun  (doRebound);
     fun  (onPlayerReachedGoal);
     fun  (doFallToBackground);

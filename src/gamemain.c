@@ -52,6 +52,17 @@ void wait(char *message) {
 #define REPEAT50(X) REPEAT25(X); REPEAT25(X);
 #define REPEAT100(X) REPEAT50(X); REPEAT50(X);
 
+#include "input/buttonstate.h"
+
+static ButtonState buttonState;
+
+static void initButtonStateInput() {
+    initButtonState(&buttonState);
+}
+
+static void updateInput() {
+    updateButtonState(&buttonState);
+}
 
 void onPlayerCollidedWithCeilingTile(PlayerEventHandler*playerEventHandler, Tile tile) {
     uint8_t tileId;
@@ -158,7 +169,7 @@ void checkCoin(TileMap* tileMap, Actor * actor) {
 }
 
 #include "engine/fsm.h"
-CREATE_STATE_MACHINE(GameStateMachine, LoadMenu, Menu, LoadLevel, StartGame, Game, UnloadLevel)
+CREATE_STATE_MACHINE(GameStateMachine, LoadMenu, Menu, LoadLevel, Game, UnloadLevel)
 
 
 static int font_atlas;
@@ -240,13 +251,9 @@ static void initMenu() {
 }
 
 
-#include "input/buttonstate.h"
 
-static ButtonState buttonState;
 
 void menuInput() {
-    updateButtonState(&buttonState);
-
     if (buttonState.just_pressed & PAD_LEFT) {
         printf("left\n");
     }
@@ -356,15 +363,14 @@ static void stateLoadMenu() {
 
 static void stateMenu() {
     drawMenu();
-    unsigned short btn = getButtons(0);
-    if (btn & PAD_START) {
+    if (buttonState.just_pressed & PAD_START) {
         GameStateMachine.setLoadLevel();
     }
 }
 
 static void stateLoadLevel() {
     loadLevel();
-    GameStateMachine.setStartGame();
+    GameStateMachine.setGame();
 }
 
 static void stateUnloadLevel() {
@@ -372,22 +378,13 @@ static void stateUnloadLevel() {
     GameStateMachine.setLoadMenu();
 }
 
-static void stateStartGame() {
-    drawMenu();
-    unsigned short btn = getButtons(0);
-    if (!(btn & PAD_START)) {
-        GameStateMachine.setGame();
-    }
-}
-
 static void stateGame() {
-    unsigned short btn = getButtons(0);
-    if (btn & PAD_START) {
+    if (buttonState.just_pressed & PAD_START) {
         GameStateMachine.setUnloadLevel();
     }
 
-    sonic->sonic.handleInput(btn);
-    fallToBackgroundScript->sonic.handleInput(btn);
+    sonic->sonic.handleInput(&buttonState);
+    fallToBackgroundScript->sonic.handleInput(&buttonState);
 
     HGL_COMMAND_updateAll();
     HGL_ANIM_updateAll();
@@ -430,35 +427,10 @@ void goToMainMenu() {
     GameStateMachine.setUnloadLevel();
 }
 
-
-void checkDebugInput() {
-    unsigned short btn = getButtons(0);
-    if(btn & PAD_UP) {
-
-    }
-    else if(btn & PAD_DOWN) {
-
-    }
-    if(btn & PAD_LEFT) {
-
-    }
-    else if(btn & PAD_RIGHT) {
-
-    }
-
-    if(btn & PAD_CROSS) {
-
-    }
-    if(btn & PAD_SQUARE) {
-
-    }
-    if (btn & PAD_START) {
-        printf("START PRESSED!\n");
-    }
-}
-
 int gameMain() {
     printf("gameMain\n");
+
+    initButtonStateInput();
 
     HGL_init();
 
@@ -523,6 +495,7 @@ int gameMain() {
 }
 
 int gameUpdate() {
+    updateInput();
     GameStateMachine.update();
     HGL_frame();
     return 0;

@@ -4,13 +4,14 @@
 #include <stdint.h>
 
 typedef struct {
-    uint8_t btn;
-    uint8_t changed;
-    uint8_t just_pressed;
-    uint8_t released;
-    uint8_t last;
+    uint16_t btn;
+    uint16_t changed;
+    uint16_t just_pressed;
+    uint16_t released;
+    uint16_t last;
 } ButtonState;
 
+void initButtonState(ButtonState *buttonState);
 void updateButtonState(ButtonState *buttonState);
 
 #endif //__INPUT_BUTTON_STATE_H__

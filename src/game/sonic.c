@@ -2,6 +2,7 @@
 #include "sonic.h"
 
 #include "../core/hgl.h"
+#include "../input/buttonstate.h"
 #include "../input/input.h"
 #include "../engine/sprites.h"
 #include "../core/hgl_types.h"
@@ -164,10 +165,10 @@ static u16 input = 0;
 static u16 just_pressed = 0;
 static u16 released = 0;
 
-static void handleInput(u16 inputState){
-    just_pressed = (inputState ^ input) & (~input);
-    released = (inputState ^ input) & (~inputState);
-    input = inputState;
+static void handleInput(ButtonState* buttonState){
+    just_pressed = buttonState->just_pressed;
+    released = buttonState->released;
+    input = buttonState->btn;
 }
 
 #define BUTTON_A PAD_CROSS

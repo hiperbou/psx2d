@@ -1,6 +1,7 @@
 #include "fallToBackgroundScript.h"
 #include "../core/hgl_actor.h"
 #include "sonic.h" //PlayerEventHandler
+#include "../input/buttonstate.h"
 #include "../input/input.h"
 #include "enemyupdate.h" //setZ
 
@@ -8,8 +9,8 @@ static PlayerEventHandler *myPlayerEventHandler;
 
 static u16 input = 0;
 
-static void fallToBackgroundHandleInput(u16 inputState){
-    input = inputState;
+static void fallToBackgroundHandleInput(ButtonState *buttonState){
+    input = buttonState->btn;
 }
 
 #define BUTTON_DOWN PAD_DOWN
