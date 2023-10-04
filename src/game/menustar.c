@@ -9,46 +9,44 @@
 
 ANIM(anim_enabled, 98, 99)
 ANIM(anim_disabled, 5)
-ANIM(anim_selected_enabled, 98, 99, 5, 5)
-ANIM(anim_selected_disabled, 5, 5, 0, 0)
+ANIM(anim_selected_enabled,  5, 5, 98, 99)
+ANIM(anim_selected_disabled, 0, 0, 5, 5)
 ANIM(anim_dead, 0)
 
-#include "../engine/actor_fsm.h"
-#include "../core/hgl_mem.h"
-
-ACTOR_CREATE_STATE_MACHINE(MenuStarStateMachine, Idle, Activated)
-
-static void stateIdle(MenuStarStateMachine * sm, Actor *actor) {
-    setAnimation(actor, anim_enabled, 6);
+static void select(Actor* actor) {
+    setAnimation(actor, actor->menuStar.anim_selected, 6);
 }
 
-static void stateActivated(MenuStarStateMachine * sm, Actor *actor) {
-    setAnimation(actor, anim_enabled, 6);
+static void unselect(Actor* actor) {
+    setAnimation(actor, actor->menuStar.anim_unselected, 6);
 }
 
-static void update(Actor* actor) {
-    updateMenuStarStateMachine(actor->menuStar.sm, actor);
+static void activate(Actor* actor) {
+    actor->menuStar.anim_selected = &anim_selected_enabled[0];
+    actor->menuStar.anim_unselected = &anim_enabled[0];
+    unselect(actor);
 }
 
-static void destructor(Actor *actor) {
-    HGL_free(actor->menuStar.sm);
+static void deactivate(Actor* actor) {
+    actor->menuStar.anim_selected = &anim_selected_disabled[0];
+    actor->menuStar.anim_unselected = &anim_disabled[0];
+    unselect(actor);
 }
 
 static void constructor(Actor* actor) {
-    MenuStarStateMachine *menuStarStateMachine = HGL_malloc(sizeof (MenuStarStateMachine));
-    initMenuStarStateMachine(menuStarStateMachine);
-    setAnimation(actor, anim_enabled, 6);
+    //setAnimation(actor, anim_disabled, 6);
     setZ(actor, 1);
     actor->menuStar = (MenuStarData) {
-        .sm = menuStarStateMachine
+        .activate = activate,
+        .deactivate = deactivate,
+        .select = select,
+        .unselect = unselect,
+        .anim_selected = &anim_selected_enabled[0],
+        .anim_unselected = &anim_enabled[0]
     };
 }
 
-inline static Actor* newMenuStarBuilder(int file, const fix32 x, const fix32 y, ActorConstructorCallback* constructorCB) {
-    return newActorWithDestructor(file,1, x, y,constructorCB,update, destructor);
-}
-
 Actor* newMenuStar(int file, const fix32 x, const fix32 y) {
-    return newMenuStarBuilder(file, x, y, constructor);
+    return newActor(file,1, x, y, constructor,NULL);
 }
 

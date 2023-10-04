@@ -39,6 +39,7 @@ CLionSources:
     src/game/enemyupdate.c \
     src/game/fallToBackgroundScript.c \
     src/game/goal.c \
+    src/game/menustar.c \
     src/game/motobug.c \
     src/game/sonic.c \
     src/game/tileshader.c \

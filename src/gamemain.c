@@ -210,7 +210,40 @@ static void drawTestMenu() {
     draw_text8(0, font_atlas, text, 16, 160+48, 0, typewritter3 >> 3);
 }
 
+#define COURSE_MENU_MAX_MISSIONS 6
+typedef struct CourseMenu{
+    int numStars;
+    int selectedItem;
+    Actor *stars[COURSE_MENU_MAX_MISSIONS];
+    int missionState[COURSE_MENU_MAX_MISSIONS];
+    const char* missionDescription[COURSE_MENU_MAX_MISSIONS];
+    const char* courseTitle;
+}CourseMenu;
+
+void initCourseMenu(CourseMenu *courseMenu) {
+    memset(courseMenu, 0, sizeof (CourseMenu));
+    *courseMenu = (CourseMenu) {
+            .numStars = 6,
+            .selectedItem = 0,
+            .missionState = { 1, 1, 0, 0, 1, 0 },
+            .courseTitle = "TICK TOCK CLOCK",
+            .missionDescription = {
+                    "MISSION 1",
+                    "MISSION 2",
+                    "MISSION 3",
+                    "MISSION 4",
+                    "MISSION 5",
+                    "MISSION 6",
+            }
+    };
+}
+
+CourseMenu courseMenu;
+
+
 static void initMenu() {
+    initCourseMenu(&courseMenu);
+
     int oneStarsPositions[] = { 10 };
     int twoStarsPositions[] = { 9, 11 };
     int threeStarsPositions[] = {8, 10, 12};
@@ -227,38 +260,50 @@ static void initMenu() {
         sixStarsPositions
     };
 
-    int numStars = 6;
+    int numStars = courseMenu.numStars;
     int *starPos = stars[numStars - 1];
+
     for (int i=0; i<numStars; i++) {
-        newMenuStar(tileset_fpgs[0], TILE(starPos[i]), TILE(4));
+        Actor * star = newMenuStar(tileset_fpgs[0], TILE(starPos[i]), TILE(4));
+        if (courseMenu.missionState[i]) {
+            star->menuStar.activate(star);
+        } else {
+            star->menuStar.deactivate(star);
+        }
+        courseMenu.stars[i] = star;
     }
-    //printf("size of %i\n", sizeof (*starArray) / sizeof (int));
 
-    //odd
-    //newMenuStar(tileset_fpgs[0], TILE(9), TILE(4));
-    //newMenuStar(tileset_fpgs[0], TILE(11), TILE(4));
-    //newMenuStar(tileset_fpgs[0], TILE(7), TILE(4));
-    //newMenuStar(tileset_fpgs[0], TILE(13), TILE(4));
-    //newMenuStar(tileset_fpgs[0], TILE(5), TILE(4));
-    //newMenuStar(tileset_fpgs[0], TILE(15), TILE(4));
+    for (int i=0; i<numStars; i++){
+        if(courseMenu.missionState[i] == 0) {
+            courseMenu.selectedItem = i;
+            break;
+        }
+    }
+    Actor * star = courseMenu.stars[courseMenu.selectedItem];
+    star->menuStar.select(star);
 
-    //even
-    //newMenuStar(tileset_fpgs[0], TILE(10), TILE(4));
-    //newMenuStar(tileset_fpgs[0], TILE(6), TILE(4));
-    //newMenuStar(tileset_fpgs[0], TILE(8), TILE(4));
-    //newMenuStar(tileset_fpgs[0], TILE(12), TILE(4));
-    //newMenuStar(tileset_fpgs[0], TILE(14), TILE(4));
+    courseMenu.numStars = numStars;
 }
-
-
 
 
 void menuInput() {
     if (buttonState.just_pressed & PAD_LEFT) {
-        printf("left\n");
+        Actor * selectedStar = courseMenu.stars[courseMenu.selectedItem];
+        selectedStar->menuStar.unselect(selectedStar);
+        courseMenu.selectedItem--;
+        if(courseMenu.selectedItem < 0) courseMenu.selectedItem = courseMenu.numStars - 1;
+        selectedStar = courseMenu.stars[courseMenu.selectedItem];
+        selectedStar->menuStar.select(selectedStar);
+        //printf("left %i %i\n", courseMenu.selectedItem, courseMenu.stars[courseMenu.selectedItem]);
     }
     if (buttonState.just_pressed & PAD_RIGHT) {
-        printf("right\n");
+        Actor * selectedStar = courseMenu.stars[courseMenu.selectedItem];
+        selectedStar->menuStar.unselect(selectedStar);
+        courseMenu.selectedItem++;
+        if(courseMenu.selectedItem >= courseMenu.numStars) courseMenu.selectedItem = 0;
+        selectedStar = courseMenu.stars[courseMenu.selectedItem];
+        selectedStar->menuStar.select(selectedStar);
+        //printf("right %i %i\n", courseMenu.selectedItem, courseMenu.stars[courseMenu.selectedItem]);
     }
 }
 
@@ -288,7 +333,7 @@ static void drawMenu() {
     static const char* numbers[] = { "1", "2", "3", "4", "5", "6" };
     static const int numberXOffset = 4;
 
-    int numStars = 6;
+    int numStars = courseMenu.numStars;
     const int *starPos = stars[numStars - 1];
     for (int i=0; i<numStars; i++) {
         draw_text8(0, font_atlas, numbers[i], (TILE_SIZE * starPos[i]) - numberXOffset, numberY, 0, -1);
@@ -296,11 +341,12 @@ static void drawMenu() {
 
     //draw_text8(0, font_atlas, "1", 0, numberY, 0, -1);
     static const int screenCenterX = 320 >> 1;
-    int textPosX = text_get_centered_position("ROLL INTO THE CAGE", screenCenterX);
-    int textPosX2 = text_get_centered_position("TICK TOCK CLOCK", screenCenterX);
+    const char * missionText = courseMenu.missionDescription[courseMenu.selectedItem];
+    int textPosX = text_get_centered_position(missionText, screenCenterX);
+    int textPosX2 = text_get_centered_position(courseMenu.courseTitle, screenCenterX);
 
-    draw_text8(0, font_atlas, "ROLL INTO THE CAGE", textPosX, missionY, 0, -1);
-    draw_text8(0, font_atlas, "TICK TOCK CLOCK", textPosX2, courseY, 0, -1);
+    draw_text8(0, font_atlas, missionText, textPosX, missionY, 0, -1);
+    draw_text8(0, font_atlas, courseMenu.courseTitle, textPosX2, courseY, 0, -1);
 
 
     HGL_ANIM_updateAll();

@@ -9,6 +9,8 @@
 #define fun2(X,Y) void (*X)(Y)
 #define boolFun(X) bool (*X)(void)
 
+typedef struct Actor Actor;
+
 typedef struct{
 	s16 direction;
     s16 min;
@@ -28,7 +30,12 @@ typedef struct {
 }GoalData;
 
 typedef struct {
-    void * sm;
+    void(*activate)(Actor*);
+    void(*deactivate)(Actor*);
+    void(*select)(Actor*);
+    void(*unselect)(Actor*);
+    const int *anim_selected;
+    const int *anim_unselected;
 }MenuStarData;
 
 typedef struct{
@@ -38,7 +45,6 @@ typedef struct{
     fun  (doFallToBackground);
 }SonicData;
 
-typedef struct Actor Actor;
 typedef void ActorConstructorCallback(Actor* actor);
 typedef void ActorUpdateCallback(Actor* actor);
 typedef void ActorDestructorCallback(Actor* actor);
