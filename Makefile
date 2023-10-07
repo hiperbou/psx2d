@@ -1,7 +1,7 @@
 TARGET = Demo
 TYPE = ps-exe
 
-MODULES = core core/psx engine engine/psx game input input/psx media media/psx pool psx utils
+MODULES = core core/psx engine engine/psx game game/data game/menu input input/psx media media/psx pool psx utils
 SOURCES	= src $(addprefix src/,$(MODULES))
 
 CFILES		= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
@@ -43,6 +43,8 @@ CLionSources:
     src/game/motobug.c \
     src/game/sonic.c \
     src/game/tileshader.c \
+    src/game/data/gamedata.c \
+    src/game/menu/coursemenu.c \
     src/input/psx/input.c \
     src/media/fpg.c \
     src/pool/FixedPool.c \

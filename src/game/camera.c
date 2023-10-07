@@ -66,6 +66,6 @@ Actor* newCamera(Actor* cameraTarget, const fix32 x, const fix32 y) {
     target = cameraTarget;
     camposx = -400;
     camposy = -400;
-    camFollow(x, y);
+    camFollow(target->entity->x, target->entity->y);
     return newActor(0, 0, x, y, constructor, update);
 }

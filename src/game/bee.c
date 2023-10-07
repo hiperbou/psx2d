@@ -20,9 +20,11 @@ static void update(Actor* actor) {
 static void constructor(Actor* actor) {
     setAnimation(actor, anim_patrol, 2);
     setZ(actor, 1);
-    actor->enemy.direction = 0;
-    actor->enemy.min = actor->entity->x - FIX32(128);
-    actor->enemy.max = actor->entity->x + FIX32(128);
+    actor->enemy = (EnemyData) {
+        .direction = 0,
+        .min = actor->entity->x - FIX32(128),
+        .max = actor->entity->x + FIX32(128)
+    };
 }
 
 Actor* newBee(int file, const fix32 x, const fix32 y) {

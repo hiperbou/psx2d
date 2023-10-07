@@ -35,9 +35,9 @@ Actor* newActor(int file, int graph, const fix32 x, const fix32 y, ActorConstruc
         actor->animationState = NULL;
     }
 	actor->entity = createEntity(file, graph, x, y);
-    if(updateCB) actor->updateCallback = updateCB;
-	if(constructorCB) constructorCB(actor);
+    actor->updateCallback = updateCB;
     actor->destructorCallback = NULL;
+    if(constructorCB) constructorCB(actor);
 	return actor;
 }
 

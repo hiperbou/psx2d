@@ -46,6 +46,8 @@
 #include "../pool/ObjectPool.c"
 #include "../utils/utils.c"
 
+#include "../game/data/gamedata.c"
+#include "../game/menu/coursemenu.c"
 
 #define anim_patrol bee_anim_patrol
 #define updatePhysics bee_updatePhysics
@@ -291,7 +293,7 @@ void *persistent_memory = NULL;
 
 typedef struct {
     int x,y;
-}GameState;
+}SaveGameState;
 
 static TileMap bgaTileMap;
 static TileMap collisionTileMap;
@@ -307,10 +309,10 @@ static AnimationState* tilesetAnimationState;
 void ctoy_begin(void)
 {
     if (ctoy_t() == 0) {
-        persistent_memory = calloc(sizeof (GameState), 1); // allocate 256 bytes with zero value
+        persistent_memory = calloc(sizeof (SaveGameState), 1); // allocate 256 bytes with zero value
         ctoy_register_memory(persistent_memory); // register persistent memory
 
-        GameState * gs = persistent_memory;
+        SaveGameState * gs = persistent_memory;
         gs->y = 188;
     }
     else {
@@ -395,7 +397,7 @@ void ctoy_main_loop(void)
    gameUpdate();
    return;
 
-    GameState *state = (GameState *)persistent_memory; // access a piece of persistent memory
+    SaveGameState *state = (SaveGameState *)persistent_memory; // access a piece of persistent memory
 
     //gameUpdate();
     //return;

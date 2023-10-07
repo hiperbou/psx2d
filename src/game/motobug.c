@@ -15,9 +15,11 @@ static void update(Actor* actor) {
 static void constructor(Actor* actor) {
     setAnimation(actor, anim_patrol, 10);
     setZ(actor, 1);
-    actor->enemy.direction = 0;
-    actor->enemy.min = actor->entity->x - FIX32(64);
-    actor->enemy.max = actor->entity->x + FIX32(64);
+    actor->enemy = (EnemyData) {
+        .direction = 0,
+        .min = actor->entity->x - FIX32(64),
+        .max = actor->entity->x + FIX32(64)
+    };
 }
 
 Actor* newMotobug(int file, const fix32 x, const fix32 y){
