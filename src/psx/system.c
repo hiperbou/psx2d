@@ -322,12 +322,15 @@ void sortRotSprite(int x, int y, int angle, int scale, int flags, SPRITE *sprite
         v[3].vx, v[3].vy );
 
     int mirroredHorizontal = flags & 1;
-    int mirroredVertical = !!(flags & 2);
+    int mirroredVertical = flags & 2;
 
-    int uu = sprite->u + spriteWidth * mirroredHorizontal;
-    int vv = sprite->v + spriteHeight * mirroredVertical;
-    int ww = spriteWidth  * (1 - 2 * mirroredHorizontal);
-    int hh = spriteHeight * (1 - 2 * mirroredVertical);
+    int spriteWidthMinusOne = sprite->w - 1;
+    int spriteHeightMinusOne = sprite->h - 1;
+
+    int uu = sprite->u + spriteWidthMinusOne * mirroredHorizontal;
+    int vv = sprite->v + spriteHeightMinusOne * mirroredVertical;
+    int ww = mirroredHorizontal ? -spriteWidthMinusOne : spriteWidth;
+    int hh = mirroredVertical ? -spriteHeightMinusOne : spriteHeight;
     setUVWH( quad, uu, vv, ww, hh);
 
     addPrim(orderTable, quad );

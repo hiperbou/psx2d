@@ -48,18 +48,14 @@ HGL_Sprite* HGL_SPR_new(const int file, const int graph, const s16 x, const s16 
     PoolElement * elem = ObjectPool_get(spritePool);
     HGL_Sprite * hglSprite = elem->data;
 
-    /*hglSprite->spr = (Tsprite) {
+    *hglSprite = (HGL_Sprite) {
         .file = file,
         .graph = graph,
-        .x = 0,
-        .y = 0
-    };*/
-    hglSprite->x = x;
-    hglSprite->y = y;
-    hglSprite->z = 0;
-    hglSprite->file = file;
-    hglSprite->graph = graph;
-    //hglSprite->spr = new_sprite(x,y,0,file,graph);
+        .x = x,
+        .y = y,
+        .z = 0,
+        .flags = 0
+    };
 
     return hglSprite;
 }
