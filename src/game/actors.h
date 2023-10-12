@@ -10,6 +10,7 @@ Actor* newMotobug(int file, fix32 x, fix32 y);
 Actor* newBlock(int file, int graph, fix32 x, fix32 y, int type);
 Actor* newGoal(int file, fix32 x, fix32 y, Actor* target);
 Actor* newGoalActivated(int file, fix32 x, fix32 y, Actor * target);
+Actor* newGoalHidden(int file, fix32 x, fix32 y, Actor * target);
 
 Actor* newCamera(Actor* cameraTarget, fix32 x, fix32 y);
 

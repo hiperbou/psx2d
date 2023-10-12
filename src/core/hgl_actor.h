@@ -27,6 +27,7 @@ typedef struct {
     PhysicsObjectData physicsObjectData;
     Actor* targetActor;
     void * sm;
+    uint8_t mission;
 }GoalData;
 
 typedef struct {
@@ -41,7 +42,7 @@ typedef struct {
 typedef struct{
 	fun2 (handleInput, ButtonState*);
     fun  (doRebound);
-    fun  (onPlayerReachedGoal);
+    fun2  (onPlayerReachedGoal, int8_t);
     fun  (doFallToBackground);
 }SonicData;
 

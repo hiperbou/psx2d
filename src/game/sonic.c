@@ -363,12 +363,15 @@ static void stateGrounded() {
     checkWalls();
 }
 
-static void onPlayerReachedGoal() {
+static int8_t missionCompleted = -1;
+
+static void onPlayerReachedGoal(int8_t mission) {
+    missionCompleted = mission;
     setAnimWin(&animStateMachine);
     setGoalReached();
 }
 
-void doPlayerWinAnimationParticles(Actor*player); //main.c
+void doPlayerWinAnimationParticles(Actor*player, int8_t mission); //main.c
 static void stateGoalReached() {
     posy += speedY;
 
@@ -376,7 +379,7 @@ static void stateGoalReached() {
     if (speedY > 0 && posy >= groundY) {
         posy = groundY;
         setWinEnter();
-        doPlayerWinAnimationParticles(playerEventHandler->player);
+        doPlayerWinAnimationParticles(playerEventHandler->player, missionCompleted);
     } else {
         speedY += GRAVITY;
     }

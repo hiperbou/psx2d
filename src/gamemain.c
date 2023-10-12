@@ -124,22 +124,21 @@ bool onPlayerGrounded(PlayerEventHandler*playerEventHandler, Tile tile) {
 
 void goToMainMenu();
 
-
-void newGoToMainMenuCommand(int delay, uint8_t *target, uint8_t value) {
+void newGoToMainMenuCommand(int delay, int8_t value) {
     DelayedCommand * command = HGL_COMMAND_new();
     *command = (DelayedCommand) {
             .delay = delay,
             .callback = goToMainMenu,
-            .target = target,
+            .target = NULL,
             .data = value
     };
 }
 
-void doPlayerWinAnimationParticles(Actor*player) {
+void doPlayerWinAnimationParticles(Actor*player, int8_t mission) {
     int x = TILE_CENTER_X_TO_SCREEN(POS_TO_TILE_16(player->entity->x));
     int y = TILE_CENTER_Y_TO_SCREEN(POS_TO_TILE_16(player->entity->y));
     REPEAT25(new_Particle(x, y))
-    newGoToMainMenuCommand(120, NULL, 0);
+    newGoToMainMenuCommand(120, mission);
 }
 
 void initPlayerEventHandler(PlayerEventHandler*playerEventHandler, TileMap *tilemap, TileMap* collisionTileMap) {
@@ -216,7 +215,6 @@ static void drawTestMenu() {
 
 GameState gameState = {
     .lastCourse = 0,
-    .lastMission = 0,
     .courseMissionState = {
         { active, hidden, hidden, hidden, hidden, hidden },
         { active, hidden, hidden, hidden, hidden, hidden },
@@ -377,7 +375,12 @@ static void loadLevel() {
 
     //goal = newGoal(tileset_fpgs[0], TILE_CENTER(10), TILE_CENTER(21), sonic);
     //deleteActor(goal);
-    newGoal(tileset_fpgs[0], TILE_CENTER(174), TILE_CENTER(21), sonic);
+    newGoal(tileset_fpgs[0], TILE_CENTER(174), TILE_CENTER(21), sonic)->goal.mission = 0; // 1 - Finish
+    newGoal(tileset_fpgs[0], TILE_CENTER(47), TILE_CENTER(24), sonic)->goal.mission = 1; // 2 -  Floor box
+    newGoal(tileset_fpgs[0], TILE_CENTER(96), TILE_CENTER(8), sonic)->goal.mission = 2; // 3 -  cloud box
+    newGoalHidden(tileset_fpgs[0], TILE(148), TILE_CENTER(6), sonic)->goal.mission = 3; // 4 -  pipe
+    newGoalHidden(tileset_fpgs[0], TILE_CENTER(65), TILE_CENTER(24), sonic)->goal.mission = 4; // 5 - behind bushes
+    newGoalActivated(tileset_fpgs[0], TILE_CENTER(176), TILE_CENTER(25), sonic)->goal.mission = 5; // 6 - Gotta go fast
     //spawnGoal(174, 21);
 
     newCamera(sonic, FIX32(40), FIX32(128));
@@ -407,12 +410,6 @@ static void stateMenu() {
     if (buttonState.just_pressed & PAD_START) {
         GameStateMachine.setLoadLevel();
         HGL_ACTOR_deleteAll();
-        //TODO: test code remove me
-        if (gameState.lastMission < 5) {
-            gameState.lastMission++;
-            gameState.courseMissionState[0].missionState[gameState.lastMission - 1] = completed;
-            gameState.courseMissionState[0].missionState[gameState.lastMission] = active;
-        }
     }
 }
 
@@ -471,7 +468,18 @@ static void stateGame() {
     draw_text8(0, font_atlas, "Hello", 8, 24, 0, -1);
 }
 
-void goToMainMenu() {
+
+
+void goToMainMenu(DelayedCommand * command) {
+    int8_t mission = (int8_t)command->data;
+
+    printf("Completed mission %i\n", mission);
+
+    CourseMissionState * courseMissionState = &gameState.courseMissionState[0];
+
+    CourseMissionState_completeMission(courseMissionState, mission);
+    CourseMissionState_activateMission(courseMissionState, CourseMissionState_getNextMission(courseMissionState));
+
     GameStateMachine.setUnloadLevel();
 }
 

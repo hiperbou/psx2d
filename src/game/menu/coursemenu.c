@@ -10,9 +10,12 @@ void initCourseMenu(CourseMenu *courseMenu, const Course* course, const GameStat
         if (missionState[i] != hidden) { numStars = i + 1; break; }
     }
 
+    int8_t nextMission = CourseMissionState_getNextMission(&gameState->courseMissionState[gameState->lastCourse]);
+    int8_t selectedItem = nextMission >= 0 ? nextMission : 0;
+
     *courseMenu = (CourseMenu) {
             .numStars = numStars,
-            .selectedItem = gameState->lastMission,
+            .selectedItem = selectedItem,
             .missionState = missionState,
             .courseTitle = course->courseTitle,
             .missionDescription = {

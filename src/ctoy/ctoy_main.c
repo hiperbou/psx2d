@@ -48,6 +48,7 @@
 
 #include "../game/data/gamedata.c"
 #include "../game/menu/coursemenu.c"
+#include "../game/state/gamestate.c"
 
 #define anim_patrol bee_anim_patrol
 #define updatePhysics bee_updatePhysics

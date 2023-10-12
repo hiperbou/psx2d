@@ -2,6 +2,7 @@
 #define ___GAME_STATE_
 
 #include <stdint.h>
+#include "../data/gamedata.h"
 
 enum MissionState { hidden, active, completed };
 
@@ -10,9 +11,12 @@ typedef struct CourseMissionState {
 }CourseMissionState;
 
 typedef struct GameState {
-    int8_t lastCourse;
-    int8_t lastMission;
+    uint8_t lastCourse;
     CourseMissionState courseMissionState[NUM_COURSES];
 }GameState;
+
+int8_t CourseMissionState_completeMission(CourseMissionState* courseMissionState, int8_t mission);
+int8_t CourseMissionState_getNextMission(const CourseMissionState* courseMissionState);
+int8_t CourseMissionState_activateMission(CourseMissionState* courseMissionState, int8_t mission);
 
 #endif

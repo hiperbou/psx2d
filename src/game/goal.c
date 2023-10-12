@@ -8,6 +8,7 @@
 #include "../core/hgl_anim.h"
 
 ANIM(anim_idle, 2, 5, 6)
+ANIM(anim_hidden, 0)
 ANIM(anim_activated, 5)
 ANIM(anim_activated2, 98,5,99,5)
 ANIM(anim_dead, 0)
@@ -16,7 +17,7 @@ ANIM(anim_star, 98,99)
 #include "../engine/actor_fsm.h"
 #include "../core/hgl_mem.h"
 
-ACTOR_CREATE_STATE_MACHINE(GoalStateMachine, Idle, Activated, Star, Float, Dead)
+ACTOR_CREATE_STATE_MACHINE(GoalStateMachine, Idle, Hidden, Activated, Star, Float, Dead)
 
 static bool checkColision(Actor * actor, Actor * targetActor) {
     if(targetActor->entity->x < actor->entity->x - FIX32(16) ||
@@ -41,6 +42,13 @@ static void stateActivated(GoalStateMachine * sm, Actor *actor) {
     }
 }
 
+static void stateHidden(GoalStateMachine * sm, Actor *actor) {
+    setAnimation(actor, anim_hidden, 32);
+    if(checkColision(actor, actor->goal.targetActor)) {
+        setActivated(sm);
+    }
+}
+
 static void stateStar(GoalStateMachine * sm, Actor *actor) {
     if(updatePhysicsObject(actor) == UpAndDownState_down) {
         setAnimation(actor, anim_star, 6);
@@ -51,7 +59,7 @@ static void stateStar(GoalStateMachine * sm, Actor *actor) {
 static void stateFloat(GoalStateMachine * sm, Actor *actor) {
     Actor * player = actor->goal.targetActor;
     if (checkColision(actor, player)) {
-        player->sonic.onPlayerReachedGoal();
+        player->sonic.onPlayerReachedGoal(actor->goal.mission);
         setAnimation(actor, anim_dead, 6);
         setDead(sm);
     }
@@ -83,13 +91,19 @@ static void constructor(Actor* actor) {
                 .groundY = actor->entity->y
         },
         .targetActor = targetActor,
-        .sm = goalStateMachine
+        .sm = goalStateMachine,
+        .mission = 0
     };
 }
 
 static void constructorActivated(Actor* actor) {
     constructor(actor);
     setActivated(actor->goal.sm);
+}
+
+static void constructorHidden(Actor* actor) {
+    constructor(actor);
+    setHidden(actor->goal.sm);
 }
 
 inline static Actor* newGoalBuilder(int file, const fix32 x, const fix32 y, Actor * target, ActorConstructorCallback* constructorCB) {
@@ -103,4 +117,8 @@ Actor* newGoal(int file, const fix32 x, const fix32 y, Actor * target) {
 
 Actor* newGoalActivated(int file, const fix32 x, const fix32 y, Actor * target) {
     return newGoalBuilder(file, x, y, target, constructorActivated);
+}
+
+Actor* newGoalHidden(int file, const fix32 x, const fix32 y, Actor * target) {
+    return newGoalBuilder(file, x, y, target, constructorHidden);
 }
