@@ -27,7 +27,10 @@ typedef struct {
     PhysicsObjectData physicsObjectData;
     Actor* targetActor;
     void * sm;
-    uint8_t mission;
+    int8_t mission;
+    void(*activate)(Actor*);
+    void(*deactivate)(Actor*);
+    bool collisionEnabled;
 }GoalData;
 
 typedef struct {
@@ -39,8 +42,12 @@ typedef struct {
     const int *anim_unselected;
 }MenuStarData;
 
+typedef struct {
+    fun2 (handleInput, ButtonState*);
+}InputHandlerData;
+
 typedef struct{
-	fun2 (handleInput, ButtonState*);
+    InputHandlerData inputHandler;
     fun  (doRebound);
     fun2  (onPlayerReachedGoal, int8_t);
     fun  (doFallToBackground);
@@ -54,6 +61,7 @@ typedef struct Actor {
 	HGL_Entity *entity;
     AnimationState *animationState;
 	union {
+        InputHandlerData inputHandler;
 		EnemyData enemy;
         PhysicsObjectData physics;
 		SonicData sonic;

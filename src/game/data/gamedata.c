@@ -5,10 +5,10 @@
 GameData gameData = {
     .course = {
         {
-            .courseTitle = _(" 1 BOB-OMB BATTLEFIELD"),
+            .courseTitle = _(" 1 GRASS LAND PLAINS"),
             .missionDescription = {
-                    _("BIG BOB-OMB ON THE SUMMIT")     , _("FOOTRACE WITH KOOPA THE QUICK") , _("SHOOT TO THE ISLAND IN THE SKY"),
-                    _("FIND THE 8 RED COINS")          , _("MARIO WINGS TO THE SKY")        , _("BEHIND CHAIN CHOMP'S GATE")
+                    _("REACH TO THE GOAL")     , _("BOX IN THE FLOOR") , _("FAR ABOVE THE CLOUDS"),
+                    _("TOP PLUMBER")          , _("BEHIND THE SCENES")        , _("GOTTA GO FAST")
             }
         },
         {

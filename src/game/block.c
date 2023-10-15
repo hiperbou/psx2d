@@ -40,7 +40,7 @@ static void constructorCoin(Actor* actor) {
 
 static void updateCoin(Actor* actor) {
     if (updatePhysicsObject(actor) == UpAndDownState_down) {
-        newBlock(2, 1, actor->entity->x, actor->entity->y, 2);
+        newBlock(2, 1, actor->entity->x, actor->entity->y, BlockType_score);
         deleteActor(actor);
     }
 }
@@ -57,7 +57,7 @@ static void constructor(Actor* actor) {
         .groundY = actor->entity->y
     };
 
-    newBlock(2, 1, actor->entity->x, actor->entity->y - FIX32(16), 1);
+    //newBlock(2, 1, actor->entity->x, actor->entity->y - FIX32(16), BlockType_coin);
     //spawnGoal(POS_TO_TILE_16(actor->entity->x), POS_TO_TILE_16(actor->entity->y) - 1);
 }
 

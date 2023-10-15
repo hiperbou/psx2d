@@ -2,10 +2,11 @@
 #include "../core/hgl.h"
 #include "../core/hgl_spr.h"
 #include "../core/hgl_ent.h"
-
-#include "enemyupdate.h"
 #include "../core/hgl_actor.h"
 #include "../core/hgl_anim.h"
+
+#include "actors.h"
+#include "enemyupdate.h"
 
 ANIM(anim_idle, 2, 5, 6)
 ANIM(anim_hidden, 0)
@@ -17,35 +18,38 @@ ANIM(anim_star, 98,99)
 #include "../engine/actor_fsm.h"
 #include "../core/hgl_mem.h"
 
-ACTOR_CREATE_STATE_MACHINE(GoalStateMachine, Idle, Hidden, Activated, Star, Float, Dead)
+ACTOR_CREATE_STATE_MACHINE(GoalStateMachine, Idle, IdleHidden, Activated, Star, Float, Dead, Inactive)
 
-static bool checkColision(Actor * actor, Actor * targetActor) {
-    if(targetActor->entity->x < actor->entity->x - FIX32(16) ||
-       targetActor->entity->x > actor->entity->x + FIX32(16) ||
-       targetActor->entity->y < actor->entity->y - FIX32(16) ||
-       targetActor->entity->y > actor->entity->y + FIX32(16)) return false;
-    return true;
+inline static bool checkColision(Actor * actor, Actor * targetActor) {
+    if(actor->goal.collisionEnabled == false) return false;
+    return checkCollision(actor, targetActor);
+}
+
+inline static void enableCollision(Actor * actor, bool enabled) {
+    actor->goal.collisionEnabled = enabled;
 }
 
 static void stateIdle(GoalStateMachine * sm, Actor *actor) {
     if(checkColision(actor, actor->goal.targetActor)) {
+        setAnimation(actor, anim_activated, 6);
         setActivated(sm);
     }
 }
 
-static void stateActivated(GoalStateMachine * sm, Actor *actor) {
-    setAnimation(actor, anim_activated, 6);
+static void stateIdleHidden(GoalStateMachine * sm, Actor *actor) {
+    if(checkColision(actor, actor->goal.targetActor)) {
+        setAnimation(actor, anim_activated2, 3);
+        setActivated(sm);
+        enableCollision(actor, false);
+    }
+}
 
+static void stateInactive(GoalStateMachine * sm, Actor *actor) { }
+
+static void stateActivated(GoalStateMachine * sm, Actor *actor) {
     if(updatePhysicsObject(actor) == UpAndDownState_up) {
         setAnimation(actor, anim_activated2, 3);
         setStar(sm);
-    }
-}
-
-static void stateHidden(GoalStateMachine * sm, Actor *actor) {
-    setAnimation(actor, anim_hidden, 32);
-    if(checkColision(actor, actor->goal.targetActor)) {
-        setActivated(sm);
     }
 }
 
@@ -79,6 +83,24 @@ static void destructor(Actor *actor) {
     HGL_free(actor->goal.sm);
 }
 
+static void activateHiddenGoal(Actor * actor) {
+    if (isInactive(actor->goal.sm)) {
+        enableCollision(actor, true);
+        setIdleHidden(actor->goal.sm);
+    } else {
+        enableCollision(actor, false);
+    }
+}
+
+static void deactivateHiddenGoal(Actor * actor) {
+    if (isIdleHidden(actor->goal.sm)) {
+        enableCollision(actor, false);
+        setInactive(actor->goal.sm);
+    } else {
+        enableCollision(actor, true);
+    }
+}
+
 static void constructor(Actor* actor) {
     GoalStateMachine *goalStateMachine = HGL_malloc(sizeof (GoalStateMachine));
     initGoalStateMachine(goalStateMachine);
@@ -92,18 +114,28 @@ static void constructor(Actor* actor) {
         },
         .targetActor = targetActor,
         .sm = goalStateMachine,
-        .mission = 0
+        .mission = 0,
+        .activate = activateHiddenGoal,
+        .deactivate = deactivateHiddenGoal,
+        .collisionEnabled = true,
     };
 }
 
 static void constructorActivated(Actor* actor) {
     constructor(actor);
+    setAnimation(actor, anim_activated2, 6);
     setActivated(actor->goal.sm);
 }
 
 static void constructorHidden(Actor* actor) {
     constructor(actor);
-    setHidden(actor->goal.sm);
+    setAnimation(actor, anim_hidden, 32);
+}
+
+static void constructorHiddenInactive(Actor* actor) {
+    constructor(actor);
+    setAnimation(actor, anim_hidden, 32);
+    setInactive(actor->goal.sm);
 }
 
 inline static Actor* newGoalBuilder(int file, const fix32 x, const fix32 y, Actor * target, ActorConstructorCallback* constructorCB) {
@@ -121,4 +153,8 @@ Actor* newGoalActivated(int file, const fix32 x, const fix32 y, Actor * target) 
 
 Actor* newGoalHidden(int file, const fix32 x, const fix32 y, Actor * target) {
     return newGoalBuilder(file, x, y, target, constructorHidden);
+}
+
+Actor* newGoalHiddenInactive(int file, const fix32 x, const fix32 y, Actor * target) {
+    return newGoalBuilder(file, x, y, target, constructorHiddenInactive);
 }

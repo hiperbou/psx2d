@@ -67,6 +67,17 @@ static void updateInput() {
     updateButtonState(&buttonState);
 }
 
+Actor* spawnGoal(int tileX, int tileY); //main.c
+
+void spawnBlockPrize(Tile tile) {
+    if ((tile.tileX == 47 && tile.tileY == 24)) //Floor box
+        spawnGoal(tile.tileX, tile.tileY - 1)->goal.mission = 1;
+    else if (tile.tileX == 96 && tile.tileY == 8) //Cloud box
+        spawnGoal(tile.tileX, tile.tileY - 1)->goal.mission = 2;
+    else
+        newBlock(2, 1, TILE_CENTER(tile.tileX), TILE_CENTER(tile.tileY) - FIX32(16), BlockType_coin);
+}
+
 void onPlayerCollidedWithCeilingTile(PlayerEventHandler*playerEventHandler, Tile tile) {
     uint8_t tileId;
     switch (tile.id) {
@@ -87,7 +98,9 @@ void onPlayerCollidedWithCeilingTile(PlayerEventHandler*playerEventHandler, Tile
                 default:
                     setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 0);
                     //spawn block
-                    newBlock(2, 1, TILE_CENTER(tile.tileX), TILE_CENTER(tile.tileY), 0);
+                    newBlock(2, 1, TILE_CENTER(tile.tileX), TILE_CENTER(tile.tileY), BlockType_block);
+                    spawnBlockPrize(tile);
+
                     newSetUint8DelayedCommand(10, getTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY), 96);
                     break;
             }
@@ -366,21 +379,26 @@ static void loadLevel() {
     sonic = newSonic(sonic_fpg, TILE(6), TILE(25), collisionTileMap, &playerEventHandler);
     playerEventHandler.player = sonic;
 
-    fallToBackgroundScript = newFallToBackgroundScript(&playerEventHandler);
 
     newMotobug(enemies_fpg, TILE(20),TILE(25));
     newMotobug(enemies_fpg, TILE(64),TILE(24));
     newMotobug (enemies_fpg, TILE(90), TILE(25));
     newBee(enemies_fpg, TILE(130),TILE(19));
 
-    //goal = newGoal(tileset_fpgs[0], TILE_CENTER(10), TILE_CENTER(21), sonic);
-    //deleteActor(goal);
     newGoal(tileset_fpgs[0], TILE_CENTER(174), TILE_CENTER(21), sonic)->goal.mission = 0; // 1 - Finish
-    newGoal(tileset_fpgs[0], TILE_CENTER(47), TILE_CENTER(24), sonic)->goal.mission = 1; // 2 -  Floor box
-    newGoal(tileset_fpgs[0], TILE_CENTER(96), TILE_CENTER(8), sonic)->goal.mission = 2; // 3 -  cloud box
-    newGoalHidden(tileset_fpgs[0], TILE(148), TILE_CENTER(6), sonic)->goal.mission = 3; // 4 -  pipe
-    newGoalHidden(tileset_fpgs[0], TILE_CENTER(65), TILE_CENTER(24), sonic)->goal.mission = 4; // 5 - behind bushes
-    newGoalActivated(tileset_fpgs[0], TILE_CENTER(176), TILE_CENTER(25), sonic)->goal.mission = 5; // 6 - Gotta go fast
+
+    //newGoal(tileset_fpgs[0], TILE_CENTER(47), TILE_CENTER(24), sonic)->goal.mission = 1; // 2 -  Floor box
+    //setTileAt(&bgaTileMap, 47, 24, 0); //Hide floor box
+    //setTileAt(&collisionTileMap, 47, 24, 0); //Hide floor box
+
+    //newGoal(tileset_fpgs[0], TILE_CENTER(96), TILE_CENTER(8), sonic)->goal.mission = 2; // 3 -  cloud box
+    newGoalActivated(tileset_fpgs[0], TILE(148), TILE_CENTER(4), sonic)->goal.mission = 3; // 4 -  pipe
+
+    Actor * hiddenGoal = newGoalHiddenInactive(tileset_fpgs[0], TILE_CENTER(65), TILE_CENTER(24), sonic); // 5 - behind bushes
+    hiddenGoal->goal.mission = 4; // 5 - behind bushes
+    fallToBackgroundScript = newFallToBackgroundScript(&playerEventHandler, hiddenGoal, bgaTileMap);
+
+    newGoalHiddenInactive(tileset_fpgs[0], TILE_CENTER(176), TILE_CENTER(25), sonic)->goal.mission = 5; // 6 - Gotta go fast
     //spawnGoal(174, 21);
 
     newCamera(sonic, FIX32(40), FIX32(128));
@@ -428,8 +446,8 @@ static void stateGame() {
         GameStateMachine.setUnloadLevel();
     }
 
-    sonic->sonic.handleInput(&buttonState);
-    fallToBackgroundScript->sonic.handleInput(&buttonState);
+    sonic->sonic.inputHandler.handleInput(&buttonState);
+    fallToBackgroundScript->inputHandler.handleInput(&buttonState);
 
     HGL_COMMAND_updateAll();
     HGL_ANIM_updateAll();

@@ -114,6 +114,7 @@
 #undef update
 #undef fsmState 
 
+#include "../game/actors.c"
 #include "../game/enemyupdate.c"
 
 
