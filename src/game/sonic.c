@@ -28,6 +28,10 @@
 #define JUMP_WIN_SPEED  FIX32(-1)
 #define GRAVITY_WIN     FIX32(0.025)
 
+#define MIN_ROLLING_ON_FLOOR_SPEED       FIX32(0.00001)
+#define ROLLING_ON_FLOOR_FRICTION_SPEED  FIX32(0.0234375)
+#define ROLLING_ON_FLOOR_DECELERATION_SPEED  FIX32(0.125)
+#define ROLLING_ON_FLOOR_Y_OFFSET  FIX32(6)
 
 //#define MIN_POSX        FIX32(10.0)
 //#define MAX_POSX        FIX32(400.0)
@@ -45,8 +49,16 @@ static fix32 posy = FIX32(128);
 static fix32 speedX = FIX32(0);
 static fix32 speedY = FIX32(0);
 
+static fix32 posyOffset = 0;
+static bool rollingOnFloor = false;
+
 static TileMap collisionTileMap;
 static PlayerEventHandler *playerEventHandler;
+
+inline static void setRollingOnFloor(bool enabled) {
+    rollingOnFloor = enabled;
+    posyOffset = enabled ? ROLLING_ON_FLOOR_Y_OFFSET : 0;
+}
 
 inline static fix32 tilePosToWorldPos(int tileXorY) {
     return FIX32(tileXorY << 4);
@@ -183,8 +195,7 @@ static void handleInput(ButtonState* buttonState){
 #define FALSE (0)
 #define TRUE (!FALSE)
 
-
-static void updateMovement() {
+static void updateMovementDefault() {
     if (input & BUTTON_RIGHT && !(input & BUTTON_LEFT))
     {
         speedX += ACCEL;
@@ -215,6 +226,43 @@ static void updateMovement() {
 
     posx += speedX;
     posy += speedY;
+}
+
+static void updateMovementRollingOnFloor() {
+    if (input & BUTTON_RIGHT && !(input & BUTTON_LEFT))
+    {
+        // going opposite side, quick breaking
+        if (speedX < 0) speedX += ROLLING_ON_FLOOR_DECELERATION_SPEED;
+
+        if (speedX >= MAX_SPEED) speedX = MAX_SPEED;
+    }
+    else if (input & BUTTON_LEFT && !(input & BUTTON_RIGHT))
+    {
+        // going opposite side, quick breaking
+        if (speedX > 0) speedX -= ROLLING_ON_FLOOR_DECELERATION_SPEED;
+
+        if (speedX <= -MAX_SPEED) speedX = -MAX_SPEED;
+    }
+
+    if (speedX < 0 && speedX < -ROLLING_ON_FLOOR_FRICTION_SPEED) {
+        speedX += ROLLING_ON_FLOOR_FRICTION_SPEED;
+    } else if (speedX > 0 && speedX > ROLLING_ON_FLOOR_FRICTION_SPEED) {
+        speedX -= ROLLING_ON_FLOOR_FRICTION_SPEED;
+    } else {
+        speedX = 0;
+        setRollingOnFloor(false);
+    }
+
+    posx += speedX;
+    posy += speedY;
+}
+
+inline static void updateMovement() {
+    if (rollingOnFloor) {
+        updateMovementRollingOnFloor();
+    } else {
+        updateMovementDefault();
+    }
 }
 
 CREATE_STATE_MACHINE(StateMachine, Grounded, Jumping, FallingOffLedge, FallToBackground, GoalReached, WinEnter, Win, WinExit)
@@ -280,28 +328,18 @@ inline static void checkCeilings() {
 static void checkGroundOnAir() {
     fix32 groundY = checkGroundY(FIX32(9), FIX32(16));
     if (speedY > 0 && posy >= groundY) {
-        if(StateMachine.isJumping()) {
-            Tile tile = checkGroundTile(FIX32(9), FIX32(16));
+        Tile tile = checkGroundTile(FIX32(9), FIX32(16));
 
-            bool processed = playerEventHandler->onGrounded(playerEventHandler, tile);
-            if (!processed) {
-                processed = playerEventHandler->onColidedWithFloorTile(playerEventHandler, tile);
-            }
+        bool processed = playerEventHandler->onGrounded(playerEventHandler, tile);
+        if (!processed && StateMachine.isJumping()) {
+            processed = playerEventHandler->onColidedWithFloorTile(playerEventHandler, tile);
+        }
 
-            if (!processed) {
-                posy = groundY;
-                speedY = 0;
-                StateMachine.setGrounded();
-            }
-        } else {
-            Tile tile = checkGroundTile(FIX32(9), FIX32(16));
-            bool processed = playerEventHandler->onGrounded(playerEventHandler, tile);
-
-            if (!processed) {
-                posy = groundY;
-                speedY = 0;
-                StateMachine.setGrounded();
-            }
+        if (!processed) {
+            posy = groundY;
+            speedY = 0;
+            setRollingOnFloor(false);
+            StateMachine.setGrounded();
         }
     } else {
         speedY += GRAVITY;
@@ -346,6 +384,11 @@ static void stateGrounded() {
     if (just_pressed & BUTTON_WIN) {
         setWinEnter();
         return;
+    }
+
+    if ((input & (BUTTON_DOWN) && !(input & BUTTON_LEFT  || input & BUTTON_RIGHT)) && abs(speedX) >= MIN_ROLLING_ON_FLOOR_SPEED) { //MEGADRIVE(Genesis)
+    //if (just_pressed & (BUTTON_DOWN) && abs(speedX) >= MIN_ROLLING_ON_FLOOR_SPEED) { //SMS
+        setRollingOnFloor(true);
     }
 
     updateMovement();
@@ -434,7 +477,7 @@ ANIM(ANIM_WIN_LOOP, 25)
 
 static void updateAnim(Actor * actor)
 {
-    if (StateMachine.isJumping()) {
+    if (StateMachine.isJumping() || rollingOnFloor) {
         setAnimation(actor, ANIM_ROLL, 4);
         setAnimationDelay(actor, 1 * (fix32ToInt(MAX_SPEED - abs(speedX))));
     } else {
@@ -490,7 +533,7 @@ static void stateAnimWin(AnimStateMachine * sm, Actor *actor) {
 
 static void update(Actor* actor) {
     StateMachine.update();
-    HGL_ENT_setPosition(actor->entity, posx , posy);
+    HGL_ENT_setPosition(actor->entity, posx , posy + posyOffset);
     updateAnimStateMachine(&animStateMachine, actor);
 }
 
@@ -502,7 +545,7 @@ static void constructor(Actor* actor) {
     input = 0;
 
     SonicData* sonic = &actor->sonic;
-    sonic->handleInput = handleInput;
+    sonic->inputHandler.handleInput = handleInput;
     sonic->doRebound = doRebound;
     sonic->onPlayerReachedGoal = onPlayerReachedGoal;
     sonic->doFallToBackground = doFallToBackground;
