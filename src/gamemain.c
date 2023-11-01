@@ -78,12 +78,19 @@ void spawnBlockPrize(Tile tile) {
         newBlock(2, 1, TILE_CENTER(tile.tileX), TILE_CENTER(tile.tileY) - FIX32(16), BlockType_coin);
 }
 
+#define TILE_MASK_SOLID 0x80           //1000 0000
+#define TILE_MASK_ONE_WAY 0x40         //0100 0000
+#define TILE_MASK_BREAKABLE 0x20       //0010 0000
+#define TILE_MASK_FLOOR 0xC0           //1100 0000
+#define TILE_MASK_SOLID_BREAKABLE 0xA0 //1010 0000
+
 void onPlayerCollidedWithCeilingTile(PlayerEventHandler*playerEventHandler, Tile tile) {
     uint8_t tileId;
     switch (tile.id) {
         case 0: break;
-        case 1:
+        case TILE_MASK_SOLID_BREAKABLE:
             tileId = *getTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY);
+
             switch (tileId) {
                 case 42:
                 case 77:
@@ -96,6 +103,7 @@ void onPlayerCollidedWithCeilingTile(PlayerEventHandler*playerEventHandler, Tile
                 case 96:
                     break;
                 default:
+                    setTileAt(playerEventHandler->collisionTileMap, tile.tileX, tile.tileY, TILE_MASK_SOLID);
                     setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 0);
                     //spawn block
                     newBlock(2, 1, TILE_CENTER(tile.tileX), TILE_CENTER(tile.tileY), BlockType_block);

@@ -124,3 +124,6 @@ run: all
 
 emulator: iso
 	./../../pcsx-redux/pcsx-redux.exe -run -iso hello_cd.cue
+
+ctoy:
+	pushd ./../../../../git/CToy-1.06 ; .\CToy.exe ; popd

@@ -3,8 +3,6 @@
 #include "stdio.h"
 #include "../core/hgl_types.h"
 
-
-
 #define OBJECTPOOL_ITERATOR_START       \
     void * it = pool->objects;          \
     int maxLength = pool->maxLength;    \
@@ -14,13 +12,9 @@
 #define OBJECTPOOL_ITERATOR_END \
     it += chunkSize; }
 
-
-
 inline static int* getPoolElementIDPtr(ObjectPool *pool, void *ptr) {
     return &getObjectPoolItemInfo(pool, ptr)->poolElementID;
 }
-
-
 
 inline static void setPoolElementID(ObjectPool *pool, void *ptr, int value) {
     *getPoolElementIDPtr(pool, ptr) = value;
@@ -65,8 +59,6 @@ void delete_ObjectPool(ObjectPool*pool) {
     HGL_free(pool);
 }
 
-
-
 PoolElement *ObjectPool_get(ObjectPool*pool) {
     PoolElement* elem = HGL_POOL_get(&pool->pool);
     storePoolElementID(pool, elem);
@@ -78,7 +70,7 @@ void ObjectPool_free(ObjectPool*pool, void* chunk) {
     int * id = getPoolElementIDPtr(pool, chunk);
     HGL_POOL_freeByID(&pool->pool, *id);
     *id = POOL_ITEM_UNUSED_ID;
-    pool->numObjectsAllocated = MIN(pool->numObjectsAllocated - 1, pool->maxLength);
+    pool->numObjectsAllocated = MAX(pool->numObjectsAllocated - 1, 0);
 }
 
 

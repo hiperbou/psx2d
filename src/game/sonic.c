@@ -28,10 +28,25 @@
 #define JUMP_WIN_SPEED  FIX32(-1)
 #define GRAVITY_WIN     FIX32(0.025)
 
-#define MIN_ROLLING_ON_FLOOR_SPEED       FIX32(0.00001)
+#define MIN_ROLLING_ON_FLOOR_SPEED       FIX32(0.001)
 #define ROLLING_ON_FLOOR_FRICTION_SPEED  FIX32(0.0234375)
 #define ROLLING_ON_FLOOR_DECELERATION_SPEED  FIX32(0.125)
 #define ROLLING_ON_FLOOR_Y_OFFSET  FIX32(6)
+#define ROLLING_ON_FLOOR_BREAK_SPEED  FIX32(4.5)
+
+#define SENSOR_VERTICAL_WIDTH  FIX32(9)
+#define SENSOR_VERTICAL_CEILING_LENGTH  FIX32(10)
+#define SENSOR_VERTICAL_GROUND_LENGTH  FIX32(16)
+
+#define SENSOR_HORIZONTAL_LENGTH  FIX32(10)
+
+#define TILE_SIZE FIX32(16)
+
+#define TILE_MASK_SOLID 0x80           //1000 0000
+#define TILE_MASK_ONE_WAY 0x40         //0100 0000
+#define TILE_MASK_BREAKABLE 0x20       //0010 0000
+#define TILE_MASK_FLOOR 0xC0           //1100 0000
+#define TILE_MASK_SOLID_BREAKABLE 0xA0 //1010 0000
 
 //#define MIN_POSX        FIX32(10.0)
 //#define MAX_POSX        FIX32(400.0)
@@ -73,7 +88,7 @@ inline static Tile getTileInfoFromCollisionMap(fix32 x, fix32 y) {
 }
 
 inline static fix32 getGroundCollisionYOrOriginalY(Tile tile, fix32 y, fix32 sensorHeight) {
-    if (tile.id > 0) {
+    if (tile.id & TILE_MASK_FLOOR) {
         return getGroundTileY(tile);
     }
     return y + 1;
@@ -81,7 +96,7 @@ inline static fix32 getGroundCollisionYOrOriginalY(Tile tile, fix32 y, fix32 sen
 
 static fix32 getGroundXY(fix32 x, fix32 y) {
     Tile tile = getTileInfoFromCollisionMap(x, y);
-    if (tile.id > 0) {
+    if (tile.id & TILE_MASK_FLOOR) {
         return getGroundTileY(tile);
     }
     return y + 1; //return ground is down the player
@@ -105,7 +120,7 @@ inline static fix32 getCeilingTileY(Tile tile, fix32 sensorHeight) {
 }
 
 inline static fix32 getCeilingCollisionYOrOriginalY(Tile tile, fix32 y, fix32 sensorHeight) {
-    if (tile.id == 1) {
+    if (tile.id & TILE_MASK_SOLID) {
         return getCeilingTileY(tile, sensorHeight);
     }
     return y;
@@ -116,19 +131,35 @@ static fix32 getCeiling(fix32 x, fix32 y, fix32 sensorHeight) {
     return getCeilingCollisionYOrOriginalY(tile, y, sensorHeight);
 }
 
-static fix32 getWallRight(fix32 x, fix32 y, fix32 sensorWidth) {
-    Tile tile = getTileInfoFromCollisionMap(x + sensorWidth, y);
-    if (tile.id == 1) {
+inline static fix32 getWallRightX(fix32 x, Tile tile, fix32 sensorWidth) {
+    if (tile.id & TILE_MASK_SOLID) {
         return tilePosToWorldPos(tile.tileX) - sensorWidth;
     }
     return x;
 }
-static fix32 getWallLeft(fix32 x, fix32 y, fix32 sensorWidth) {
-    Tile tile = getTileInfoFromCollisionMap(x - sensorWidth, y);
-    if (tile.id == 1) {
+
+inline static fix32 getWallLeftX(fix32 x, Tile tile, fix32 sensorWidth) {
+    if (tile.id & TILE_MASK_SOLID) {
         return tilePosToWorldPos(tile.tileX + 1) + sensorWidth;
     }
     return x;
+}
+
+inline static Tile getTileWallRight(fix32 x, fix32 y, fix32 sensorWidth) {
+    return getTileInfoFromCollisionMap(x + sensorWidth, y);
+}
+
+inline static Tile getTileWallLeft(fix32 x, fix32 y, fix32 sensorWidth) {
+    return getTileInfoFromCollisionMap(x - sensorWidth, y);
+}
+
+static fix32 getWallRight(fix32 x, fix32 y, fix32 sensorWidth) {
+    Tile tile = getTileWallRight(x, y, sensorWidth);
+    return getWallRightX(x, tile, sensorWidth);
+}
+static fix32 getWallLeft(fix32 x, fix32 y, fix32 sensorWidth) {
+    Tile tile = getTileWallLeft(x, y, sensorWidth);
+    return getWallLeftX(x, tile, sensorWidth);
 }
 
 inline static fix32 checkGroundY(fix32 sensorWidth, fix32 sensorHeight) {
@@ -195,6 +226,13 @@ static void handleInput(ButtonState* buttonState){
 #define FALSE (0)
 #define TRUE (!FALSE)
 
+CREATE_STATE_MACHINE(StateMachine, Grounded, Jumping, FallingOffLedge, FallToBackground, GoalReached, WinEnter, Win, WinExit)
+
+#include "../engine/actor_fsm.h"
+ACTOR_CREATE_STATE_MACHINE(AnimStateMachine, AnimNormal, AnimWin)
+
+static AnimStateMachine animStateMachine;
+
 static void updateMovementDefault() {
     if (input & BUTTON_RIGHT && !(input & BUTTON_LEFT))
     {
@@ -250,7 +288,7 @@ static void updateMovementRollingOnFloor() {
         speedX -= ROLLING_ON_FLOOR_FRICTION_SPEED;
     } else {
         speedX = 0;
-        setRollingOnFloor(false);
+        if (isGrounded()) setRollingOnFloor(false);
     }
 
     posx += speedX;
@@ -265,12 +303,7 @@ inline static void updateMovement() {
     }
 }
 
-CREATE_STATE_MACHINE(StateMachine, Grounded, Jumping, FallingOffLedge, FallToBackground, GoalReached, WinEnter, Win, WinExit)
 
-#include "../engine/actor_fsm.h"
-ACTOR_CREATE_STATE_MACHINE(AnimStateMachine, AnimNormal, AnimWin)
-
-static AnimStateMachine animStateMachine;
 
 
 inline static void jump(fix32 jumpSpeed){
@@ -294,18 +327,59 @@ inline static void doFallToBackground() {
     StateMachine.setFallToBackground();
 }
 
-inline static void checkWalls(){
+inline static void checkWallsDefault(){
     if((input & BUTTON_NOCLIP)) return;
 
     if (speedX > 0) {
-        int wallX = getWallRight(posx, posy, FIX32(10));
+        fix32 wallX = getWallRight(posx, posy, SENSOR_HORIZONTAL_LENGTH);
         if (posx > wallX) speedX = 0;
         posx = MIN(posx, wallX);
     }
     if (speedX < 0) {
-        int wallX = getWallLeft(posx, posy,  FIX32(10));
+        fix32 wallX = getWallLeft(posx, posy,  SENSOR_HORIZONTAL_LENGTH);
         if (posx < wallX) speedX = 0;
         posx = MAX(posx, wallX);
+    }
+}
+
+inline static void checkWallsRolling(){
+    if((input & BUTTON_NOCLIP)) return;
+
+    if (speedX > 0) {
+        Tile tile = getTileWallRight(posx, posy, SENSOR_HORIZONTAL_LENGTH);
+        fix32 wallX = getWallRightX(posx, tile, SENSOR_HORIZONTAL_LENGTH);
+        if (posx > wallX) {
+            if (speedX >= ROLLING_ON_FLOOR_BREAK_SPEED) {
+                playerEventHandler->onColidedWithCeilingTile(playerEventHandler, tile);
+                playerEventHandler->onColidedWithCeilingTile(playerEventHandler, getTileWallRight(posx, posy - TILE_SIZE , SENSOR_HORIZONTAL_LENGTH));
+            } else {
+                speedX = 0;
+            }
+            if(!(tile.id & TILE_MASK_BREAKABLE)) speedX = 0;
+        }
+        posx = MIN(posx, wallX);
+    }
+    if (speedX < 0) {
+        Tile tile = getTileWallLeft(posx, posy, SENSOR_HORIZONTAL_LENGTH);
+        fix32 wallX = getWallLeftX(posx, tile, SENSOR_HORIZONTAL_LENGTH);
+        if (posx < wallX) {
+            if (speedX <= -ROLLING_ON_FLOOR_BREAK_SPEED) {
+                playerEventHandler->onColidedWithCeilingTile(playerEventHandler, tile);
+                playerEventHandler->onColidedWithCeilingTile(playerEventHandler, getTileWallLeft(posx, posy - TILE_SIZE , SENSOR_HORIZONTAL_LENGTH));
+            } else {
+                speedX = 0;
+            }
+            if(!(tile.id & TILE_MASK_BREAKABLE)) speedX = 0;
+        }
+        posx = MAX(posx, wallX);
+    }
+}
+
+inline static void checkWalls() {
+    if (rollingOnFloor) {
+        checkWallsRolling();
+    } else {
+        checkWallsDefault();
     }
 }
 
@@ -313,9 +387,9 @@ inline static void checkCeilings() {
     if((input & BUTTON_NOCLIP)) return;
 
     if(speedY<0) {
-        Tile tile = checkCeilingTile(FIX32(9), FIX32(10));
-        if (tile.id == 1) {
-            int ceilingY = tilePosToWorldPos(tile.tileY + 1) + FIX32(10);;
+        Tile tile = checkCeilingTile(SENSOR_VERTICAL_WIDTH, SENSOR_VERTICAL_CEILING_LENGTH);
+        if (tile.id & TILE_MASK_SOLID) { //TODO: this doesn leave jump through because jump through are == 3 :S
+            int ceilingY = tilePosToWorldPos(tile.tileY + 1) + SENSOR_VERTICAL_CEILING_LENGTH;
             if (posy < ceilingY) {
                 playerEventHandler->onColidedWithCeilingTile(playerEventHandler, tile);
                 speedY = 0;
@@ -326,9 +400,9 @@ inline static void checkCeilings() {
 }
 
 static void checkGroundOnAir() {
-    fix32 groundY = checkGroundY(FIX32(9), FIX32(16));
+    fix32 groundY = checkGroundY(SENSOR_VERTICAL_WIDTH, SENSOR_VERTICAL_GROUND_LENGTH);
     if (speedY > 0 && posy >= groundY) {
-        Tile tile = checkGroundTile(FIX32(9), FIX32(16));
+        Tile tile = checkGroundTile(SENSOR_VERTICAL_WIDTH, SENSOR_VERTICAL_GROUND_LENGTH);
 
         bool processed = playerEventHandler->onGrounded(playerEventHandler, tile);
         if (!processed && StateMachine.isJumping()) {
@@ -386,17 +460,17 @@ static void stateGrounded() {
         return;
     }
 
-    if ((input & (BUTTON_DOWN) && !(input & BUTTON_LEFT  || input & BUTTON_RIGHT)) && abs(speedX) >= MIN_ROLLING_ON_FLOOR_SPEED) { //MEGADRIVE(Genesis)
+    if (!rollingOnFloor && (input & (BUTTON_DOWN) && !(input & BUTTON_LEFT  || input & BUTTON_RIGHT)) && abs(speedX) >= MIN_ROLLING_ON_FLOOR_SPEED) { //MEGADRIVE(Genesis)
     //if (just_pressed & (BUTTON_DOWN) && abs(speedX) >= MIN_ROLLING_ON_FLOOR_SPEED) { //SMS
         setRollingOnFloor(true);
     }
 
     updateMovement();
 
-    int groundY = checkGroundY(FIX32(9), FIX32(16));;
+    int groundY = checkGroundY(SENSOR_VERTICAL_WIDTH, SENSOR_VERTICAL_GROUND_LENGTH);
     int groundYStep = getGroundXY(posx, posy);
 
-    if (groundY > posy + FIX32(16)) {
+    if (groundY > posy + SENSOR_VERTICAL_GROUND_LENGTH) {
         speedY = GRAVITY;
         StateMachine.setFallingOffLedge();
     } else if(groundYStep<groundY) {
@@ -418,7 +492,7 @@ void doPlayerWinAnimationParticles(Actor*player, int8_t mission); //main.c
 static void stateGoalReached() {
     posy += speedY;
 
-    fix32 groundY = checkGroundY(FIX32(9), FIX32(16));
+    fix32 groundY = checkGroundY(SENSOR_VERTICAL_WIDTH, SENSOR_VERTICAL_GROUND_LENGTH);
     if (speedY > 0 && posy >= groundY) {
         posy = groundY;
         setWinEnter();
