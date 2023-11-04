@@ -15,6 +15,7 @@
 #include "core/hgl_anim.h"
 #include "core/hgl_command.h"
 #include "core/hgl_mem.h"
+#include "core/hgl_text.h"
 #include "game/camera.h"
 #include "game/tileshader.h"
 #include "game/data/gamedata.h"
@@ -253,6 +254,8 @@ GameState gameState = {
 
 CourseMenu courseMenu;
 
+static HGL_Text * missionText;
+
 static void loadCourseMenu(CourseMenu *courseMenu) {
 
     int oneStarsPositions[] = { 10 };
@@ -272,7 +275,25 @@ static void loadCourseMenu(CourseMenu *courseMenu) {
     };
 
     int numStars = courseMenu->numStars;
-    int *starPos = stars[numStars - 1];
+    const int *starPos = stars[numStars - 1];
+
+    static const char* numbers[] = { "1", "2", "3", "4", "5", "6" };
+    static const int numberY = 32;
+    static const int missionY = 80;
+    static const int courseY = 192;
+    static const int numberXOffset = 4;
+
+    for (int i=0; i<numStars; i++) {
+        HGL_TEXT_new(0, font_atlas, numbers[i], (TILE_SIZE * starPos[i]) - numberXOffset, numberY, 0, -1);
+    }
+
+    static const int screenCenterX = 320 >> 1;
+    const char * missionDescription = courseMenu->missionDescription[courseMenu->selectedItem];
+    int textPosX = text_get_centered_position(missionDescription, screenCenterX);
+    int textPosX2 = text_get_centered_position(courseMenu->courseTitle, screenCenterX);
+
+    missionText = HGL_TEXT_new(0, font_atlas, missionDescription, textPosX, missionY, 0, -1);
+    HGL_TEXT_new(0, font_atlas, courseMenu->courseTitle, textPosX2, courseY, 0, -1);
 
     for (int i=0; i<numStars; i++) {
         Actor * star = newMenuStar(tileset_fpgs[0], TILE(starPos[i]), TILE(4));
@@ -294,6 +315,13 @@ static void loadCourseMenu(CourseMenu *courseMenu) {
     star->menuStar.select(star);
 }
 
+void updateMissionText(CourseMenu *courseMenu) {
+    static const int screenCenterX = 320 >> 1;
+    const char * missionDescription = courseMenu->missionDescription[courseMenu->selectedItem];
+    missionText->x = text_get_centered_position(missionDescription, screenCenterX);
+    missionText->text = missionDescription;
+}
+
 void updateCourseMenuInput(CourseMenu *courseMenu) {
     if (courseMenu->numStars <= 1) return;
 
@@ -307,6 +335,8 @@ void updateCourseMenuInput(CourseMenu *courseMenu) {
         if(courseMenu->selectedItem < 0) courseMenu->selectedItem = courseMenu->numStars - 1;
         selectedStar = courseMenu->stars[courseMenu->selectedItem];
         selectedStar->menuStar.select(selectedStar);
+
+        updateMissionText(courseMenu);
     }
     if (buttonState.just_pressed & PAD_RIGHT) {
         Actor * selectedStar = courseMenu->stars[courseMenu->selectedItem];
@@ -318,53 +348,18 @@ void updateCourseMenuInput(CourseMenu *courseMenu) {
         if(courseMenu->selectedItem >= courseMenu->numStars) courseMenu->selectedItem = 0;
         selectedStar = courseMenu->stars[courseMenu->selectedItem];
         selectedStar->menuStar.select(selectedStar);
+
+        updateMissionText(courseMenu);
     }
 }
 
 static void drawCourseMenu(CourseMenu *courseMenu) {
-    static const int numberY = 32;
-    static const int missionY = 80;
-    static const int courseY = 192;
-
-    static const int oneStarsPositions[] = { 10 };
-    static const int twoStarsPositions[] = { 9, 11 };
-    static const int threeStarsPositions[] = { 8, 10, 12 };
-    static const int fourStarsPositions[] = { 7, 9, 11, 13 };
-    static const int fiveStarsPositions[] = { 6, 8, 10, 12, 14 };
-    static const int sixStarsPositions[] = { 5, 7, 9, 11, 13, 15 };
-
-    static const int* stars[6] = {
-            oneStarsPositions,
-            twoStarsPositions,
-            threeStarsPositions,
-            fourStarsPositions,
-            fiveStarsPositions,
-            sixStarsPositions
-    };
-    static const char* numbers[] = { "1", "2", "3", "4", "5", "6" };
-    static const int numberXOffset = 4;
-
-    int numStars = courseMenu->numStars;
-    const int *starPos = stars[numStars - 1];
-    for (int i=0; i<numStars; i++) {
-        draw_text8(0, font_atlas, numbers[i], (TILE_SIZE * starPos[i]) - numberXOffset, numberY, 0, -1);
-    }
-
-    //draw_text8(0, font_atlas, "1", 0, numberY, 0, -1);
-    static const int screenCenterX = 320 >> 1;
-    const char * missionText = courseMenu->missionDescription[courseMenu->selectedItem];
-    int textPosX = text_get_centered_position(missionText, screenCenterX);
-    int textPosX2 = text_get_centered_position(courseMenu->courseTitle, screenCenterX);
-
-    draw_text8(0, font_atlas, missionText, textPosX, missionY, 0, -1);
-    draw_text8(0, font_atlas, courseMenu->courseTitle, textPosX2, courseY, 0, -1);
-
-
     HGL_ANIM_updateAll();
     HGL_ENT_updateAll();
     HGL_ACTOR_updateAll();
     HGL_ENT_renderAll(0, 0);
     HGL_SPR_renderAll();
+    HGL_TEXT_renderAll();
     draw_all_sprites_basic();
 }
 
@@ -442,6 +437,7 @@ static void loadLevel() {
 static void unloadLevel() {
     HGL_ACTOR_deleteAll();
     HGL_COMMAND_deleteAll();
+    HGL_TEXT_deleteAll();
     remove_Particles();
     HGL_free((void*)bgaTileMap.map);
     HGL_free((void*)collisionTileMap.map);
@@ -461,6 +457,7 @@ static void stateMenu() {
     if (buttonState.just_pressed & PAD_START) {
         GameStateMachine.setLoadLevel();
         HGL_ACTOR_deleteAll();
+        HGL_TEXT_deleteAll();
     }
 }
 
@@ -497,6 +494,7 @@ static void stateGame() {
 
     HGL_ENT_renderAll(bgbx,bgby);
     HGL_SPR_renderAll();
+    HGL_TEXT_renderAll();
 
     draw_tilemap_no_wrap(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
     //draw_tilemap_no_wrap(tileset_fpgs[4 + tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
@@ -541,6 +539,7 @@ int gameMain() {
     HGL_SPR_init();
     HGL_ENT_init();
     HGL_ACTOR_init();
+    HGL_TEXT_init();
     
     int system_fpg = 0;
 

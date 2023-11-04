@@ -29,6 +29,7 @@ CLionSources:
     src/core/psx/hgl_mem.c \
     src/core/hgl_pool.c \
     src/core/hgl_spr.c \
+    src/core/hgl_text.c \
     src/engine/particle.c \
     src/engine/sprites.c \
     src/engine/tilemap.c \
