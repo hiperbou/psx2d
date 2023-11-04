@@ -1,8 +1,7 @@
 #include "tilemap.h"
 #include "../core/hgl_mem.h"
 
-//Amiga AMOS Pro Tome (.map) and Turbo Plus (.scene)
-TileMap fromTiledBinScene(const uint8_t *tmx, int padding) {
+TileMap fromTiledBin(const uint8_t *tmx) {
     const uint8_t *ptr = tmx;
 
     uint8_t l = *ptr;
@@ -12,7 +11,7 @@ TileMap fromTiledBinScene(const uint8_t *tmx, int padding) {
     l = *ptr;
     r = *(ptr + 1);
     int height = (l<<1) | r; //Stored in Big-endian
-    ptr += padding;    //Undocumented header, contains layer name "layer" or "collision"
+    ptr += 2;
 
     return (TileMap) {
             .map = ptr,

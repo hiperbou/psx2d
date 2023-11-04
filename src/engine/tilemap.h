@@ -45,7 +45,7 @@ void draw_tilemap(int file, int base_map, TileMap *tilemap, int offsetX, int off
 void draw_tilemap8(int file, int base_map, TileMap *tilemap, int offsetX, int offsetY, int flags);
 
 
-TileMap fromTiledBinScene(const uint8_t *tmx, int padding);
+TileMap fromTiledBin(const uint8_t *tmx);
 TileMap cloneTileMap(TileMap * original);
 
 #endif //__HGL__TILEMAP_H

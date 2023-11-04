@@ -7,6 +7,7 @@
 
 static PlayerEventHandler *myPlayerEventHandler;
 static Actor* myGoal;
+static Actor* myGoal2;
 static TileMap levelTileMap;
 
 static u16 input = 0;
@@ -50,6 +51,7 @@ static void update(Actor* actor) {
     } else if (restoreCounter == 0 && playerIsVisible()) {
         setZ(myPlayerEventHandler->player, 0);
         myGoal->goal.deactivate(myGoal);
+        myGoal2->goal.deactivate(myGoal2);
     }
 
     if (playerCrouchingInWhiteBlock()) {
@@ -59,15 +61,17 @@ static void update(Actor* actor) {
             restoreCounter = TIME_TO_RESTORE;
             myPlayerEventHandler->player->sonic.doFallToBackground();
             myGoal->goal.activate(myGoal);
+            myGoal2->goal.activate(myGoal2);
         }
     } else {
         activateCounter = 0;
     }
 }
 
-Actor* newFallToBackgroundScript(PlayerEventHandler *playerEventHandler, Actor* goal, TileMap tileMap) {
+Actor* newFallToBackgroundScript(PlayerEventHandler *playerEventHandler, Actor* goal, Actor* goal2, TileMap tileMap) {
     myPlayerEventHandler = playerEventHandler;
     myGoal = goal;
+    myGoal2 = goal2;
     levelTileMap = tileMap;
     return newActor(0, 0, 0, 0, constructor, update);
 }

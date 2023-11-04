@@ -362,8 +362,8 @@ void ctoy_begin(void)
 
     m_image_load_float(&sonic_image, "art/sonic.png");
 
-    bgaTileMap = fromTiledBinScene(smb3scene,28);
-    collisionTileMap = fromTiledBinScene(smb3col,32);
+    bgaTileMap = fromTiledBin(smb3_2_layer);
+    collisionTileMap = fromTiledBin(smb3_2_collision);
 }
 
 void ctoy_end(void)

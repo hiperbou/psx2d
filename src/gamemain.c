@@ -23,9 +23,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 
-#include "smb3scene.h"
-#include "smb3col.h"
+#include "e1m1.h"
+#include "e1m1b.h"
 
 
 //#include "memory.h"
@@ -184,7 +185,7 @@ void checkCoin(TileMap* tileMap, Actor * actor) {
         for (int tileX = minTileX; tileX <= maxTileX; tileX++) {
             uint8_t* coinTile = getTileAt(tileMap, tileX, tileY);
             if (*coinTile == 7) {
-                *coinTile = 1;
+                *coinTile = 0;
                 REPEAT5(new_Particle(TILE_CENTER_X_TO_SCREEN(tileX), TILE_CENTER_Y_TO_SCREEN(tileY)))
             }
         }
@@ -206,7 +207,7 @@ static Actor * fallToBackgroundScript = NULL;
 //static Actor * goal = NULL;
 static TileMap bgaTileMap;
 static TileMap collisionTileMap;
-static int tileset_fpgs[4];
+static int tileset_fpgs[8];
 static AnimationState* tilesetAnimationState;
 
 static int sonic_fpg, enemies_fpg;
@@ -256,10 +257,10 @@ static void loadCourseMenu(CourseMenu *courseMenu) {
 
     int oneStarsPositions[] = { 10 };
     int twoStarsPositions[] = { 9, 11 };
-    int threeStarsPositions[] = {8, 10, 12};
-    int fourStarsPositions[] = {7, 9, 11, 13};
-    int fiveStarsPositions[] = { 6, 8, 10, 12, 14};
-    int sixStarsPositions[] = {5, 7, 9, 11, 13, 15};
+    int threeStarsPositions[] = { 8, 10, 12 };
+    int fourStarsPositions[] = { 7, 9, 11, 13 };
+    int fiveStarsPositions[] = { 6, 8, 10, 12, 14 };
+    int sixStarsPositions[] = { 5, 7, 9, 11, 13, 15 };
 
     int* stars[6] = {
         oneStarsPositions,
@@ -327,10 +328,10 @@ static void drawCourseMenu(CourseMenu *courseMenu) {
 
     static const int oneStarsPositions[] = { 10 };
     static const int twoStarsPositions[] = { 9, 11 };
-    static const int threeStarsPositions[] = {8, 10, 12};
-    static const int fourStarsPositions[] = {7, 9, 11, 13};
-    static const int fiveStarsPositions[] = { 6, 8, 10, 12, 14};
-    static const int sixStarsPositions[] = {5, 7, 9, 11, 13, 15};
+    static const int threeStarsPositions[] = { 8, 10, 12 };
+    static const int fourStarsPositions[] = { 7, 9, 11, 13 };
+    static const int fiveStarsPositions[] = { 6, 8, 10, 12, 14 };
+    static const int sixStarsPositions[] = { 5, 7, 9, 11, 13, 15 };
 
     static const int* stars[6] = {
             oneStarsPositions,
@@ -372,9 +373,29 @@ Actor* spawnGoal(int tileX, int tileY) {
     return newGoalActivated(tileset_fpgs[0], TILE_CENTER(tileX), TILE_CENTER(tileY), sonic);
 }
 
+
+
+static void loadLevel_e1m1b() {
+    bgaTileMap = fromTiledBin(smb3_1_1_underground_layer);
+    collisionTileMap = fromTiledBin(smb3_1_1_underground_collision);
+
+    bgaTileMap = cloneTileMap(&bgaTileMap);
+    collisionTileMap = cloneTileMap(&collisionTileMap);
+
+    bgbx = 0;
+    bgby = 0;
+
+    initPlayerEventHandler(&playerEventHandler, &bgaTileMap, &collisionTileMap);
+
+    sonic = newSonic(sonic_fpg, TILE(9), TILE(5), collisionTileMap, &playerEventHandler);
+    playerEventHandler.player = sonic;
+
+    newCamera(sonic, FIX32(40), FIX32(128));
+}
+
 static void loadLevel() {
-    bgaTileMap = fromTiledBinScene(smb3scene,28);
-    collisionTileMap = fromTiledBinScene(smb3col,32);
+    bgaTileMap = fromTiledBin(smb3_2_layer);
+    collisionTileMap = fromTiledBin(smb3_2_collision);
 
     bgaTileMap = cloneTileMap(&bgaTileMap);
     collisionTileMap = cloneTileMap(&collisionTileMap);
@@ -404,9 +425,13 @@ static void loadLevel() {
 
     Actor * hiddenGoal = newGoalHiddenInactive(tileset_fpgs[0], TILE_CENTER(65), TILE_CENTER(24), sonic); // 5 - behind bushes
     hiddenGoal->goal.mission = 4; // 5 - behind bushes
-    fallToBackgroundScript = newFallToBackgroundScript(&playerEventHandler, hiddenGoal, bgaTileMap);
 
-    newGoalHiddenInactive(tileset_fpgs[0], TILE_CENTER(176), TILE_CENTER(25), sonic)->goal.mission = 5; // 6 - Gotta go fast
+    Actor * hiddenGoal2 = newGoalHiddenInactive(tileset_fpgs[0], TILE_CENTER(177), TILE_CENTER(25), sonic);
+    hiddenGoal2->goal.mission = 5; // 6 - Gotta go fast
+
+    fallToBackgroundScript = newFallToBackgroundScript(&playerEventHandler, hiddenGoal, hiddenGoal2, bgaTileMap);
+
+
     //spawnGoal(174, 21);
 
     newCamera(sonic, FIX32(40), FIX32(128));
@@ -473,21 +498,16 @@ static void stateGame() {
     HGL_ENT_renderAll(bgbx,bgby);
     HGL_SPR_renderAll();
 
+    draw_tilemap_no_wrap(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
+    //draw_tilemap_no_wrap(tileset_fpgs[4 + tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
+
 #ifdef PSX
     draw_all_sprites_basic();
-    update_Particles();
-#endif
-    //draw_tilemap_no_wrap(tiles_fpg, 1, &collisionTileMap, bgbx, bgby, 0); //Front
-    draw_tilemap_no_wrap(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
-
-    //draw_tilemap(tiles_fpg, bgb_map, &bgbTileMap, bgbx>>1, bgby>>1, 1); //BK
-    //draw_tilemap_no_wrap(tiles_fpg, bgb_map, &bgbTileMap, 0, 0, 1); //BK
-
-    //CTOY
-#ifndef PSX
+#else //CToy
     draw_all_sprites_zorder();
-    update_Particles();
 #endif
+
+    update_Particles();
 
     draw_text8(0, font_atlas, "012345789", 8, 8, 0, -1);
     draw_text8(0, font_atlas, "ABCDEFGHIJLMNOPQRSTUVWXYZ", 8, 16, 0, -1);
@@ -526,13 +546,9 @@ int gameMain() {
 
     sonic_fpg = new_fpg();
 
-    tileset_fpgs[0] = new_fpg();
-    tileset_fpgs[1] = new_fpg();
-    tileset_fpgs[2] = new_fpg();
-    tileset_fpgs[3] = new_fpg();
-
-    int tiles_fpg = tileset_fpgs[0];
-
+    for (int i=0; i<8; i++) {
+      tileset_fpgs[i] = new_fpg();
+    }
     enemies_fpg = new_fpg();
     //int tiles2_fpg = new_fpg();
 
@@ -549,20 +565,22 @@ int gameMain() {
 
     int sonic_map = load_atlas(sonic_fpg, "art/sonic", 48, 48, 5, 5);
 
-    ////int bga_map = load_atlas(tiles_fpg, "art/bga", 16, 16, 10, 8);
-    ////int bga_map = load_atlas(tiles_fpg, "art/ghz1tile", 8, 8, 26, 25);
-    //int bga_map = load_atlas(tiles_fpg, "art/ghz16", 16, 16, 16, 15);
-    int bga_map = load_atlas(tileset_fpgs[0], "art/smb3t" , 16, 16, 11, 9);
+
+    load_atlas(tileset_fpgs[0], "art/smb3t" , 16, 16, 11, 9);
     load_atlas(tileset_fpgs[1], "art/smb3t2", 16, 16, 11, 9);
     load_atlas(tileset_fpgs[2], "art/smb3t3", 16, 16, 11, 9);
     load_atlas(tileset_fpgs[3], "art/smb3t4", 16, 16, 11, 9);
-    
+
+    load_atlas(tileset_fpgs[4], "art/smb3u" , 16, 16, 4, 2);
+    tileset_fpgs[5] = tileset_fpgs[4]; //load_atlas(tileset_fpgs[5], "art/smb3u", 16, 16, 4, 2); //tile variant 2
+    tileset_fpgs[6] = tileset_fpgs[4]; //load_atlas(tileset_fpgs[6], "art/smb3u", 16, 16, 4, 2); //tile variant 3
+    tileset_fpgs[7] = tileset_fpgs[4]; //load_atlas(tileset_fpgs[7], "art/smb3u", 16, 16, 4, 2); //tile variant 4
+
     ANIM(TilesetAnimation, 0, 1, 2, 3)
 
     tilesetAnimationState = HGL_ANIM_new();
     SetAnimationState(tilesetAnimationState, TilesetAnimation, 8);
 
-    //int bgb_map = load_atlas(tiles_fpg, "art/bgb", 16, 16, 15, 13);
     int enemies_map = load_atlas(enemies_fpg, "art/enemies", 48, 32, 4, 2);
 
     initGameStateMachine();

@@ -12,7 +12,7 @@
 //#include <sys/types.h>	// This provides typedefs needed by libgte.h and libgpu.h
 #include "../pool/FixedPool.h"
 
-#define MAX_NUM_FPGS 8
+#define MAX_NUM_FPGS 16
 #define MAX_NUM_MAPS 1024
 
 typedef struct{
