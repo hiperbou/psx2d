@@ -10,6 +10,8 @@ int num_procesos = 0;
 int new_proceso = 0;
 
 void initSprites() {
+     num_procesos = 0;
+     new_proceso = 0;
      for (int i=0; i<MAX_SPRITES; i++)     
      {   
          proceso[i].id = -1;
@@ -61,15 +63,18 @@ Tsprite *new_sprite(int x, int y, int z,int file, int graph) {
         if (new_proceso == MAX_SPRITES) break;
     } while (proceso[new_proceso].id!=-1);
     //UPDATE_Z_ORDER=1;
-    num_procesos++;
+    if (new_proceso > num_procesos) {
+        num_procesos++;
+    }
     return nuevo;
 }
 
 
 void delete_sprite(Tsprite * spr) {
     int spriteId = spr->id;
+    //printf("delete sprite %i %i\n", spriteId, num_procesos);
     if (spriteId != -1) {
-        if(spriteId==num_procesos -1 ) {
+        if(spriteId == num_procesos - 1 ) {
             num_procesos--;
         }
         new_proceso = MIN(spriteId, new_proceso);
@@ -115,12 +120,31 @@ void draw_all_sprites_zorder(){
     insertsort(lista_z, num_procesos);
     for (int i = 0; i < num_procesos; i++) {
         Tsprite *sprite = lista_z[i];
+        //printf("%i,", sprite->z);
+        if (sprite->z < 6) {
+            continue;
+        }
         if(sprite->fast) {
             draw_sprite_fast(sprite);
         } else {
             draw_sprite(sprite);
         }
     }
+    //printf(" -> %i\n", num_procesos);
+}
+
+void draw_all_sprites_zorder2(){
+  for (int i = 0; i < num_procesos; i++) {
+    Tsprite *sprite = lista_z[i];
+    if (sprite->z >= 6) {
+      continue;
+    }
+    if(sprite->fast) {
+      draw_sprite_fast(sprite);
+    } else {
+      draw_sprite(sprite);
+    }
+  }
 }
 
 void draw_tilemap_with_sprites(int file, int base_map, TileMap *tilemap) {

@@ -441,6 +441,7 @@ static void unloadLevel() {
     remove_Particles();
     HGL_free((void*)bgaTileMap.map);
     HGL_free((void*)collisionTileMap.map);
+    initSprites();
 }
 
 static void stateLoadMenu() {
@@ -458,6 +459,7 @@ static void stateMenu() {
         GameStateMachine.setLoadLevel();
         HGL_ACTOR_deleteAll();
         HGL_TEXT_deleteAll();
+        initSprites();
     }
 }
 
@@ -470,6 +472,8 @@ static void stateUnloadLevel() {
     unloadLevel();
     GameStateMachine.setLoadMenu();
 }
+
+void draw_all_sprites_zorder2();
 
 static void stateGame() {
     if (buttonState.just_pressed & PAD_START) {
@@ -496,13 +500,17 @@ static void stateGame() {
     HGL_SPR_renderAll();
     HGL_TEXT_renderAll();
 
-    draw_tilemap_no_wrap(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
-    //draw_tilemap_no_wrap(tileset_fpgs[4 + tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
+
 
 #ifdef PSX
+    draw_tilemap_no_wrap(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
+    //draw_tilemap_no_wrap(tileset_fpgs[4 + tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
     draw_all_sprites_basic();
+
 #else //CToy
     draw_all_sprites_zorder();
+    draw_tilemap_no_wrap(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
+    draw_all_sprites_zorder2();
 #endif
 
     update_Particles();
