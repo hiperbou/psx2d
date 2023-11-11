@@ -15,6 +15,7 @@
 #include "core/hgl_anim.h"
 #include "core/hgl_command.h"
 #include "core/hgl_mem.h"
+#include "core/hgl_scroll.h"
 #include "core/hgl_text.h"
 #include "game/camera.h"
 #include "game/tileshader.h"
@@ -211,6 +212,8 @@ static TileMap collisionTileMap;
 static int tileset_fpgs[8];
 static AnimationState* tilesetAnimationState;
 
+static HGL_Scroll * scroll;
+
 static int sonic_fpg, enemies_fpg;
 static PlayerEventHandler playerEventHandler;
 
@@ -398,6 +401,8 @@ static void loadLevel() {
     bgbx = 0;
     bgby = 0;
 
+    scroll = HGL_SCROLL_new(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 6, 0);
+
     initPlayerEventHandler(&playerEventHandler, &bgaTileMap, &collisionTileMap);
 
     sonic = newSonic(sonic_fpg, TILE(6), TILE(25), collisionTileMap, &playerEventHandler);
@@ -438,6 +443,7 @@ static void unloadLevel() {
     HGL_ACTOR_deleteAll();
     HGL_COMMAND_deleteAll();
     HGL_TEXT_deleteAll();
+    HGL_SCROLL_deleteAll();
     remove_Particles();
     HGL_free((void*)bgaTileMap.map);
     HGL_free((void*)collisionTileMap.map);
@@ -489,6 +495,9 @@ static void stateGame() {
     bgbx = camposx;
     bgby = camposy;
 
+    scroll->file = tileset_fpgs[tilesetAnimationState->currentFrame];
+    HGL_SCROLL_setOffset(scroll, bgbx, bgby);
+
     HGL_ENT_updateAll();
     HGL_ACTOR_updateAll();
 
@@ -497,20 +506,19 @@ static void stateGame() {
     //checkGoal( goal, sonic);
 
     HGL_ENT_renderAll(bgbx,bgby);
+    HGL_SCROLL_renderAll();
     HGL_SPR_renderAll();
     HGL_TEXT_renderAll();
 
-
-
 #ifdef PSX
-    draw_tilemap_no_wrap(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
+    //draw_tilemap_no_wrap(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
     //draw_tilemap_no_wrap(tileset_fpgs[4 + tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
     draw_all_sprites_basic();
-
 #else //CToy
-    draw_all_sprites_zorder();
-    draw_tilemap_no_wrap(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
-    draw_all_sprites_zorder2();
+    //draw_tilemap_no_wrap(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 0); //Front
+    //draw_all_sprites_zorder();
+    //draw_all_sprites_zorder2();
+    draw_all_sprites_layer();
 #endif
 
     update_Particles();
@@ -547,8 +555,9 @@ int gameMain() {
     HGL_SPR_init();
     HGL_ENT_init();
     HGL_ACTOR_init();
+    HGL_SCROLL_init();
     HGL_TEXT_init();
-    
+
     int system_fpg = 0;
 
     sonic_fpg = new_fpg();

@@ -40,7 +40,7 @@
 
 #define SENSOR_HORIZONTAL_LENGTH  FIX32(10)
 
-#define TILE_SIZE FIX32(16)
+#define TILE_SIZE_FIX32 FIX32(16)
 
 #define TILE_MASK_SOLID 0x80           //1000 0000
 #define TILE_MASK_ONE_WAY 0x40         //0100 0000
@@ -351,7 +351,7 @@ inline static void checkWallsRolling(){
         if (posx > wallX) {
             if (speedX >= ROLLING_ON_FLOOR_BREAK_SPEED) {
                 playerEventHandler->onColidedWithCeilingTile(playerEventHandler, tile);
-                playerEventHandler->onColidedWithCeilingTile(playerEventHandler, getTileWallRight(posx, posy - TILE_SIZE , SENSOR_HORIZONTAL_LENGTH));
+                playerEventHandler->onColidedWithCeilingTile(playerEventHandler, getTileWallRight(posx, posy - TILE_SIZE_FIX32 , SENSOR_HORIZONTAL_LENGTH));
             } else {
                 speedX = 0;
             }
@@ -365,7 +365,7 @@ inline static void checkWallsRolling(){
         if (posx < wallX) {
             if (speedX <= -ROLLING_ON_FLOOR_BREAK_SPEED) {
                 playerEventHandler->onColidedWithCeilingTile(playerEventHandler, tile);
-                playerEventHandler->onColidedWithCeilingTile(playerEventHandler, getTileWallLeft(posx, posy - TILE_SIZE , SENSOR_HORIZONTAL_LENGTH));
+                playerEventHandler->onColidedWithCeilingTile(playerEventHandler, getTileWallLeft(posx, posy - TILE_SIZE_FIX32 , SENSOR_HORIZONTAL_LENGTH));
             } else {
                 speedX = 0;
             }

@@ -1,13 +1,23 @@
 #include "sprites.h"
+
+#include "../core/hgl_scroll.h"
+
 #include "../engine/tilemap.h"
 #include "../media/fpg.h"
 
 #define MAX_SPRITES 1024
 
+#define MAX_SCROLLS 10
+HGL_Scroll * scrolls[MAX_SCROLLS];
+
 Tsprite proceso[MAX_SPRITES];  //lista de procesos
 Tsprite *lista_z[MAX_SPRITES];
 int num_procesos = 0;
 int new_proceso = 0;
+
+void setScroll(int index, HGL_Scroll* scroll) {
+    scrolls[index] = scroll;
+}
 
 void initSprites() {
      num_procesos = 0;
@@ -15,6 +25,10 @@ void initSprites() {
      for (int i=0; i<MAX_SPRITES; i++)     
      {   
          proceso[i].id = -1;
+     }
+     for (int i=0; i<MAX_SCROLLS; i++)
+     {
+         scrolls[i] = NULL;
      }
 }
 
@@ -82,17 +96,28 @@ void delete_sprite(Tsprite * spr) {
     }
 }
 
+inline static void drawScroll(HGL_Scroll* scroll) {
+    draw_tilemap_no_wrap(scroll->file, scroll->base_map, scroll->tilemap, scroll->offsetX, scroll->offsetY, scroll->flags);
+}
+
+inline static void drawSprite(Tsprite * sprite) {
+    if(sprite->fast) {
+        draw_sprite_fast(sprite);
+    } else {
+        draw_sprite(sprite);
+    }
+}
 
 void draw_all_sprites_basic(){
-    Tsprite * sprite;
+    for (int i=0; i<MAX_SCROLLS; i++) {
+        HGL_Scroll * scroll = scrolls[i];
+        if (scroll == NULL) break;
+        drawScroll(scroll);
+    }
+
     for (int i = num_procesos-1; i >= 0; i--)     
     {
-        sprite = &proceso[i];
-        if(sprite->fast) {
-            draw_sprite_fast(sprite);
-        } else {
-            draw_sprite(sprite);
-        }
+        drawSprite(&proceso[i]);
     }
 }
 
@@ -119,32 +144,106 @@ void draw_all_sprites_zorder(){
     }
     insertsort(lista_z, num_procesos);
     for (int i = 0; i < num_procesos; i++) {
-        Tsprite *sprite = lista_z[i];
         //printf("%i,", sprite->z);
-        if (sprite->z < 6) {
-            continue;
-        }
-        if(sprite->fast) {
-            draw_sprite_fast(sprite);
-        } else {
-            draw_sprite(sprite);
-        }
+        drawSprite(lista_z[i]);
     }
     //printf(" -> %i\n", num_procesos);
 }
 
-void draw_all_sprites_zorder2(){
-  for (int i = 0; i < num_procesos; i++) {
-    Tsprite *sprite = lista_z[i];
-    if (sprite->z >= 6) {
-      continue;
+enum DrawableType { DrawableNode, DrawableSprite, DrawableTileMap };
+
+typedef struct {
+    enum DrawableType type;
+    void * drawable;
+    void * next;
+}Drawable;
+
+#define ORDER_TABLE_LENGTH 8
+
+Drawable drawable_buffer[MAX_SPRITES + 10];
+static Drawable ot[ORDER_TABLE_LENGTH];
+Drawable * nextDrawable = &drawable_buffer[0];
+Drawable * headDrawable;
+
+void init_draw_layers(Drawable *ot, int length) {
+    nextDrawable = drawable_buffer;
+    for (int i = 1; i<length; i++) {
+        ot[i].type = DrawableNode;
+        ot[i].next = &ot[i-1];
     }
-    if(sprite->fast) {
-      draw_sprite_fast(sprite);
-    } else {
-      draw_sprite(sprite);
+    ot[0].type = DrawableNode;
+    ot[0].next = NULL;
+    headDrawable = &ot[length-1];
+}
+
+void init_draw_layersR(Drawable *ot, int length) {
+    nextDrawable = drawable_buffer;
+    for (int i = 0; i<length - 1; i++) {
+        ot[i].type = DrawableNode;
+        ot[i].next = &ot[i+1];
     }
-  }
+    ot[length-1].type = DrawableNode;
+    ot[length-1].next = NULL;
+    headDrawable = &ot[0];
+}
+
+
+void add_sprite(Drawable *ot, Tsprite * sprite) {
+    nextDrawable->type = DrawableSprite;
+    nextDrawable->drawable = sprite;
+    nextDrawable->next = ot->next;
+    ot->next = nextDrawable;
+    nextDrawable++;
+}
+
+void add_scroll(Drawable *ot, HGL_Scroll * scroll) {
+    nextDrawable->type = DrawableTileMap;
+    nextDrawable->drawable = scroll;
+    nextDrawable->next = ot->next;
+    ot->next = nextDrawable;
+    nextDrawable++;
+}
+
+static void addAllScrolls() {
+    for (int i=0; i<MAX_SCROLLS; i++) {
+        HGL_Scroll * scroll = scrolls[i];
+        if (scroll == NULL) return;
+        add_scroll(&ot[scroll->z], scroll);
+    }
+}
+static void addAllSprites() {
+    for (int i = num_procesos-1; i >= 0; i--)
+    {
+        Tsprite *sprite = &proceso[i];
+        add_sprite(&ot[sprite->z], sprite);
+    }
+}
+
+static void buildDrawableList() {
+    init_draw_layers(ot, ORDER_TABLE_LENGTH);
+    addAllScrolls();
+    addAllSprites();
+}
+
+void draw_all_sprites_layer() {
+    buildDrawableList();
+    const Drawable * next = headDrawable;
+    Tsprite *sprite;
+    HGL_Scroll *scroll;
+    while(next != NULL)
+    {
+        switch (next->type) {
+            case DrawableSprite:
+                drawSprite(next->drawable);
+                break;
+            case DrawableTileMap:
+                drawScroll(next->drawable);
+                break;
+            default:
+                break;;
+        }
+        next = next->next;
+    }
 }
 
 void draw_tilemap_with_sprites(int file, int base_map, TileMap *tilemap) {

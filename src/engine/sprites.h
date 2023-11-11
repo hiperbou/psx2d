@@ -5,6 +5,7 @@
 #include "particle.h"
 
 #include "../core/hgl_types.h"
+#include "../core/hgl_scroll.h"
 
 typedef struct{
       int x; 
@@ -28,13 +29,14 @@ typedef struct{
       int uploadTpage;
 }Tsprite;
 
-//extern SPRITE psxSpritePool[4096];
+void setScroll(int index, HGL_Scroll* scroll);
 
 void initSprites();
 Tsprite *new_sprite(int x, int y, int z,int file, int graph);
 void delete_sprite(Tsprite * spr);
 void draw_all_sprites_basic();
 void draw_all_sprites_zorder();
+void draw_all_sprites_layer();
 
 void draw_particle(int file, int graph, Particle *p);
 void draw_sprite(Tsprite * spr);

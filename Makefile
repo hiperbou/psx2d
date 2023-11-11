@@ -28,6 +28,7 @@ CLionSources:
     src/core/hgl_ent.c \
     src/core/psx/hgl_mem.c \
     src/core/hgl_pool.c \
+    src/core/hgl_scroll.c \
     src/core/hgl_spr.c \
     src/core/hgl_text.c \
     src/engine/particle.c \
@@ -128,3 +129,6 @@ emulator: iso
 
 ctoy:
 	pushd ./../../../../git/CToy-1.06 ; .\CToy.exe ; popd
+
+cppcheck:
+	cppcheck src --cppcheck-build-dir=.cppcheck -i ghz16.c

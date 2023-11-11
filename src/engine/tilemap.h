@@ -6,7 +6,6 @@
 
 typedef struct {
     const uint8_t * map;
-    //int *map;
     int numCols;
     int numRows;
 }TileMap;
@@ -46,6 +45,6 @@ void draw_tilemap8(int file, int base_map, TileMap *tilemap, int offsetX, int of
 
 
 TileMap fromTiledBin(const uint8_t *tmx);
-TileMap cloneTileMap(TileMap * original);
+TileMap cloneTileMap(const TileMap * original);
 
 #endif //__HGL__TILEMAP_H

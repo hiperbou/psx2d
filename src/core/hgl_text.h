@@ -21,7 +21,7 @@ void HGL_TEXT_renderAll();
 
 HGL_Text* HGL_TEXT_new(int file, int base_map, const char* text, int x, int y, int flags, int length);
 
-void HGL_TEXT_delete(HGL_Text * sprite);
+void HGL_TEXT_delete(HGL_Text * text);
 void HGL_TEXT_deleteAll();
 
 

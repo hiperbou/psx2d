@@ -20,8 +20,8 @@ TileMap fromTiledBin(const uint8_t *tmx) {
     };
 }
 
-TileMap cloneTileMap(TileMap * original) {
-    size_t size = sizeof(uint8_t) * original->numRows * original->numCols;
+TileMap cloneTileMap(const TileMap * original) {
+    const size_t size = sizeof(uint8_t) * original->numRows * original->numCols;
     uint8_t * newMap =  HGL_malloc(size);
     HGL_memcpy(newMap, (uint8_t*)original->map, size);
 
