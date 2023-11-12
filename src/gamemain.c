@@ -372,6 +372,7 @@ Actor* spawnGoal(int tileX, int tileY) {
 }
 
 
+int nextLevel = 1;
 
 static void loadLevel_e1m1b() {
     bgaTileMap = fromTiledBin(smb3_1_1_underground_layer);
@@ -383,15 +384,27 @@ static void loadLevel_e1m1b() {
     bgbx = 0;
     bgby = 0;
 
+    ANIM(TilesetAnimation, 4, 5, 6, 7)
+
+    tilesetAnimationState = HGL_ANIM_new();
+    SetAnimationState(tilesetAnimationState, TilesetAnimation, 8);
+
+    scroll = HGL_SCROLL_new(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 6, 0);
+
     initPlayerEventHandler(&playerEventHandler, &bgaTileMap, &collisionTileMap);
 
     sonic = newSonic(sonic_fpg, TILE(9), TILE(5), collisionTileMap, &playerEventHandler);
     playerEventHandler.player = sonic;
 
-    newCamera(sonic, FIX32(40), FIX32(128));
+    //newCamera(sonic, FIX32(6), FIX32(0));
+    camposx = TILE_SIZE * 6;
+
+    newGoalFloating(tileset_fpgs[0], TILE(23), TILE(5), sonic)->goal.mission = 3;
+
+    nextLevel = 0;
 }
 
-static void loadLevel() {
+static void loadLevel_e1m1() {
     bgaTileMap = fromTiledBin(smb3_2_layer);
     collisionTileMap = fromTiledBin(smb3_2_collision);
 
@@ -400,6 +413,11 @@ static void loadLevel() {
 
     bgbx = 0;
     bgby = 0;
+
+    ANIM(TilesetAnimation, 0, 1, 2, 3)
+
+    tilesetAnimationState = HGL_ANIM_new();
+    SetAnimationState(tilesetAnimationState, TilesetAnimation, 8);
 
     scroll = HGL_SCROLL_new(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 6, 0);
 
@@ -421,7 +439,7 @@ static void loadLevel() {
     //setTileAt(&collisionTileMap, 47, 24, 0); //Hide floor box
 
     //newGoal(tileset_fpgs[0], TILE_CENTER(96), TILE_CENTER(8), sonic)->goal.mission = 2; // 3 -  cloud box
-    newGoalActivated(tileset_fpgs[0], TILE(148), TILE_CENTER(4), sonic)->goal.mission = 3; // 4 -  pipe
+    newGoalFloating(tileset_fpgs[0], TILE(148), TILE_CENTER(4), sonic)->goal.mission = 3; // 4 -  pipe
 
     Actor * hiddenGoal = newGoalHiddenInactive(tileset_fpgs[0], TILE_CENTER(65), TILE_CENTER(24), sonic); // 5 - behind bushes
     hiddenGoal->goal.mission = 4; // 5 - behind bushes
@@ -438,6 +456,13 @@ static void loadLevel() {
 
     //Actor * tileShader = newTileShader(&bgaTileMap);
 }
+
+typedef void (*functionPointer)();
+static functionPointer levels[] = {
+    loadLevel_e1m1,
+    loadLevel_e1m1b
+};
+
 
 static void unloadLevel() {
     HGL_ACTOR_deleteAll();
@@ -470,7 +495,7 @@ static void stateMenu() {
 }
 
 static void stateLoadLevel() {
-    loadLevel();
+    levels[nextLevel]();
     GameStateMachine.setGame();
 }
 
@@ -487,7 +512,7 @@ static void stateGame() {
     }
 
     sonic->sonic.inputHandler.handleInput(&buttonState);
-    fallToBackgroundScript->inputHandler.handleInput(&buttonState);
+    if(fallToBackgroundScript) fallToBackgroundScript->inputHandler.handleInput(&buttonState);
 
     HGL_COMMAND_updateAll();
     HGL_ANIM_updateAll();
@@ -592,11 +617,11 @@ int gameMain() {
     tileset_fpgs[6] = tileset_fpgs[4]; //load_atlas(tileset_fpgs[6], "art/smb3u", 16, 16, 4, 2); //tile variant 3
     tileset_fpgs[7] = tileset_fpgs[4]; //load_atlas(tileset_fpgs[7], "art/smb3u", 16, 16, 4, 2); //tile variant 4
 
-    ANIM(TilesetAnimation, 0, 1, 2, 3)
+    /*ANIM(TilesetAnimation, 0, 1, 2, 3)
 
     tilesetAnimationState = HGL_ANIM_new();
     SetAnimationState(tilesetAnimationState, TilesetAnimation, 8);
-
+*/
     int enemies_map = load_atlas(enemies_fpg, "art/enemies", 48, 32, 4, 2);
 
     initGameStateMachine();

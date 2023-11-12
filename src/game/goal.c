@@ -127,6 +127,12 @@ static void constructorActivated(Actor* actor) {
     setActivated(actor->goal.sm);
 }
 
+static void constructorFloating(Actor* actor) {
+    constructor(actor);
+    setAnimation(actor, anim_star, 6);
+    setFloat(actor->goal.sm);
+}
+
 static void constructorHidden(Actor* actor) {
     constructor(actor);
     setAnimation(actor, anim_hidden, 32);
@@ -150,6 +156,11 @@ Actor* newGoal(int file, const fix32 x, const fix32 y, Actor * target) {
 Actor* newGoalActivated(int file, const fix32 x, const fix32 y, Actor * target) {
     return newGoalBuilder(file, x, y, target, constructorActivated);
 }
+
+Actor* newGoalFloating(int file, const fix32 x, const fix32 y, Actor * target) {
+    return newGoalBuilder(file, x, y, target, constructorFloating);
+}
+
 
 Actor* newGoalHidden(int file, const fix32 x, const fix32 y, Actor * target) {
     return newGoalBuilder(file, x, y, target, constructorHidden);
