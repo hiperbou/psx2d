@@ -45,6 +45,7 @@ CLionSources:
     src/game/motobug.c \
     src/game/sonic.c \
     src/game/tileshader.c \
+    src/game/triggerScript.c \
     src/game/data/gamedata.c \
     src/game/menu/coursemenu.c \
     src/game/state/gamestate.c \

@@ -102,6 +102,7 @@
                 <file name="smb3t3.tim"   type="data" source="art\smb3t3.tim"/>
                 <file name="smb3t4.tim"   type="data" source="art\smb3t4.tim"/>
                 <file name="smb3u.tim"   type="data" source="art\smb3u.tim"/>
+                <file name="smb3h.tim"   type="data" source="art\smb3h.tim"/>
                 <file name="gbs-mono.tim"   type="data" source="art\gbs-mono.tim"/>
             </dir>
 

@@ -8,6 +8,7 @@
 
 #include "game/sonic.h"
 #include "game/fallToBackgroundScript.h"
+#include "game/triggerScript.h"
 
 #include "core/hgl_types.h"
 
@@ -29,6 +30,7 @@
 
 #include "e1m1.h"
 #include "e1m1b.h"
+#include "e1m1c.h"
 
 
 //#include "memory.h"
@@ -209,7 +211,8 @@ static Actor * fallToBackgroundScript = NULL;
 //static Actor * goal = NULL;
 static TileMap bgaTileMap;
 static TileMap collisionTileMap;
-static int tileset_fpgs[8];
+#define MAX_NUM_TILESETS_FPGS 9
+static int tileset_fpgs[MAX_NUM_TILESETS_FPGS];
 static AnimationState* tilesetAnimationState;
 
 static HGL_Scroll * scroll;
@@ -372,7 +375,7 @@ Actor* spawnGoal(int tileX, int tileY) {
 }
 
 
-int nextLevel = 1;
+int nextLevel = 2;
 
 static void loadLevel_e1m1b() {
     bgaTileMap = fromTiledBin(smb3_1_1_underground_layer);
@@ -398,11 +401,44 @@ static void loadLevel_e1m1b() {
 
     //newCamera(sonic, FIX32(6), FIX32(0));
     camposx = TILE_SIZE * 6;
+    camposy = 0;
 
     newGoalFloating(tileset_fpgs[0], TILE(23), TILE(5), sonic)->goal.mission = 3;
 
     nextLevel = 0;
 }
+
+static void loadLevel_e1m1c() {
+    bgaTileMap = fromTiledBin(e1m1c_layer);
+    collisionTileMap = fromTiledBin(e1m1c_collision);
+
+    bgaTileMap = cloneTileMap(&bgaTileMap);
+    collisionTileMap = cloneTileMap(&collisionTileMap);
+
+    bgbx = 0;
+    bgby = 0;
+
+    ANIM(TilesetAnimation, 8)
+    tilesetAnimationState = HGL_ANIM_new();
+    SetAnimationState(tilesetAnimationState, TilesetAnimation, 8);
+
+    scroll = HGL_SCROLL_new(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 6, 0);
+
+    initPlayerEventHandler(&playerEventHandler, &bgaTileMap, &collisionTileMap);
+
+    sonic = newSonic(sonic_fpg, TILE(9), TILE(5), collisionTileMap, &playerEventHandler);
+    playerEventHandler.player = sonic;
+
+    //newCamera(sonic, FIX32(6), FIX32(0));
+    camposx = TILE_SIZE * -2;
+    camposy = TILE_SIZE * -2;
+
+    newGoalFloating(tileset_fpgs[0], TILE(23), TILE(5), sonic)->goal.mission = 3;
+
+    nextLevel = 0;
+}
+
+void loadNextLevel();
 
 static void loadLevel_e1m1() {
     bgaTileMap = fromTiledBin(smb3_2_layer);
@@ -449,6 +485,7 @@ static void loadLevel_e1m1() {
 
     fallToBackgroundScript = newFallToBackgroundScript(&playerEventHandler, hiddenGoal, hiddenGoal2, bgaTileMap);
 
+    newTriggerScript(&playerEventHandler, loadNextLevel);
 
     //spawnGoal(174, 21);
 
@@ -460,7 +497,8 @@ static void loadLevel_e1m1() {
 typedef void (*functionPointer)();
 static functionPointer levels[] = {
     loadLevel_e1m1,
-    loadLevel_e1m1b
+    loadLevel_e1m1b,
+    loadLevel_e1m1c
 };
 
 
@@ -474,6 +512,13 @@ static void unloadLevel() {
     HGL_free((void*)collisionTileMap.map);
     initSprites();
 }
+
+void loadNextLevel() {
+    nextLevel = 1;
+    unloadLevel();
+    GameStateMachine.setLoadLevel();
+}
+
 
 static void stateLoadMenu() {
     initCourseMenu(&courseMenu, &gameData.course[0], &gameState);
@@ -587,7 +632,7 @@ int gameMain() {
 
     sonic_fpg = new_fpg();
 
-    for (int i=0; i<8; i++) {
+    for (int i=0; i<MAX_NUM_TILESETS_FPGS; i++) {
       tileset_fpgs[i] = new_fpg();
     }
     enemies_fpg = new_fpg();
@@ -616,6 +661,9 @@ int gameMain() {
     tileset_fpgs[5] = tileset_fpgs[4]; //load_atlas(tileset_fpgs[5], "art/smb3u", 16, 16, 4, 2); //tile variant 2
     tileset_fpgs[6] = tileset_fpgs[4]; //load_atlas(tileset_fpgs[6], "art/smb3u", 16, 16, 4, 2); //tile variant 3
     tileset_fpgs[7] = tileset_fpgs[4]; //load_atlas(tileset_fpgs[7], "art/smb3u", 16, 16, 4, 2); //tile variant 4
+
+    load_atlas(tileset_fpgs[8], "art/smb3h" , 16, 16, 4, 3);
+
 
     /*ANIM(TilesetAnimation, 0, 1, 2, 3)
 

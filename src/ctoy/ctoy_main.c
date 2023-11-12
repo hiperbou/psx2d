@@ -84,6 +84,12 @@
 #undef constructor
 #undef update
 
+#define constructor triggerScript_constructor
+#define update triggerScript_update
+#include "../game/triggerScript.c"
+#undef constructor
+#undef update
+
 #define constructor goal_constructor
 #define update goal_update
 #include "../game/goal.c"

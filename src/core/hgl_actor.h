@@ -53,6 +53,10 @@ typedef struct{
     fun  (doFallToBackground);
 }SonicData;
 
+typedef struct {
+    fun (onEnterCallback);
+}TriggerData;
+
 typedef void ActorConstructorCallback(Actor* actor);
 typedef void ActorUpdateCallback(Actor* actor);
 typedef void ActorDestructorCallback(Actor* actor);
@@ -67,6 +71,7 @@ typedef struct Actor {
 		SonicData sonic;
         GoalData goal;
         MenuStarData menuStar;
+	    TriggerData trigger;
 	};
     ActorUpdateCallback *updateCallback;
     ActorDestructorCallback *destructorCallback;
