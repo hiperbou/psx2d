@@ -9,8 +9,8 @@
 #include "../core/hgl_anim.h"
 
 
-#define MAP_WIDTH           2944//10240
-#define MAP_HEIGHT          432//1280
+int MAP_WIDTH = 2944;
+int MAP_HEIGHT = 432;
 
 int camposx;
 int camposy;

@@ -4,11 +4,13 @@
 #include "../input/buttonstate.h"
 #include "../input/input.h"
 #include "enemyupdate.h" //setZ
+#include "triggerScript.h" //onTriggerEnter
 
 static PlayerEventHandler *myPlayerEventHandler;
 static Actor* myGoal;
-static Actor* myGoal2;
+static Actor* myTrigger;
 static TileMap levelTileMap;
+static AABB myBox;
 
 static u16 input = 0;
 
@@ -42,16 +44,17 @@ inline static bool playerIsVisible() {
 }
 
 inline static bool playerCrouchingInWhiteBlock() {
-    return (input & BUTTON_DOWN);
+    return (input & BUTTON_DOWN) && onTriggerEnter(myPlayerEventHandler->player->entity, &myBox);
 }
 
 static void update(Actor* actor) {
     if (restoreCounter > 0) {
         restoreCounter--;
     } else if (restoreCounter == 0 && playerIsVisible()) {
+        restoreCounter--;
         setZ(myPlayerEventHandler->player, 0);
         myGoal->goal.deactivate(myGoal);
-        myGoal2->goal.deactivate(myGoal2);
+        myTrigger->trigger.active = false;
     }
 
     if (playerCrouchingInWhiteBlock()) {
@@ -61,17 +64,18 @@ static void update(Actor* actor) {
             restoreCounter = TIME_TO_RESTORE;
             myPlayerEventHandler->player->sonic.doFallToBackground();
             myGoal->goal.activate(myGoal);
-            myGoal2->goal.activate(myGoal2);
+            myTrigger->trigger.active = true;
         }
     } else {
         activateCounter = 0;
     }
 }
 
-Actor* newFallToBackgroundScript(PlayerEventHandler *playerEventHandler, Actor* goal, Actor* goal2, TileMap tileMap) {
+Actor* newFallToBackgroundScript(PlayerEventHandler *playerEventHandler, Actor* goal, Actor* trigger, TileMap tileMap, AABB box) {
     myPlayerEventHandler = playerEventHandler;
     myGoal = goal;
-    myGoal2 = goal2;
+    myTrigger = trigger;
+    myBox = box;
     levelTileMap = tileMap;
     return newActor(0, 0, 0, 0, constructor, update);
 }

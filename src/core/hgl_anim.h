@@ -15,6 +15,7 @@ void HGL_ANIM_init();
 AnimationState* HGL_ANIM_new();
 void HGL_ANIM_delete(AnimationState *e);
 void HGL_ANIM_updateAll();
+void HGL_ANIM_deleteAll();
 
 void SetAnimationState(AnimationState * animationState, const int* data, int delay);
 void SetAnimationDelay(AnimationState * animationState, int delay);

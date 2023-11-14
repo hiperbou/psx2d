@@ -51,10 +51,20 @@ typedef struct{
     fun  (doRebound);
     fun2  (onPlayerReachedGoal, int8_t);
     fun  (doFallToBackground);
+    fun2 (doPipeDown, fix32);
 }SonicData;
 
 typedef struct {
-    fun (onEnterCallback);
+    uint16_t x;
+    uint16_t y;
+    uint16_t w;
+    uint16_t h;
+}AABB;
+
+typedef struct {
+    fun2 (onEnterCallback, Actor*);
+    bool active;
+    AABB box;
 }TriggerData;
 
 typedef void ActorConstructorCallback(Actor* actor);

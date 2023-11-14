@@ -5,6 +5,8 @@
 
 extern int camposx;
 extern int camposy;
+extern int MAP_WIDTH;
+extern int MAP_HEIGHT;
 
 void updateCameraVPD();
 

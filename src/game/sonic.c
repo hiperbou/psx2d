@@ -226,10 +226,10 @@ static void handleInput(ButtonState* buttonState){
 #define FALSE (0)
 #define TRUE (!FALSE)
 
-CREATE_STATE_MACHINE(StateMachine, Grounded, Jumping, FallingOffLedge, FallToBackground, GoalReached, WinEnter, Win, WinExit)
+CREATE_STATE_MACHINE(StateMachine, Grounded, Jumping, FallingOffLedge, FallToBackground, GoalReached, WinEnter, Win, WinExit, PipeDown, PipeDownEnter)
 
 #include "../engine/actor_fsm.h"
-ACTOR_CREATE_STATE_MACHINE(AnimStateMachine, AnimNormal, AnimWin)
+ACTOR_CREATE_STATE_MACHINE(AnimStateMachine, AnimNormal, AnimWin, AnimPipe)
 
 static AnimStateMachine animStateMachine;
 
@@ -503,6 +503,36 @@ static void stateGoalReached() {
 }
 
 static int timer = 0;
+
+static void statePipeDown() {
+    posy += FIX32(1);
+}
+
+static void statePipeDownEnter() {
+    posy += FIX32(1);
+    timer++;
+    if (timer > 40) {
+        timer = 0;
+        setZ(playerEventHandler->player, 0);
+        setAnimNormal(&animStateMachine);
+        setFallingOffLedge();
+    }
+}
+
+inline static void doPipeDown(fix32 warpPosition) {
+    posx = warpPosition;
+    setAnimPipe(&animStateMachine);
+    setZ(playerEventHandler->player, 7);
+    StateMachine.setPipeDown();
+}
+
+void sonicDoEnterFromPipe() {
+    setAnimPipe(&animStateMachine);
+    setZ(playerEventHandler->player, 7);
+    StateMachine.setPipeDownEnter();
+}
+
+
 static void stateWinEnter() {
     timer++;
     if (timer > 20) {
@@ -596,6 +626,9 @@ static void updateWinAnim(Actor * actor)
     }
 }
 
+static void updatePipeAnim(Actor *actor) {
+    setAnimation(actor, ANIM_WAIT, 60);
+}
 
 static void stateAnimNormal(AnimStateMachine * sm, Actor *actor) {
     updateAnim(actor);
@@ -603,6 +636,10 @@ static void stateAnimNormal(AnimStateMachine * sm, Actor *actor) {
 
 static void stateAnimWin(AnimStateMachine * sm, Actor *actor) {
     updateWinAnim(actor);
+}
+
+static void stateAnimPipe(AnimStateMachine * sm, Actor *actor) {
+    updatePipeAnim(actor);
 }
 
 static void update(Actor* actor) {
@@ -617,12 +654,14 @@ static void constructor(Actor* actor) {
     speedX = FIX32(0);
     speedY = FIX32(0);
     input = 0;
+    timer = 0;
 
     SonicData* sonic = &actor->sonic;
     sonic->inputHandler.handleInput = handleInput;
     sonic->doRebound = doRebound;
     sonic->onPlayerReachedGoal = onPlayerReachedGoal;
     sonic->doFallToBackground = doFallToBackground;
+    sonic->doPipeDown = doPipeDown;
 
     setAnimation(actor, ANIM_STAND, 100);
 

@@ -61,3 +61,8 @@ void HGL_ANIM_updateAll() {
     OBJECTPOOL_ITERATOR_ALLOCATED_END
 }
 
+void HGL_ANIM_deleteAll() {
+    OBJECTPOOL_ITERATOR_ALLOCATED_START(animationStatePool, AnimationState)
+    HGL_ANIM_delete(it);
+    OBJECTPOOL_ITERATOR_ALLOCATED_END
+}

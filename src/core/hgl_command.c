@@ -44,6 +44,18 @@ DelayedCommand* HGL_COMMAND_new()
     return elem->data;
 }
 
+DelayedCommand* HGL_COMMAND_create(int delay,  DelayedCommandCallback *callback,  void * target,  int data)
+{
+    DelayedCommand * command = HGL_COMMAND_new();
+    *command = (DelayedCommand) {
+        .delay = delay,
+        .callback = callback,
+        .target = target,
+        .data = data
+    };
+    return command;
+}
+
 void HGL_COMMAND_delete(DelayedCommand *delayedCommand)
 {
     ObjectPool_free(commandPool, delayedCommand);

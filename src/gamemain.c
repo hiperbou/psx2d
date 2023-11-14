@@ -375,7 +375,7 @@ Actor* spawnGoal(int tileX, int tileY) {
 }
 
 
-int nextLevel = 2;
+int nextLevel = 0;
 
 static void loadLevel_e1m1b() {
     bgaTileMap = fromTiledBin(smb3_1_1_underground_layer);
@@ -396,12 +396,15 @@ static void loadLevel_e1m1b() {
 
     initPlayerEventHandler(&playerEventHandler, &bgaTileMap, &collisionTileMap);
 
-    sonic = newSonic(sonic_fpg, TILE(9), TILE(5), collisionTileMap, &playerEventHandler);
+    sonic = newSonic(sonic_fpg, TILE(9), TILE(3), collisionTileMap, &playerEventHandler);
     playerEventHandler.player = sonic;
+    sonicDoEnterFromPipe();
 
-    //newCamera(sonic, FIX32(6), FIX32(0));
-    camposx = TILE_SIZE * 6;
-    camposy = 0;
+    MAP_WIDTH  = bgaTileMap.numCols * TILE_SIZE;
+    MAP_HEIGHT = bgaTileMap.numRows * TILE_SIZE;
+    newCamera(sonic, FIX32(1), FIX32(0));
+    //camposx = TILE_SIZE * 6;
+    //camposy = 0;
 
     newGoalFloating(tileset_fpgs[0], TILE(23), TILE(5), sonic)->goal.mission = 3;
 
@@ -426,19 +429,22 @@ static void loadLevel_e1m1c() {
 
     initPlayerEventHandler(&playerEventHandler, &bgaTileMap, &collisionTileMap);
 
-    sonic = newSonic(sonic_fpg, TILE(9), TILE(5), collisionTileMap, &playerEventHandler);
+    sonic = newSonic(sonic_fpg, TILE(2), TILE(6), collisionTileMap, &playerEventHandler);
     playerEventHandler.player = sonic;
 
+    MAP_WIDTH  = bgaTileMap.numCols * TILE_SIZE;
+    MAP_HEIGHT = bgaTileMap.numRows * TILE_SIZE;
     //newCamera(sonic, FIX32(6), FIX32(0));
     camposx = TILE_SIZE * -2;
     camposy = TILE_SIZE * -2;
 
-    newGoalFloating(tileset_fpgs[0], TILE(23), TILE(5), sonic)->goal.mission = 3;
+    newGoalActivated(tileset_fpgs[0], TILE(8), TILE(9), sonic)->goal.mission = 5;
 
     nextLevel = 0;
 }
 
-void loadNextLevel();
+void loadUndergroundLevel();
+void loadSecretLevel();
 
 static void loadLevel_e1m1() {
     bgaTileMap = fromTiledBin(smb3_2_layer);
@@ -459,7 +465,8 @@ static void loadLevel_e1m1() {
 
     initPlayerEventHandler(&playerEventHandler, &bgaTileMap, &collisionTileMap);
 
-    sonic = newSonic(sonic_fpg, TILE(6), TILE(25), collisionTileMap, &playerEventHandler);
+    //sonic = newSonic(sonic_fpg, TILE(6), TILE(25), collisionTileMap, &playerEventHandler);
+    sonic = newSonic(sonic_fpg, TILE(148), TILE(6), collisionTileMap, &playerEventHandler);
     playerEventHandler.player = sonic;
 
 
@@ -475,20 +482,24 @@ static void loadLevel_e1m1() {
     //setTileAt(&collisionTileMap, 47, 24, 0); //Hide floor box
 
     //newGoal(tileset_fpgs[0], TILE_CENTER(96), TILE_CENTER(8), sonic)->goal.mission = 2; // 3 -  cloud box
-    newGoalFloating(tileset_fpgs[0], TILE(148), TILE_CENTER(4), sonic)->goal.mission = 3; // 4 -  pipe
+    //newGoalFloating(tileset_fpgs[0], TILE(148), TILE_CENTER(4), sonic)->goal.mission = 3; // 4 -  pipe
 
     Actor * hiddenGoal = newGoalHiddenInactive(tileset_fpgs[0], TILE_CENTER(65), TILE_CENTER(24), sonic); // 5 - behind bushes
     hiddenGoal->goal.mission = 4; // 5 - behind bushes
 
-    Actor * hiddenGoal2 = newGoalHiddenInactive(tileset_fpgs[0], TILE_CENTER(177), TILE_CENTER(25), sonic);
-    hiddenGoal2->goal.mission = 5; // 6 - Gotta go fast
+    //Actor * hiddenGoal2 = newGoalHiddenInactive(tileset_fpgs[0], TILE_CENTER(177), TILE_CENTER(25), sonic);
+    //hiddenGoal2->goal.mission = 5; // 6 - Gotta go fast
+    Actor * trigger = newTriggerScript(&playerEventHandler, loadSecretLevel, false, (AABB) { TILE_SIZE * 174, 0, 160, 416});
+    fallToBackgroundScript = newFallToBackgroundScript(
+        &playerEventHandler,hiddenGoal, trigger, bgaTileMap,
+        (AABB) { TILE_SIZE * 37, TILE_SIZE * 18, TILE_SIZE * 6, TILE_SIZE *1});
 
-    fallToBackgroundScript = newFallToBackgroundScript(&playerEventHandler, hiddenGoal, hiddenGoal2, bgaTileMap);
 
-    newTriggerScript(&playerEventHandler, loadNextLevel);
-
+    newTriggerScript(&playerEventHandler, loadUndergroundLevel, true, (AABB) { TILE_SIZE * 147 + 8, TILE_SIZE * 6, TILE_SIZE * 1,  TILE_SIZE * 1});
     //spawnGoal(174, 21);
 
+    MAP_WIDTH  = bgaTileMap.numCols * TILE_SIZE;
+    MAP_HEIGHT = bgaTileMap.numRows * TILE_SIZE;
     newCamera(sonic, FIX32(40), FIX32(128));
 
     //Actor * tileShader = newTileShader(&bgaTileMap);
@@ -507,18 +518,34 @@ static void unloadLevel() {
     HGL_COMMAND_deleteAll();
     HGL_TEXT_deleteAll();
     HGL_SCROLL_deleteAll();
+    HGL_ANIM_deleteAll();
     remove_Particles();
     HGL_free((void*)bgaTileMap.map);
     HGL_free((void*)collisionTileMap.map);
     initSprites();
 }
 
-void loadNextLevel() {
-    nextLevel = 1;
+static void loadNextLevel(int levelIndex) {
+    nextLevel = levelIndex;
     unloadLevel();
     GameStateMachine.setLoadLevel();
 }
 
+void loadUnderGroundLevelCommand(DelayedCommand * command) {
+    loadNextLevel(1);
+}
+
+void loadUndergroundLevel(Actor * trigger) {
+    if (buttonState.btn & PAD_DOWN) {
+        deleteActor(trigger);
+        sonic->sonic.doPipeDown(FIX32(16 * 148));
+        HGL_COMMAND_create(60, loadUnderGroundLevelCommand, NULL, 0);
+    }
+}
+
+void loadSecretLevel() {
+    loadNextLevel(2);
+}
 
 static void stateLoadMenu() {
     initCourseMenu(&courseMenu, &gameData.course[0], &gameState);
@@ -535,6 +562,7 @@ static void stateMenu() {
         GameStateMachine.setLoadLevel();
         HGL_ACTOR_deleteAll();
         HGL_TEXT_deleteAll();
+        HGL_ANIM_deleteAll();
         initSprites();
     }
 }

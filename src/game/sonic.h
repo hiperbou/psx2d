@@ -18,5 +18,6 @@ typedef struct PlayerEventHandler{
 
 Actor* newSonic(int file, fix32 x, fix32 y, TileMap _collisionTileMap, PlayerEventHandler* playerEventHandler);
 
+void sonicDoEnterFromPipe();
 
 #endif //DEMO_SONIC_H

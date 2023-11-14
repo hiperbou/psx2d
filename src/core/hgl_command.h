@@ -16,6 +16,7 @@ typedef struct DelayedCommand{
 
 void HGL_COMMAND_init();
 DelayedCommand* HGL_COMMAND_new();
+DelayedCommand* HGL_COMMAND_create(int delay,  DelayedCommandCallback *callback,  void * target,  int data);
 void HGL_COMMAND_delete(DelayedCommand *e);
 void HGL_COMMAND_updateAll();
 void HGL_COMMAND_deleteAll();
