@@ -1,5 +1,6 @@
 #include "sprites.h"
 
+#include "../core/hgl.h"
 #include "../core/hgl_scroll.h"
 
 #include "../engine/tilemap.h"

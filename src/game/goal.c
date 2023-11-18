@@ -1,9 +1,10 @@
 #include <stdbool.h>
-#include "../core/hgl.h"
-#include "../core/hgl_spr.h"
-#include "../core/hgl_ent.h"
+
 #include "../core/hgl_actor.h"
 #include "../core/hgl_anim.h"
+#include "../core/hgl_ent.h"
+#include "../core/hgl_mem.h"
+#include "../engine/actor_fsm.h"
 
 #include "actors.h"
 #include "enemyupdate.h"
@@ -15,10 +16,7 @@ ANIM(anim_activated2, 98,5,99,5)
 ANIM(anim_dead, 0)
 ANIM(anim_star, 98,99)
 
-#include "../engine/actor_fsm.h"
-#include "../core/hgl_mem.h"
-
-ACTOR_CREATE_STATE_MACHINE(GoalStateMachine, Idle, IdleHidden, Activated, Star, Float, Dead, Inactive)
+ACTOR_CREATE_STATE_MACHINE(GoalStateMachine, Idle, IdleHidden, IdleHiddenChest, Activated, Star, Float, Dead, Inactive)
 
 inline static bool checkColision(Actor * actor, Actor * targetActor) {
     if(actor->goal.collisionEnabled == false) return false;
@@ -41,6 +39,13 @@ static void stateIdleHidden(GoalStateMachine * sm, Actor *actor) {
         setAnimation(actor, anim_activated2, 3);
         setActivated(sm);
         enableCollision(actor, false);
+    }
+}
+
+static void stateIdleHiddenChest(GoalStateMachine * sm, Actor *actor) {
+    if(checkColision(actor, actor->goal.targetActor)) {
+        setAnimation(actor, anim_activated2, 3);
+        setActivated(sm);
     }
 }
 
@@ -138,6 +143,12 @@ static void constructorHidden(Actor* actor) {
     setAnimation(actor, anim_hidden, 32);
 }
 
+static void constructorHiddenChest(Actor* actor) {
+    constructor(actor);
+    setAnimation(actor, anim_hidden, 32);
+    setIdleHiddenChest(actor->goal.sm);
+}
+
 static void constructorHiddenInactive(Actor* actor) {
     constructor(actor);
     setAnimation(actor, anim_hidden, 32);
@@ -161,9 +172,12 @@ Actor* newGoalFloating(int file, const fix32 x, const fix32 y, Actor * target) {
     return newGoalBuilder(file, x, y, target, constructorFloating);
 }
 
-
 Actor* newGoalHidden(int file, const fix32 x, const fix32 y, Actor * target) {
     return newGoalBuilder(file, x, y, target, constructorHidden);
+}
+
+Actor* newGoalHiddenChest(int file, const fix32 x, const fix32 y, Actor * target) {
+    return newGoalBuilder(file, x, y, target, constructorHiddenChest);
 }
 
 Actor* newGoalHiddenInactive(int file, const fix32 x, const fix32 y, Actor * target) {

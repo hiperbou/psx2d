@@ -32,12 +32,12 @@ void SetAnimationState(AnimationState * animationState, const int* data, int del
 
     *animationState = (AnimationState) {
             .data = (int*) data,
-            .frames = (int *) &data[1],
-            .numFrames = data[0],
+            .frames = ANIM_GET_FRAMES_POINTER(data),
+            .numFrames = ANIM_GET_NUM_FRAMES(data),
             .animFrame = 0,
             .accumTicks = delay,
             .delay = delay,
-            .currentFrame = data[1]
+            .currentFrame = ANIM_GET_FIRST_FRAME(data)
     };
 }
 

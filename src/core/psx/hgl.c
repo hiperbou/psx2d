@@ -2,6 +2,7 @@
 #include "input.h"
 #include "sprites.h"
 #include "fpg.h"
+#include "../hgl.h"
 
 void HGL_init() {
     initDisplay();

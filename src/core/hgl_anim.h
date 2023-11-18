@@ -27,4 +27,10 @@ void SetAnimationDelay(AnimationState * animationState, int delay);
 #define ANIM(NAME, ...) \
 static const int NAME[] = { COUNT_ARGUMENTS(__VA_ARGS__), ##__VA_ARGS__ };
 
+#define ANIM_GET_NUM_FRAMES(NAME) NAME[0]
+#define ANIM_GET_FIRST_FRAME(NAME) NAME[1]
+#define ANIM_GET_FRAME(NAME, X) NAME[(X) + 1]
+#define ANIM_GET_LAST_FRAME(NAME) NAME[ANIM_GET_NUM_FRAMES(NAME)]
+#define ANIM_GET_FRAMES_POINTER(NAME) (int *) &NAME[1]
+
 #endif //DEMO_HGL_ANIM_H

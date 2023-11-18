@@ -18,6 +18,7 @@ Actor* newGoal(int file, fix32 x, fix32 y, Actor* target);
 Actor* newGoalActivated(int file, fix32 x, fix32 y, Actor * target);
 Actor* newGoalFloating(int file, fix32 x, fix32 y, Actor * target);
 Actor* newGoalHidden(int file, fix32 x, fix32 y, Actor * target);
+Actor* newGoalHiddenChest(int file, fix32 x, fix32 y, Actor * target);
 Actor* newGoalHiddenInactive(int file, fix32 x, fix32 y, Actor * target);
 
 Actor* newCamera(Actor* cameraTarget, fix32 x, fix32 y);

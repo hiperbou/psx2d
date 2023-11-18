@@ -15,6 +15,7 @@ void initDisplay() {
     //ctoy_window_size(1280, 960);
     //m_image_create(&buffer, M_FLOAT, image.width, image.height, 3);
     m_image_create(&buffer, M_FLOAT, 320, 240, 3);
+    setClearColor(0, 0, 0);
 }
 
 void HGL_init() {

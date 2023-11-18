@@ -14,17 +14,10 @@ void SetUint8(DelayedCommand * data) {
 }
 
 void newSetUint8DelayedCommand(int delay, uint8_t *target, uint8_t value) {
-    DelayedCommand * command = HGL_COMMAND_new();
-    *command = (DelayedCommand) {
-            .delay = delay,
-            .callback = SetUint8,
-            .target = target,
-            .data = value
-    };
+    HGL_COMMAND_create(delay, SetUint8, target, value);
 }
 
-void HGL_COMMAND_init()
-{
+void HGL_COMMAND_init() {
     commandPool = new_ObjectPool(MAX_NUM_COMMANDS, sizeof(DelayedCommand));
 }
 
@@ -37,15 +30,13 @@ inline static void HGL_COMMAND_reset(DelayedCommand *delayedCommand) {
     };
 }
 
-DelayedCommand* HGL_COMMAND_new()
-{
+DelayedCommand* HGL_COMMAND_new() {
     PoolElement * elem = ObjectPool_get(commandPool);
     HGL_COMMAND_reset(elem->data);
     return elem->data;
 }
 
-DelayedCommand* HGL_COMMAND_create(int delay,  DelayedCommandCallback *callback,  void * target,  int data)
-{
+DelayedCommand* HGL_COMMAND_create(int delay,  DelayedCommandCallback *callback,  void * target,  int data) {
     DelayedCommand * command = HGL_COMMAND_new();
     *command = (DelayedCommand) {
         .delay = delay,
@@ -56,8 +47,7 @@ DelayedCommand* HGL_COMMAND_create(int delay,  DelayedCommandCallback *callback,
     return command;
 }
 
-void HGL_COMMAND_delete(DelayedCommand *delayedCommand)
-{
+void HGL_COMMAND_delete(DelayedCommand *delayedCommand) {
     ObjectPool_free(commandPool, delayedCommand);
 }
 

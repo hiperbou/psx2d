@@ -48,17 +48,6 @@
 #define TILE_MASK_FLOOR 0xC0           //1100 0000
 #define TILE_MASK_SOLID_BREAKABLE 0xA0 //1010 0000
 
-//#define MIN_POSX        FIX32(10.0)
-//#define MAX_POSX        FIX32(400.0)
-//#define MAX_POSY        FIX32(156.0)
-
-//#define MAP_WIDTH           320 //10240
-//#define MAP_HEIGHT          416//992//224 //1280
-
-//#define MIN_POSX            FIX32(10L)
-//#define MAX_POSX            FIX32(MAP_WIDTH - 100)
-//#define MAX_POSY            FIX32(MAP_HEIGHT - 48)
-
 static fix32 posx = FIX32(128);
 static fix32 posy = FIX32(128);
 static fix32 speedX = FIX32(0);
@@ -302,9 +291,6 @@ inline static void updateMovement() {
         updateMovementDefault();
     }
 }
-
-
-
 
 inline static void jump(fix32 jumpSpeed){
     speedY = jumpSpeed;
@@ -666,6 +652,7 @@ static void constructor(Actor* actor) {
     setAnimation(actor, ANIM_STAND, 100);
 
     setZ(actor, 0);
+    setRollingOnFloor(false);
 
     initStateMachine();
     initAnimStateMachine(&animStateMachine);

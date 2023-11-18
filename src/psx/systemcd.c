@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <libcd.h>
 
-#include "hgl_mem.h"
+#include "../core/hgl_mem.h"
 
 
 // CD specifics

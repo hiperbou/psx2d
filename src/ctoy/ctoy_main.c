@@ -39,6 +39,7 @@
 #include "../media/ctoy/ctoy_fpg.c"
 #include "../media/fpg.c"
 
+#include "../engine/fader.c"
 #include "../engine/tilemap.c"
 #include "../engine/sprites.c"
 #include "../engine/text.c"
@@ -137,11 +138,23 @@ struct m_image sonic_image = M_IMAGE_IDENTITY();
 extern struct m_image buffer;
 int fullscreen = 0;
 
+typedef struct {
+    float r,g,b;
+}CToy_ClearColor;
+
+static CToy_ClearColor ctoyClearColor;
+
+void setClearColor(uint8_t r, uint8_t g, uint8_t b) {
+    ctoyClearColor.r = r / 255.f;
+    ctoyClearColor.g = g / 255.f;
+    ctoyClearColor.b = b / 255.f;
+}
+
 void clear(struct m_image *dest) {
 
-    float r = 0.5;//175 / 255.0f;
-    float g = 0.9;//249 / 255.0f;
-    float b = 0.9;//240 / 255.0f;
+    float r = ctoyClearColor.r;//0.5;//175 / 255.0f;
+    float g = ctoyClearColor.g;//0.9;//249 / 255.0f;
+    float b = ctoyClearColor.b;//0.9;//240 / 255.0f;
 
     //float r = 0.5;// This gives r 188 colors are not exact!
     //float g = 0.5;// This gives g 188
@@ -299,6 +312,39 @@ void blit_ex(struct m_image *dest, const struct m_image *src, int px, int py, in
             }
         }
     }
+}
+
+
+void ctoy_fadeToBlack(struct m_image *dest, float fade) {
+    for(int y = 0; y < dest->height; y++) {
+        float *dest_pixel = ((float *)dest->data) + y * dest->width * dest->comp;
+        for(int x = 0; x < dest->width; x++) {
+            dest_pixel[0] = dest_pixel[0] * fade;
+            dest_pixel[1] = dest_pixel[1] * fade;
+            dest_pixel[2] = dest_pixel[2] * fade;
+            dest_pixel += dest->comp;
+        }
+    }
+}
+
+void ctoy_fadeToWhite(struct m_image *dest, float fade) {
+    for(int y = 0; y < dest->height; y++) {
+        float *dest_pixel = ((float *)dest->data) + y * dest->width * dest->comp;
+        for(int x = 0; x < dest->width; x++) {
+            dest_pixel[0] = dest_pixel[0] + (1.0 - dest_pixel[0]) * fade;
+            dest_pixel[1] = dest_pixel[1] + (1.0 - dest_pixel[1]) * fade;
+            dest_pixel[2] = dest_pixel[2] + (1.0 - dest_pixel[2]) * fade;
+            dest_pixel += dest->comp;
+        }
+    }
+}
+
+void fadeToBlack(uint8_t fade) {
+    ctoy_fadeToBlack(&buffer, 1.0 - fade/255.0f);
+}
+
+void fadeToWhite(uint8_t fade) {
+    ctoy_fadeToWhite(&buffer, fade/255.0f);
 }
 
 void *persistent_memory = NULL;

@@ -12,12 +12,13 @@
 
 #include "core/hgl_types.h"
 
-#include "game/actors.h"
 #include "core/hgl_anim.h"
 #include "core/hgl_command.h"
 #include "core/hgl_mem.h"
 #include "core/hgl_scroll.h"
 #include "core/hgl_text.h"
+#include "engine/fader.h"
+#include "game/actors.h"
 #include "game/camera.h"
 #include "game/tileshader.h"
 #include "game/data/gamedata.h"
@@ -151,13 +152,7 @@ bool onPlayerGrounded(PlayerEventHandler*playerEventHandler, Tile tile) {
 void goToMainMenu();
 
 void newGoToMainMenuCommand(int delay, int8_t value) {
-    DelayedCommand * command = HGL_COMMAND_new();
-    *command = (DelayedCommand) {
-            .delay = delay,
-            .callback = goToMainMenu,
-            .target = NULL,
-            .data = value
-    };
+    HGL_COMMAND_create(delay, goToMainMenu, NULL, value);
 }
 
 void doPlayerWinAnimationParticles(Actor*player, int8_t mission) {
@@ -384,6 +379,8 @@ static void loadLevel_e1m1b() {
     bgaTileMap = cloneTileMap(&bgaTileMap);
     collisionTileMap = cloneTileMap(&collisionTileMap);
 
+    setClearColor(0, 0, 0);
+
     bgbx = 0;
     bgby = 0;
 
@@ -418,6 +415,8 @@ static void loadLevel_e1m1c() {
     bgaTileMap = cloneTileMap(&bgaTileMap);
     collisionTileMap = cloneTileMap(&collisionTileMap);
 
+    setClearColor(0, 0, 0);
+
     bgbx = 0;
     bgby = 0;
 
@@ -438,13 +437,13 @@ static void loadLevel_e1m1c() {
     camposx = TILE_SIZE * -2;
     camposy = TILE_SIZE * -2;
 
-    newGoalActivated(tileset_fpgs[0], TILE(8), TILE(9), sonic)->goal.mission = 5;
+    newGoalHiddenChest(tileset_fpgs[0], TILE(8), TILE(9), sonic)->goal.mission = 5;
 
     nextLevel = 0;
 }
 
-void loadUndergroundLevel();
-void loadSecretLevel();
+void loadUndergroundLevelTriggerCallback();
+void loadSecretLevelTriggerCallback();
 
 static void loadLevel_e1m1() {
     bgaTileMap = fromTiledBin(smb3_2_layer);
@@ -452,6 +451,8 @@ static void loadLevel_e1m1() {
 
     bgaTileMap = cloneTileMap(&bgaTileMap);
     collisionTileMap = cloneTileMap(&collisionTileMap);
+
+    setClearColor(175, 249, 240);
 
     bgbx = 0;
     bgby = 0;
@@ -464,6 +465,8 @@ static void loadLevel_e1m1() {
     scroll = HGL_SCROLL_new(tileset_fpgs[tilesetAnimationState->currentFrame], 1, &bgaTileMap, bgbx, bgby, 6, 0);
 
     initPlayerEventHandler(&playerEventHandler, &bgaTileMap, &collisionTileMap);
+
+    newTriggerScript(&playerEventHandler, loadUndergroundLevelTriggerCallback, true, (AABB) { TILE_SIZE * 147 + 8, TILE_SIZE * 6, TILE_SIZE * 1,  TILE_SIZE * 1});
 
     //sonic = newSonic(sonic_fpg, TILE(6), TILE(25), collisionTileMap, &playerEventHandler);
     sonic = newSonic(sonic_fpg, TILE(148), TILE(6), collisionTileMap, &playerEventHandler);
@@ -489,13 +492,12 @@ static void loadLevel_e1m1() {
 
     //Actor * hiddenGoal2 = newGoalHiddenInactive(tileset_fpgs[0], TILE_CENTER(177), TILE_CENTER(25), sonic);
     //hiddenGoal2->goal.mission = 5; // 6 - Gotta go fast
-    Actor * trigger = newTriggerScript(&playerEventHandler, loadSecretLevel, false, (AABB) { TILE_SIZE * 174, 0, 160, 416});
+    Actor * trigger = newTriggerScript(&playerEventHandler, loadSecretLevelTriggerCallback, false, (AABB) { TILE_SIZE * 174, 0, 160, 416});
     fallToBackgroundScript = newFallToBackgroundScript(
         &playerEventHandler,hiddenGoal, trigger, bgaTileMap,
         (AABB) { TILE_SIZE * 37, TILE_SIZE * 18, TILE_SIZE * 6, TILE_SIZE *1});
 
 
-    newTriggerScript(&playerEventHandler, loadUndergroundLevel, true, (AABB) { TILE_SIZE * 147 + 8, TILE_SIZE * 6, TILE_SIZE * 1,  TILE_SIZE * 1});
     //spawnGoal(174, 21);
 
     MAP_WIDTH  = bgaTileMap.numCols * TILE_SIZE;
@@ -531,11 +533,21 @@ static void loadNextLevel(int levelIndex) {
     GameStateMachine.setLoadLevel();
 }
 
-void loadUnderGroundLevelCommand(DelayedCommand * command) {
-    loadNextLevel(1);
+void loadNextLevelCommand(DelayedCommand * command) {
+    loadNextLevel(command->data);
 }
 
-void loadUndergroundLevel(Actor * trigger) {
+inline static void createLoadNextLevelCommand(int nextLevelIndex) {
+    HGL_COMMAND_create(30, loadNextLevelCommand, NULL, nextLevelIndex);
+}
+
+void loadUnderGroundLevelCommand(DelayedCommand * command) {
+    fadeOff();
+    createLoadNextLevelCommand(1);
+    //loadNextLevel(1);
+}
+
+void loadUndergroundLevelTriggerCallback(Actor * trigger) {
     if (buttonState.btn & PAD_DOWN) {
         deleteActor(trigger);
         sonic->sonic.doPipeDown(FIX32(16 * 148));
@@ -543,11 +555,14 @@ void loadUndergroundLevel(Actor * trigger) {
     }
 }
 
-void loadSecretLevel() {
-    loadNextLevel(2);
+void loadSecretLevelTriggerCallback(Actor* trigger) {
+    deleteActor(trigger);
+    fadeOff();
+    createLoadNextLevelCommand(2);
 }
 
 static void stateLoadMenu() {
+    setClearColor(175, 249, 240);
     initCourseMenu(&courseMenu, &gameData.course[0], &gameState);
     loadCourseMenu(&courseMenu);
     GameStateMachine.setMenu();
@@ -570,6 +585,7 @@ static void stateMenu() {
 static void stateLoadLevel() {
     levels[nextLevel]();
     GameStateMachine.setGame();
+    HGL_COMMAND_create(1, fadeOn, NULL, NULL);
 }
 
 static void stateUnloadLevel() {
@@ -714,6 +730,7 @@ int gameMain() {
 int gameUpdate() {
     updateInput();
     GameStateMachine.update();
+    drawFader();
     HGL_frame();
     return 0;
 }

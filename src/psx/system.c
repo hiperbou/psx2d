@@ -12,6 +12,8 @@
 #include <ctype.h>
 
 #include "system.h"
+#include "../core/hgl.h"
+#include "../engine/fader.h"
 
 // Define environment pairs and buffer counter
 static DISPENV disp[2];
@@ -58,10 +60,17 @@ void initPALDisplay() {
     SetDefDrawEnv(&draw[1], 0, 0, 320, 256);
 }
 
+void setClearColor(uint8_t r, uint8_t g, uint8_t b) {
+    setRGB0(&draw[0], r, g, b);
+    setRGB0(&draw[1], r, g, b);
+}
+
 void initClearColor() {
     // Specifies the clear color of the DRAWENV
-    setRGB0(&draw[0], 175, 249, 240);
-    setRGB0(&draw[1], 175, 249, 240);
+    //setRGB0(&draw[0], 175, 249, 240);
+    //setRGB0(&draw[1], 175, 249, 240);
+    setRGB0(&draw[0], 0, 0, 0);
+    setRGB0(&draw[1], 0, 0, 0);
     // Enable background clear
     draw[0].isbg = 1;
     draw[1].isbg = 1;
@@ -456,3 +465,30 @@ void GetSpriteFromMemory(u_char *data, SPRITE *sprite) {
     GetSprite(&timImage, sprite);
 }
 */
+
+
+
+void addFadePrimitive(int z, int screenWidth, int screenHeight, int fade, enum FadeColor fadeColor) {
+    TILE * tile = (TILE*)nextpri;
+    setTile(tile);
+
+    setXY0(tile, 0, 0);
+    setWH(tile, screenWidth, screenHeight);
+    setRGB0(tile, fade, fade, fade);
+    setSemiTrans(tile, 1);
+    addPrim(&currentOrderTable[z], tile);
+    nextpri += sizeof(TILE);
+
+    DR_MODE *drMode = (DR_MODE*)nextpri;
+    setDrawMode(drMode, 0, 0, getTPage(0, fadeColor, 0, 0), 0);
+    addPrim(&currentOrderTable[z], drMode);
+    nextpri += sizeof(DR_MODE);
+}
+
+void fadeToBlack(uint8_t fade) {
+    addFadePrimitive(0, 320, 240, fade, BlackFadeColor);
+}
+
+void fadeToWhite(uint8_t fade) {
+    addFadePrimitive(0, 320, 240, fade, WhiteFadeColor);
+}

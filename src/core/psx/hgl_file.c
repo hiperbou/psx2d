@@ -1,5 +1,8 @@
 #include <stdint.h>
+#include <string.h>
 #include "../hgl_file.h"
+#include "../../utils/utils.h"
+#include "../../psx/system.h"
 
 void GetSpriteFromDisc(char *filename, SPRITE *sprite) {
     TIM_IMAGE timImage;
