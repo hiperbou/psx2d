@@ -1,4 +1,7 @@
 #include "fallToBackgroundScript.h"
+
+#include <stdio.h>
+
 #include "../core/hgl_actor.h"
 #include "sonic.h" //PlayerEventHandler
 #include "../input/buttonstate.h"
@@ -30,7 +33,7 @@ static void constructor(Actor* actor) {
     inputHandler->handleInput = fallToBackgroundHandleInput;
 
     activateCounter = 0;
-    restoreCounter = 0;
+    restoreCounter = -1;
 }
 
 inline static Tile getTileInfoFromMap(fix32 x, fix32 y) {
@@ -52,7 +55,7 @@ static void update(Actor* actor) {
         restoreCounter--;
     } else if (restoreCounter == 0 && playerIsVisible()) {
         restoreCounter--;
-        setZ(myPlayerEventHandler->player, 0);
+        setZ(myPlayerEventHandler->player, 0); //TODO: this should be a call fo a doBringToForeground function
         myGoal->goal.deactivate(myGoal);
         myTrigger->trigger.active = false;
     }

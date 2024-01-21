@@ -110,6 +110,8 @@ void initDisplay() {
     clearOrderingTable();
 }
 
+void preloadFadePrimitives();
+
 void display() {
     // Wait for GPU to finish drawing and V-Blank
     DrawSync(0);
@@ -129,6 +131,8 @@ void display() {
     nextpri = pribuff[db];      // Reset next primitive pointer
 
     clearOrderingTable();
+
+    preloadFadePrimitives();
 }
 
 void initFont() {
@@ -467,11 +471,12 @@ void GetSpriteFromMemory(u_char *data, SPRITE *sprite) {
 */
 
 
+static TILE * fadePrimitiveTile;
+static DR_MODE *fadePrimitiveDrMode;
 
-void addFadePrimitive(int z, int screenWidth, int screenHeight, int fade, enum FadeColor fadeColor) {
+static void addFadePrimitive(int z, int screenWidth, int screenHeight, int fade, enum FadeColor fadeColor) {
     TILE * tile = (TILE*)nextpri;
     setTile(tile);
-
     setXY0(tile, 0, 0);
     setWH(tile, screenWidth, screenHeight);
     setRGB0(tile, fade, fade, fade);
@@ -483,12 +488,24 @@ void addFadePrimitive(int z, int screenWidth, int screenHeight, int fade, enum F
     setDrawMode(drMode, 0, 0, getTPage(0, fadeColor, 0, 0), 0);
     addPrim(&currentOrderTable[z], drMode);
     nextpri += sizeof(DR_MODE);
+
+    fadePrimitiveTile  = tile;
+    fadePrimitiveDrMode = drMode;
+}
+
+static void updateFadePrimitive(int fade, enum FadeColor fadeColor) {
+    setRGB0(fadePrimitiveTile, fade, fade, fade);
+    setDrawMode(fadePrimitiveDrMode, 0, 0, getTPage(0, fadeColor, 0, 0), 0);
+}
+
+inline void preloadFadePrimitives() {
+    addFadePrimitive(0, 320, 240, 0, BlackFadeColor);
 }
 
 void fadeToBlack(uint8_t fade) {
-    addFadePrimitive(0, 320, 240, fade, BlackFadeColor);
+    updateFadePrimitive(fade, BlackFadeColor);
 }
 
 void fadeToWhite(uint8_t fade) {
-    addFadePrimitive(0, 320, 240, fade, WhiteFadeColor);
+    updateFadePrimitive(fade, WhiteFadeColor);
 }

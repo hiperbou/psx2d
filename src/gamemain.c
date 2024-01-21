@@ -18,6 +18,7 @@
 #include "core/hgl_scroll.h"
 #include "core/hgl_text.h"
 #include "engine/fader.h"
+
 #include "game/actors.h"
 #include "game/camera.h"
 #include "game/tileshader.h"
@@ -34,15 +35,55 @@
 #include "e1m1c.h"
 
 
-//#include "memory.h"
+/*
+#include <setjmp.h>
+void jumpTest() {
+    jmp_buf state;
+    int jmp = 0;
 
-void wait(char *message) {
-    int wait = 20;
-    while(wait) {
-        //FntPrint(message);
-        wait--;
-        HGL_frame();
+    jmp = setjmp(state);
+    if(!jmp)
+        printf("jmp available\n");
+    else
+        printf("jumped back!\n");
+
+    if(jmp == 0) {
+        printf("calling longjmp\n");
+        longjmp(state, 1);
+    } else {
+        printf("keep with the code :)\n");
     }
+}*/
+
+//#include "memory.h"
+void wait(int wait);
+
+void waitCommand(DelayedCommand * command) {
+    ((void (*)())command->target)();
+}
+
+typedef struct FunctionArray {
+   void *(functions)[10];
+}FunctionArray;
+
+void waitCommandArray(DelayedCommand * command) {
+    printf("run waitCommand array!\n");
+    FunctionArray * functionArray = command->target;
+    for (int i=0; i < command->data; i++) {
+        printf("iteration %i %i\n", i, functionArray);
+        //((void (*)())(*functionArray->functions[i]))();
+        ((void (*)())functionArray->functions[i])();
+        printf("Called OK %i\n", *(int*)functionArray);
+
+    }
+}
+
+void newWaitCommand(int delay, void *func) {
+    HGL_COMMAND_create(delay, waitCommand, func, 0);
+}
+
+void newWaitCommandArray(int delay, FunctionArray *func, int numFunctions) {
+    HGL_COMMAND_create(delay, waitCommandArray, func, numFunctions);
 }
 
 #define TILE_SIZE 16
@@ -149,10 +190,10 @@ bool onPlayerGrounded(PlayerEventHandler*playerEventHandler, Tile tile) {
     return false;
 }
 
-void goToMainMenu();
+void goToMainMenuCommandCallback();
 
 void newGoToMainMenuCommand(int delay, int8_t value) {
-    HGL_COMMAND_create(delay, goToMainMenu, NULL, value);
+    HGL_COMMAND_create(delay, goToMainMenuCommandCallback, NULL, value);
 }
 
 void doPlayerWinAnimationParticles(Actor*player, int8_t mission) {
@@ -356,6 +397,7 @@ void updateCourseMenuInput(CourseMenu *courseMenu) {
 
 static void drawCourseMenu(CourseMenu *courseMenu) {
     HGL_ANIM_updateAll();
+    HGL_COMMAND_updateAll();
     HGL_ENT_updateAll();
     HGL_ACTOR_updateAll();
     HGL_ENT_renderAll(0, 0);
@@ -542,7 +584,7 @@ inline static void createLoadNextLevelCommand(int nextLevelIndex) {
 }
 
 void loadUnderGroundLevelCommand(DelayedCommand * command) {
-    fadeOff();
+    blackFadeOut();
     createLoadNextLevelCommand(1);
     //loadNextLevel(1);
 }
@@ -557,7 +599,7 @@ void loadUndergroundLevelTriggerCallback(Actor * trigger) {
 
 void loadSecretLevelTriggerCallback(Actor* trigger) {
     deleteActor(trigger);
-    fadeOff();
+    blackFadeOut();
     createLoadNextLevelCommand(2);
 }
 
@@ -566,6 +608,7 @@ static void stateLoadMenu() {
     initCourseMenu(&courseMenu, &gameData.course[0], &gameState);
     loadCourseMenu(&courseMenu);
     GameStateMachine.setMenu();
+    fadeIn();
 }
 
 static void stateMenu() {
@@ -574,18 +617,35 @@ static void stateMenu() {
     drawCourseMenu(&courseMenu);
 
     if (buttonState.just_pressed & PAD_START) {
-        GameStateMachine.setLoadLevel();
-        HGL_ACTOR_deleteAll();
-        HGL_TEXT_deleteAll();
-        HGL_ANIM_deleteAll();
-        initSprites();
+        whiteFadeOut();
+        //wait(20);
+        //GameStateMachine.setLoadLevel();
+        //HGL_ACTOR_deleteAll();
+        //HGL_TEXT_deleteAll();
+        //HGL_ANIM_deleteAll();
+        //initSprites();
+        /*newWaitCommand(20, GameStateMachine.setLoadLevel);
+        newWaitCommand(20, HGL_ACTOR_deleteAll);
+        newWaitCommand(20, HGL_TEXT_deleteAll);
+        newWaitCommand(20, HGL_ANIM_deleteAll);
+        newWaitCommand(20, initSprites);*/
+
+        static FunctionArray functionArray;
+        functionArray = (FunctionArray) {
+            GameStateMachine.setLoadLevel,
+            HGL_ACTOR_deleteAll,
+            HGL_TEXT_deleteAll,
+            HGL_ANIM_deleteAll,
+            initSprites
+        };
+        newWaitCommandArray(20, &functionArray, 5);
     }
 }
 
 static void stateLoadLevel() {
     levels[nextLevel]();
     GameStateMachine.setGame();
-    HGL_COMMAND_create(1, fadeOn, NULL, NULL);
+    HGL_COMMAND_create(1, fadeIn, NULL, NULL);
 }
 
 static void stateUnloadLevel() {
@@ -597,7 +657,11 @@ void draw_all_sprites_zorder2();
 
 static void stateGame() {
     if (buttonState.just_pressed & PAD_START) {
-        GameStateMachine.setUnloadLevel();
+        whiteFadeOut();
+        //wait(20);
+        //GameStateMachine.setUnloadLevel();
+        //HGL_COMMAND_create(20, waitCommand, GameStateMachine.setUnloadLevel, 0);
+        newWaitCommand(20, GameStateMachine.setUnloadLevel);
     }
 
     sonic->sonic.inputHandler.handleInput(&buttonState);
@@ -644,7 +708,7 @@ static void stateGame() {
 
 
 
-void goToMainMenu(DelayedCommand * command) {
+void goToMainMenuCommandCallback(DelayedCommand * command) {
     int8_t mission = (int8_t)command->data;
 
     printf("Completed mission %i\n", mission);
@@ -654,11 +718,16 @@ void goToMainMenu(DelayedCommand * command) {
     CourseMissionState_completeMission(courseMissionState, mission);
     CourseMissionState_activateMission(courseMissionState, CourseMissionState_getNextMission(courseMissionState));
 
-    GameStateMachine.setUnloadLevel();
+    whiteFadeOut();
+    //wait(20);
+    //GameStateMachine.setUnloadLevel();
+    //HGL_COMMAND_create(20, waitCommand, GameStateMachine.setUnloadLevel, 0);
+    newWaitCommand(20, GameStateMachine.setUnloadLevel);
 }
 
 int gameMain() {
     printf("gameMain\n");
+    //jumpTest();
 
     initButtonStateInput();
 
@@ -728,9 +797,27 @@ int gameMain() {
 }
 
 int gameUpdate() {
-    updateInput();
+    if (isFaded()) {
+        initButtonStateInput();
+    } else {
+        updateInput();
+    }
     GameStateMachine.update();
-    drawFader();
+    updateFader();
     HGL_frame();
     return 0;
+}
+
+
+void wait(int wait) {
+    initButtonStateInput();
+    while(wait) {
+        wait--;
+        GameStateMachine.update();
+        updateFader();
+        HGL_frame();
+
+    }
+    //updateFader();
+    //HGL_frame();
 }

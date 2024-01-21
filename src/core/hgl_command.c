@@ -53,7 +53,7 @@ void HGL_COMMAND_delete(DelayedCommand *delayedCommand) {
 
 static inline void updateCommandState(DelayedCommand * delayedCommand) {
     delayedCommand->delay--;
-    if (delayedCommand->delay <= 0) {
+    if (delayedCommand->delay == 0) {
         //printf("command executed!\n");
         if(delayedCommand->callback) {
             delayedCommand->callback(delayedCommand);

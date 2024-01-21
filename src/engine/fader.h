@@ -8,6 +8,7 @@ enum FadeColor { WhiteFadeColor = 1, BlackFadeColor = 2 };
 
 typedef struct Fader Fader;
 typedef struct Fader {
+    bool faded;
     bool fading;
     int wait;
     int i;
@@ -17,14 +18,18 @@ typedef struct Fader {
     fun2 (update, Fader*);
 }Fader;
 
-void fadeOff();
-void fadeOn();
-void drawFader();
+void fadeOut();
+void fadeIn();
 
 void setFadeColor(enum FadeColor fadeColor);
-inline void setWhiteFadeColor() { setFadeColor(WhiteFadeColor); }
-inline void setBlackFadeColor() { setFadeColor(BlackFadeColor); }
+static inline void setWhiteFadeColor() { setFadeColor(WhiteFadeColor); }
+static inline void setBlackFadeColor() { setFadeColor(BlackFadeColor); }
 
+static inline void blackFadeOut() { setBlackFadeColor(); fadeOut(); }
+static inline void whiteFadeOut() { setWhiteFadeColor(); fadeOut(); }
+
+void updateFader();
 void initFader(Fader * fader);
+bool isFaded();
 
 #endif //FADER_H

@@ -491,6 +491,7 @@ static void stateGoalReached() {
 static int timer = 0;
 
 static void statePipeDown() {
+    //setZ(playerEventHandler->player, 7); //z is changed from somewhere
     posy += FIX32(1);
 }
 
