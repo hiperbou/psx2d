@@ -31,5 +31,10 @@ static inline void whiteFadeOut() { setWhiteFadeColor(); fadeOut(); }
 void updateFader();
 void initFader(Fader * fader);
 bool isFaded();
+bool isNotFaded();
+bool isFading();
+bool isNotFading();
+
+#define fadeFinished isNotFading
 
 #endif //FADER_H

@@ -1,4 +1,5 @@
 #include <ctoy.h>
+
 #include "../../util/img_util.c"
 
 #include "../core/hgl_types.h"
@@ -17,6 +18,13 @@
 #include "../input/input.h"
 #include "../input/buttonstate.h"
 #include "../media/fpg.h"
+
+#include "../utils/picoro.h"
+//#include "../utils/picoro.c"
+int resumable(coro c) {}
+void *resume(coro c, void *arg) { return NULL; }
+void *yield(void *arg) { return NULL; }
+coro coroutine(void *function(void *arg)) { return NULL; } 
 
 
 #define fsmState gameFsmState

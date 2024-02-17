@@ -100,3 +100,15 @@ void setFadeColor(enum FadeColor fadeColor) {
 bool isFaded() {
     return fader.faded;
 }
+
+bool isNotFaded() {
+    return !fader.faded;
+}
+
+bool isFading() {
+    return fader.fading;
+}
+
+bool isNotFading() {
+    return !fader.fading;
+}
