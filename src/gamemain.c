@@ -6,6 +6,8 @@
 #include "engine/tilemap.h"
 #include "media/fpg.h"
 
+#include "gameresources.h"
+
 #include "game/sonic.h"
 #include "game/fallToBackgroundScript.h"
 #include "game/triggerScript.h"
@@ -212,17 +214,8 @@ void newWaitCommandArray(int delay, FunctionArray *func, int numFunctions) {
 #define REPEAT50(X) REPEAT25(X) REPEAT25(X)
 #define REPEAT100(X) REPEAT50(X) REPEAT50(X)
 
+#include "game.h"
 #include "input/buttonstate.h"
-
-static ButtonState buttonState;
-
-static void initButtonStateInput() {
-    initButtonState(&buttonState);
-}
-
-static void updateInput() {
-    updateButtonState(&buttonState);
-}
 
 Actor* spawnGoal(int tileX, int tileY); //main.c
 
@@ -350,10 +343,6 @@ void checkCoin(TileMap* tileMap, Actor * actor) {
 CREATE_STATE_MACHINE(GameStateMachine, LoadMenu, Menu, LoadLevel, Game, UnloadLevel)
 
 
-static int font_atlas;
-
-
-
 static int bgbx = 0;
 static int bgby = 0;
 static Actor * sonic = NULL;
@@ -367,10 +356,11 @@ static AnimationState* tilesetAnimationState;
 
 static HGL_Scroll * scroll;
 
-static int sonic_fpg, enemies_fpg;
+//static int sonic_fpg, enemies_fpg;
 static PlayerEventHandler playerEventHandler;
 
 static void drawTestMenu() {
+    int font_atlas = Resources.getFontAtlas();
     draw_text8(0, font_atlas, "hello this is a direct drawing", 32, 128, 0, -1);
 
     char * text = "hello this is a typewritter effect";
@@ -438,6 +428,8 @@ static void loadCourseMenu(CourseMenu *courseMenu) {
     static const int missionY = 80;
     static const int courseY = 192;
     static const int numberXOffset = 4;
+
+    int font_atlas = Resources.getFontAtlas();
 
     for (int i=0; i<numStars; i++) {
         HGL_TEXT_new(0, font_atlas, numbers[i], (TILE_SIZE * starPos[i]) - numberXOffset, numberY, 0, -1);
@@ -550,7 +542,8 @@ static void loadLevel_e1m1b() {
 
     initPlayerEventHandler(&playerEventHandler, &bgaTileMap, &collisionTileMap);
 
-    sonic = newSonic(sonic_fpg, TILE(9), TILE(3), collisionTileMap, &playerEventHandler);
+
+    sonic = newSonic(Resources.getSonicFpg(), TILE(9), TILE(3), collisionTileMap, &playerEventHandler);
     playerEventHandler.player = sonic;
     sonicDoEnterFromPipe();
 
@@ -591,7 +584,7 @@ static void loadLevel_e1m1c() {
 
     initPlayerEventHandler(&playerEventHandler, &bgaTileMap, &collisionTileMap);
 
-    sonic = newSonic(sonic_fpg, TILE(2), TILE(6), collisionTileMap, &playerEventHandler);
+    sonic = newSonic(Resources.getSonicFpg(), TILE(2), TILE(6), collisionTileMap, &playerEventHandler);
     playerEventHandler.player = sonic;
 
     MAP_WIDTH  = bgaTileMap.numCols * TILE_SIZE;
@@ -633,10 +626,10 @@ static void loadLevel_e1m1() {
     newTriggerScript(&playerEventHandler, loadUndergroundLevelTriggerCallback, true, (AABB) { TILE_SIZE * 147 + 8, TILE_SIZE * 6, TILE_SIZE * 1,  TILE_SIZE * 1});
 
     //sonic = newSonic(sonic_fpg, TILE(6), TILE(25), collisionTileMap, &playerEventHandler);
-    sonic = newSonic(sonic_fpg, TILE(148), TILE(6), collisionTileMap, &playerEventHandler);
+    sonic = newSonic(Resources.getSonicFpg(), TILE(148), TILE(6), collisionTileMap, &playerEventHandler);
     playerEventHandler.player = sonic;
 
-
+    int enemies_fpg = Resources.getEnemiesFpg();
     newMotobug(enemies_fpg, TILE(20),TILE(25));
     newMotobug(enemies_fpg, TILE(64),TILE(24));
     newMotobug (enemies_fpg, TILE(90), TILE(25));
@@ -919,12 +912,11 @@ static void stateGame() {
 
     update_Particles();
 
+    int font_atlas = Resources.getFontAtlas();
     draw_text8(0, font_atlas, "012345789", 8, 8, 0, -1);
     draw_text8(0, font_atlas, "ABCDEFGHIJLMNOPQRSTUVWXYZ", 8, 16, 0, -1);
     draw_text8(0, font_atlas, "Hello", 8, 24, 0, -1);
 }
-
-
 
 void goToMainMenuCommandCallback(DelayedCommand * command) {
     int8_t mission = (int8_t)command->data;
@@ -947,45 +939,22 @@ int gameMain() {
     printf("gameMain\n");
     //jumpTest();
     //picoroTest();
-
-    initButtonStateInput();
-
-    HGL_init();
-
-
     //luaTest();
-
-    HGL_COMMAND_init();
-    HGL_ANIM_init();
-    HGL_SPR_init();
-    HGL_ENT_init();
-    HGL_ACTOR_init();
-    HGL_SCROLL_init();
-    HGL_TEXT_init();
-
-    int system_fpg = 0;
-
-    sonic_fpg = new_fpg();
 
     for (int i=0; i<MAX_NUM_TILESETS_FPGS; i++) {
       tileset_fpgs[i] = new_fpg();
     }
-    enemies_fpg = new_fpg();
+
     //int tiles2_fpg = new_fpg();
 
     //int texture64_map = load_map_from_memory(system_fpg, texture64);
     //int girl01_map = load_map_from_memory(girl_fpg, girl01);
     //int girl02_map = load_map_from_memory(girl_fpg, girl02);
 
-    font_atlas = load_atlas(system_fpg, "art/gbs-mono", 8,8,16,14);
-
-    int texture64_map = load_map(system_fpg, "art/texture6");
+    //int texture64_map = load_map(system_fpg, "art/texture6");
     //printf("texture64_map %i\n", texture64_map);
     //int girl01_map = load_map(girl_fpg, "art/girl01");
     //int girl02_map = load_map(girl_fpg, "art/girl02");
-
-    int sonic_map = load_atlas(sonic_fpg, "art/sonic", 48, 48, 5, 5);
-
 
     load_atlas(tileset_fpgs[0], "art/smb3t" , 16, 16, 11, 9);
     load_atlas(tileset_fpgs[1], "art/smb3t2", 16, 16, 11, 9);
@@ -999,13 +968,11 @@ int gameMain() {
 
     load_atlas(tileset_fpgs[8], "art/smb3h" , 16, 16, 4, 3);
 
-
     /*ANIM(TilesetAnimation, 0, 1, 2, 3)
 
     tilesetAnimationState = HGL_ANIM_new();
     SetAnimationState(tilesetAnimationState, TilesetAnimation, 8);
 */
-    int enemies_map = load_atlas(enemies_fpg, "art/enemies", 48, 32, 4, 2);
 
     initGameStateMachine();
 

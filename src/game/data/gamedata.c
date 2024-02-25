@@ -7,7 +7,7 @@ GameData gameData = {
         {
             .courseTitle = _(" 1 GRASS LAND PLAINS"),
             .missionDescription = {
-                    _("REACH TO THE GOAL")     , _("BOX IN THE FLOOR") , _("FAR ABOVE THE CLOUDS"),
+                    _("REACH TO THE GOAL")     , _("BOX ON THE FLOOR") , _("FAR ABOVE THE CLOUDS"),
                     _("TOP PLUMBER")          , _("BEHIND THE SCENES")        , _("GOTTA GO FAST")
             }
         },

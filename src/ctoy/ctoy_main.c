@@ -26,9 +26,12 @@ void *resume(coro c, void *arg) { return NULL; }
 void *yield(void *arg) { return NULL; }
 coro coroutine(void *function(void *arg)) { return NULL; } 
 
-
+#include "../gameresources.c"
 #define fsmState gameFsmState
 #include "../gamemain.c"
+#include "../game.c"
+#include "../gametitle.c"
+#include "../gameending.c"
 #undef fsmState
 #include "../core/hgl_actor.c"
 #include "../core/ctoy/hgl.c"
@@ -386,6 +389,8 @@ void ctoy_begin(void)
     }
 
     printf("--- ctoy_begin ---\n");
+    gameInit();
+    initResources();
 
     gameMain();
     return;
