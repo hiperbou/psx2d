@@ -85,6 +85,7 @@ static inline void particleUpdater(Particle * particle) {
     update_particle(particle);
     draw_particle(2, 42, particle);
     if (particle->life <= 0 ||
+        particle->size <= 0 ||
         particle->pos.x < 0 || particle->pos.x > FIX32(320) ||
         particle->pos.y < 0 || particle->pos.y > FIX32(240)) {
 

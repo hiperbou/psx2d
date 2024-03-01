@@ -3,6 +3,8 @@
 
 #ifdef PSX
 #include "psx/psx_fpg.h"
+#elif defined(RAYLIB)
+#include "raylib/raylib_fpg.h"
 #else
 #include "ctoy/ctoy_fpg.h"
 #endif

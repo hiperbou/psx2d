@@ -55,3 +55,5 @@ void HGL_SCROLL_deleteAll() {
     HGL_SCROLL_delete(it);
     OBJECTPOOL_ITERATOR_ALLOCATED_END
 }
+
+void HGL_SCROLL_setOffset(HGL_Scroll*scroll, int offsetX, int offsetY) { scroll->offsetX = offsetX; scroll->offsetY = offsetY; }

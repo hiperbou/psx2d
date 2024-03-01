@@ -25,6 +25,7 @@ HGL_Scroll* HGL_SCROLL_new(int file, int base_map, TileMap *tilemap, int offsetX
 void HGL_SCROLL_delete(HGL_Scroll * scroll);
 void HGL_SCROLL_deleteAll();
 
-inline void HGL_SCROLL_setOffset(HGL_Scroll*scroll, int offsetX, int offsetY) { scroll->offsetX = offsetX; scroll->offsetY = offsetY; }
+//inline void HGL_SCROLL_setOffset(HGL_Scroll*scroll, int offsetX, int offsetY) { scroll->offsetX = offsetX; scroll->offsetY = offsetY; }
+void HGL_SCROLL_setOffset(HGL_Scroll*scroll, int offsetX, int offsetY);
 
 #endif /* HGL_SCROLL_H_ */

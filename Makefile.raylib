@@ -1,0 +1,45 @@
+MODULES = core engine game game/data game/menu game/state input media pool utils
+MODULES_DEFAULT = core/default
+MODULES_RAYLIB = core/raylib engine/raylib input/raylib media/raylib
+
+SOURCES	= src $(addprefix src/,$(MODULES)) $(addprefix src/,$(MODULES_DEFAULT)) $(addprefix src/,$(MODULES_RAYLIB))
+
+CFILES		= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
+CPPFILES	= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.cpp))
+
+OBJ_DIR = obj/
+
+OBJECTS		= $(addprefix $(OBJ_DIR),$(CFILES:.c=.o))
+CPPOBJECTS	= $(addprefix $(OBJ_DIR),$(CPPFILES:.cpp=.o))
+
+INCLUDES  = $(addprefix -I,$(SOURCES))
+
+.PHONY: all clean
+
+all: raylib
+
+debug:
+	@echo $(OBJECTS)
+	#@echo $(CPPFILES)
+	#@echo $(OBJECTS)
+	#@echo $(DEPS)
+
+raylib: $(OBJECTS) $(CPPOBJECTS)
+	gcc -w -DRAYLIB $(OBJECTS) $(CPPOBJECTS) -o main.exe -lraylib -lopengl32 -lgdi32 -lwinmm
+
+$(OBJ_DIR)%.o: %.c
+	@mkdir -p $(dir $@)
+	gcc -w -DRAYLIB -c -o $@  $< 
+
+$(OBJ_DIR)%.o: %.cpp
+	@mkdir -p $(dir $@)
+	gcc -w -DRAYLIB -c -o $@  $<     
+
+ctoy:
+	pushd ./../../../../git/CToy-1.06 ; .\CToy.exe ; popd
+
+cppcheck:
+	cppcheck src --cppcheck-build-dir=.cppcheck -i ghz16.c
+
+clean:
+	rm -f $(OBJECTS)
