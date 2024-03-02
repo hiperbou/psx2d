@@ -314,12 +314,16 @@ void initPlayerEventHandler(PlayerEventHandler*playerEventHandler, TileMap *tile
     playerEventHandler->onGrounded = onPlayerGrounded;
 }
 
-static int currentLevel = 2;
-static int nextLevel = 2;
+static int currentLevel = 1;
+static int nextLevel = 1;
 
 void checkCoin(TileMap* tileMap, Actor * actor) {
     if(currentLevel == 2) return;
-
+    if(tileMap->map == NULL) {
+        print("ERROR: Calling checkCoin with unloaded tilemap!!");
+        return;
+    }
+    
     int actorHalfWidth = FIX32(6);
     int actorHalfHeight = FIX32(6);
     int actorBoundingBoxY = FIX32(16);
@@ -340,7 +344,7 @@ void checkCoin(TileMap* tileMap, Actor * actor) {
 }
 
 #include "engine/fsm.h"
-CREATE_STATE_MACHINE(GameStateMachine, LoadMenu, Menu, LoadLevel, Game, UnloadLevel)
+CREATE_STATE_MACHINE(GameStateMachine, LoadMenu, Menu, LoadLevelEnter, LoadLevel, Game, UnloadLevel)
 
 
 static int bgbx = 0;
@@ -681,13 +685,13 @@ static void unloadLevel() {
     remove_Particles();
     HGL_free((void*)bgaTileMap.map);
     HGL_free((void*)collisionTileMap.map);
+    bgaTileMap.map = NULL;
     initSprites();
 }
 
 static void loadNextLevel(int levelIndex) {
     nextLevel = levelIndex;
-    unloadLevel();
-    GameStateMachine.setLoadLevel();
+    GameStateMachine.setLoadLevelEnter();
 }
 
 void loadNextLevelCommand(DelayedCommand * command) {
@@ -849,6 +853,11 @@ static void stateMenu() {
         };
         newWaitCommandArray(20, &functionArray, 5);
     }
+}
+
+static void stateLoadLevelEnter() {
+    unloadLevel();
+    GameStateMachine.setLoadLevel();
 }
 
 static void stateLoadLevel() {
