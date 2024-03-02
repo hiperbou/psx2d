@@ -319,11 +319,7 @@ static int nextLevel = 0;
 
 void checkCoin(TileMap* tileMap, Actor * actor) {
     if(currentLevel == 2) return;
-    if(tileMap->map == NULL) {
-        print("ERROR: Calling checkCoin with unloaded tilemap!!");
-        return;
-    }
-    
+
     int actorHalfWidth = FIX32(6);
     int actorHalfHeight = FIX32(6);
     int actorBoundingBoxY = FIX32(16);
@@ -344,7 +340,7 @@ void checkCoin(TileMap* tileMap, Actor * actor) {
 }
 
 #include "engine/fsm.h"
-CREATE_STATE_MACHINE(GameStateMachine, LoadMenu, Menu, LoadLevelEnter, LoadLevel, Game, UnloadLevel)
+CREATE_STATE_MACHINE(GameStateMachine, LoadMenu, Menu, LoadLevelEnter, LoadLevel, Game, UnloadLevelBackToMenu)
 
 
 static int bgbx = 0;
@@ -685,7 +681,6 @@ static void unloadLevel() {
     remove_Particles();
     HGL_free((void*)bgaTileMap.map);
     HGL_free((void*)collisionTileMap.map);
-    bgaTileMap.map = NULL;
     initSprites();
 }
 
@@ -867,7 +862,7 @@ static void stateLoadLevel() {
     HGL_COMMAND_create(1, fadeIn, NULL, NULL);
 }
 
-static void stateUnloadLevel() {
+static void stateUnloadLevelBackToMenu() {
     unloadLevel();
     GameStateMachine.setLoadMenu();
     //GameStateMachine.setMenu(); //Coroutine picoro
@@ -879,9 +874,9 @@ static void stateGame() {
     if (buttonState.just_pressed & PAD_START) {
         whiteFadeOut();
         //wait(20);
-        //GameStateMachine.setUnloadLevel();
-        //HGL_COMMAND_create(20, waitCommand, GameStateMachine.setUnloadLevel, 0);
-        newWaitCommand(20, GameStateMachine.setUnloadLevel);
+        //GameStateMachine.setUnloadLevelBackToMenu();
+        //HGL_COMMAND_create(20, waitCommand, GameStateMachine.setUnloadLevelBackToMenu, 0);
+        newWaitCommand(20, GameStateMachine.setUnloadLevelBackToMenu);
     }
 
     sonic->sonic.inputHandler.handleInput(&buttonState);
@@ -939,9 +934,9 @@ void goToMainMenuCommandCallback(DelayedCommand * command) {
 
     whiteFadeOut();
     //wait(20);
-    //GameStateMachine.setUnloadLevel();
-    //HGL_COMMAND_create(20, waitCommand, GameStateMachine.setUnloadLevel, 0);
-    newWaitCommand(20, GameStateMachine.setUnloadLevel);
+    //GameStateMachine.setUnloadLevelBackToMenu();
+    //HGL_COMMAND_create(20, waitCommand, GameStateMachine.setUnloadLevelBackToMenu, 0);
+    newWaitCommand(20, GameStateMachine.setUnloadLevelBackToMenu);
 }
 
 int gameMain() {
