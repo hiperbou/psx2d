@@ -225,7 +225,7 @@ void spawnBlockPrize(Tile tile) {
     else if (tile.tileX == 96 && tile.tileY == 8) //Cloud box
         spawnGoal(tile.tileX, tile.tileY - 1)->goal.mission = 2;
     else
-        newBlock(Resources.getBlocksFpg(), 1, TILE_CENTER(tile.tileX), TILE_CENTER(tile.tileY) - FIX32(16), BlockType_coin);
+        newBlock(Resources.getSmb3tTileset(), 1, TILE_CENTER(tile.tileX), TILE_CENTER(tile.tileY) - FIX32(16), BlockType_coin);
 }
 
 #define TILE_MASK_SOLID 0x80           //1000 0000
@@ -256,7 +256,7 @@ void onPlayerCollidedWithCeilingTile(PlayerEventHandler*playerEventHandler, Tile
                     setTileAt(playerEventHandler->collisionTileMap, tile.tileX, tile.tileY, TILE_MASK_SOLID);
                     setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 0);
                     //spawn block
-                    newBlock(Resources.getBlocksFpg(), 1, TILE_CENTER(tile.tileX), TILE_CENTER(tile.tileY), BlockType_block);
+                    newBlock(Resources.getSmb3tTileset(), 1, TILE_CENTER(tile.tileX), TILE_CENTER(tile.tileY), BlockType_block);
                     spawnBlockPrize(tile);
 
                     newSetUint8DelayedCommand(10, getTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY), 96);
@@ -950,10 +950,6 @@ int gameMain() {
     //picoroTest();
     //luaTest();
 
-    for (int i=0; i<MAX_NUM_TILESETS_FPGS; i++) {
-      tileset_fpgs[i] = new_fpg();
-    }
-
     //int tiles2_fpg = new_fpg();
 
     //int texture64_map = load_map_from_memory(system_fpg, texture64);
@@ -965,31 +961,19 @@ int gameMain() {
     //int girl01_map = load_map(girl_fpg, "art/girl01");
     //int girl02_map = load_map(girl_fpg, "art/girl02");
 
-    load_atlas(tileset_fpgs[0], "art/smb3t" , 16, 16, 11, 9);
-    load_atlas(tileset_fpgs[1], "art/smb3t2", 16, 16, 11, 9);
-    load_atlas(tileset_fpgs[2], "art/smb3t3", 16, 16, 11, 9);
-    load_atlas(tileset_fpgs[3], "art/smb3t4", 16, 16, 11, 9);
+    tileset_fpgs[0] = Resources.getSmb3tTileset();
+    tileset_fpgs[1] = Resources.getSmb3t2Tileset();
+    tileset_fpgs[2] = Resources.getSmb3t3Tileset();
+    tileset_fpgs[3] = Resources.getSmb3t4Tileset();
 
-    load_atlas(tileset_fpgs[4], "art/smb3u" , 16, 16, 4, 2);
-    tileset_fpgs[5] = tileset_fpgs[4]; //load_atlas(tileset_fpgs[5], "art/smb3u", 16, 16, 4, 2); //tile variant 2
-    tileset_fpgs[6] = tileset_fpgs[4]; //load_atlas(tileset_fpgs[6], "art/smb3u", 16, 16, 4, 2); //tile variant 3
-    tileset_fpgs[7] = tileset_fpgs[4]; //load_atlas(tileset_fpgs[7], "art/smb3u", 16, 16, 4, 2); //tile variant 4
+    tileset_fpgs[4] = Resources.getSmb3uTileset();
+    tileset_fpgs[5] = tileset_fpgs[4];
+    tileset_fpgs[6] = tileset_fpgs[4];
+    tileset_fpgs[7] = tileset_fpgs[4];
 
-    load_atlas(tileset_fpgs[8], "art/smb3h" , 16, 16, 4, 3);
-
-    /*ANIM(TilesetAnimation, 0, 1, 2, 3)
-
-    tilesetAnimationState = HGL_ANIM_new();
-    SetAnimationState(tilesetAnimationState, TilesetAnimation, 8);
-*/
+    tileset_fpgs[8] = Resources.getSmb3hTileset();
 
     initGameStateMachine();
-
-    /*while(1)
-    {
-        GameStateMachine.update();
-        HGL_frame();
-    }*/
 
     return 0;
 }

@@ -30,22 +30,48 @@ new_fpg();
 load_atlas(EnemiesFpg_res, "art/enemies", 48, 32, 4, 2);
 RESOURCE_END(EnemiesFpg)
 
-/*
-    load_atlas(tileset_fpgs[0], "art/smb3t" , 16, 16, 11, 9);
-    load_atlas(tileset_fpgs[1], "art/smb3t2", 16, 16, 11, 9);
-    load_atlas(tileset_fpgs[2], "art/smb3t3", 16, 16, 11, 9);
-    load_atlas(tileset_fpgs[3], "art/smb3t4", 16, 16, 11, 9);
-*/
-RESOURCE(BlocksFpg)
+RESOURCE(Smb3tTileset)
 new_fpg();
-load_atlas(BlocksFpg_res, "art/smb3t" , 16, 16, 11, 9);
-RESOURCE_END(BlocksFpg)
+load_atlas(Smb3tTileset_res, "art/smb3t" , 16, 16, 11, 9);
+RESOURCE_END(Smb3tTileset)
+
+RESOURCE(Smb3t2Tileset)
+new_fpg();
+load_atlas(Smb3t2Tileset_res, "art/smb3t2" , 16, 16, 11, 9);
+RESOURCE_END(Smb3t2Tileset)
+
+RESOURCE(Smb3t3Tileset)
+new_fpg();
+load_atlas(Smb3t3Tileset_res, "art/smb3t3" , 16, 16, 11, 9);
+RESOURCE_END(Smb3t3Tileset)
+
+RESOURCE(Smb3t4Tileset)
+new_fpg();
+load_atlas(Smb3t4Tileset_res, "art/smb3t4" , 16, 16, 11, 9);
+RESOURCE_END(Smb3t4Tileset)
+
+RESOURCE(Smb3uTileset)
+new_fpg();
+load_atlas(Smb3uTileset_res, "art/smb3u" , 16, 16, 4, 2);
+RESOURCE_END(Smb3uTileset)
+
+RESOURCE(Smb3hTileset)
+new_fpg();
+load_atlas(Smb3hTileset_res, "art/smb3h" , 16, 16, 4, 3);
+RESOURCE_END(Smb3hTileset)
+
 
 void initResources() {
     Resources.getFontAtlas = loadFontAtlas;
     Resources.getSonicFpg = loadSonicFpg;
     Resources.getEnemiesFpg = loadEnemiesFpg;
-    Resources.getBlocksFpg = loadBlocksFpg;
+    Resources.getSmb3tTileset = loadSmb3tTileset;
+    Resources.getSmb3t2Tileset = loadSmb3t2Tileset;
+    Resources.getSmb3t3Tileset = loadSmb3t3Tileset;
+    Resources.getSmb3t4Tileset = loadSmb3t4Tileset;
+
+    Resources.getSmb3uTileset = loadSmb3uTileset;
+    Resources.getSmb3hTileset = loadSmb3hTileset;
 }
 
 #undef system_fpg
