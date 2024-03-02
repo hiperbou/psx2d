@@ -225,7 +225,7 @@ void spawnBlockPrize(Tile tile) {
     else if (tile.tileX == 96 && tile.tileY == 8) //Cloud box
         spawnGoal(tile.tileX, tile.tileY - 1)->goal.mission = 2;
     else
-        newBlock(2, 1, TILE_CENTER(tile.tileX), TILE_CENTER(tile.tileY) - FIX32(16), BlockType_coin);
+        newBlock(Resources.getBlocksFpg(), 1, TILE_CENTER(tile.tileX), TILE_CENTER(tile.tileY) - FIX32(16), BlockType_coin);
 }
 
 #define TILE_MASK_SOLID 0x80           //1000 0000
@@ -256,7 +256,7 @@ void onPlayerCollidedWithCeilingTile(PlayerEventHandler*playerEventHandler, Tile
                     setTileAt(playerEventHandler->collisionTileMap, tile.tileX, tile.tileY, TILE_MASK_SOLID);
                     setTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY, 0);
                     //spawn block
-                    newBlock(2, 1, TILE_CENTER(tile.tileX), TILE_CENTER(tile.tileY), BlockType_block);
+                    newBlock(Resources.getBlocksFpg(), 1, TILE_CENTER(tile.tileX), TILE_CENTER(tile.tileY), BlockType_block);
                     spawnBlockPrize(tile);
 
                     newSetUint8DelayedCommand(10, getTileAt(playerEventHandler->tilemap, tile.tileX, tile.tileY), 96);
@@ -314,8 +314,8 @@ void initPlayerEventHandler(PlayerEventHandler*playerEventHandler, TileMap *tile
     playerEventHandler->onGrounded = onPlayerGrounded;
 }
 
-static int currentLevel = 1;
-static int nextLevel = 1;
+static int currentLevel = 0;
+static int nextLevel = 0;
 
 void checkCoin(TileMap* tileMap, Actor * actor) {
     if(currentLevel == 2) return;

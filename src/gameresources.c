@@ -30,10 +30,22 @@ new_fpg();
 load_atlas(EnemiesFpg_res, "art/enemies", 48, 32, 4, 2);
 RESOURCE_END(EnemiesFpg)
 
+/*
+    load_atlas(tileset_fpgs[0], "art/smb3t" , 16, 16, 11, 9);
+    load_atlas(tileset_fpgs[1], "art/smb3t2", 16, 16, 11, 9);
+    load_atlas(tileset_fpgs[2], "art/smb3t3", 16, 16, 11, 9);
+    load_atlas(tileset_fpgs[3], "art/smb3t4", 16, 16, 11, 9);
+*/
+RESOURCE(BlocksFpg)
+new_fpg();
+load_atlas(BlocksFpg_res, "art/smb3t" , 16, 16, 11, 9);
+RESOURCE_END(BlocksFpg)
+
 void initResources() {
     Resources.getFontAtlas = loadFontAtlas;
     Resources.getSonicFpg = loadSonicFpg;
     Resources.getEnemiesFpg = loadEnemiesFpg;
+    Resources.getBlocksFpg = loadBlocksFpg;
 }
 
 #undef system_fpg

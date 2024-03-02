@@ -5,6 +5,7 @@ typedef struct GameResources {
     int (*getFontAtlas)();
     int (*getSonicFpg)();
     int (*getEnemiesFpg)();
+    int (*getBlocksFpg)();
 } GameResources;
 
 extern GameResources Resources;

@@ -6,6 +6,8 @@
 #include "../core/hgl_actor.h"
 #include "../core/hgl_anim.h"
 
+#include "../gameresources.h"
+
 #include "actors.h"
 
 ANIM(AnimBlock, 96)
@@ -40,7 +42,7 @@ static void constructorCoin(Actor* actor) {
 
 static void updateCoin(Actor* actor) {
     if (updatePhysicsObject(actor) == UpAndDownState_down) {
-        newBlock(2, 1, actor->entity->x, actor->entity->y, BlockType_score);
+        newBlock(Resources.getBlocksFpg(), 1, actor->entity->x, actor->entity->y, BlockType_score);
         deleteActor(actor);
     }
 }
