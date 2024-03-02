@@ -2,7 +2,7 @@ TARGET = Demo
 TYPE = ps-exe
 
 MODULES = core engine game game/data game/menu game/state input media pool utils
-MODULES_PSX = psx core/psx engine/psx input/psx media/psx
+MODULES_PSX = platform/psx core/psx engine/psx input/psx media/psx
 SOURCES	= src $(addprefix src/,$(MODULES)) $(addprefix src/,$(MODULES_PSX))
 
 CFILES		= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))

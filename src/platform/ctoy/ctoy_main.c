@@ -1,76 +1,76 @@
 #include <ctoy.h>
 
-#include "../../util/img_util.c"
+#include "../../../util/img_util.c"
 
-#include "../core/hgl_types.h"
-#include "../core/hgl_actor.h"
-#include "../core/hgl_anim.h"
-#include "../core/hgl_command.h"
-#include "../core/hgl_ent.h"
-#include "../core/hgl_scroll.h"
-#include "../core/hgl_spr.h"
-#include "../core/hgl_text.h"
-#include "../engine/sprites.h"
-#include "../engine/text.h"
-#include "../engine/tilemap.h"
-#include "../game/actors.h"
-#include "../game/camera.h"
-#include "../input/input.h"
-#include "../input/buttonstate.h"
-#include "../media/fpg.h"
+#include "../../core/hgl_types.h"
+#include "../../core/hgl_actor.h"
+#include "../../core/hgl_anim.h"
+#include "../../core/hgl_command.h"
+#include "../../core/hgl_ent.h"
+#include "../../core/hgl_scroll.h"
+#include "../../core/hgl_spr.h"
+#include "../../core/hgl_text.h"
+#include "../../engine/sprites.h"
+#include "../../engine/text.h"
+#include "../../engine/tilemap.h"
+#include "../../game/actors.h"
+#include "../../game/camera.h"
+#include "../../input/input.h"
+#include "../../input/buttonstate.h"
+#include "../../media/fpg.h"
 
-#include "../utils/picoro.h"
-//#include "../utils/picoro.c"
+#include "../../utils/picoro.h"
+//#include "../../utils/picoro.c"
 int resumable(coro c) {}
 void *resume(coro c, void *arg) { return NULL; }
 void *yield(void *arg) { return NULL; }
 coro coroutine(void *function(void *arg)) { return NULL; } 
 
-#include "../gameresources.c"
+#include "../../gameresources.c"
 #define fsmState gameFsmState
-#include "../gamemain.c"
-#include "../game.c"
-#include "../gametitle.c"
-#include "../gameending.c"
+#include "../../gamemain.c"
+#include "../../game.c"
+#include "../../gametitle.c"
+#include "../../gameending.c"
 #undef fsmState
-#include "../core/hgl_actor.c"
-#include "../core/ctoy/hgl.c"
-#include "../core/hgl_anim.c"
-#include "../core/hgl_command.c"
-#include "../core/hgl_ent.c"
-#include "../core/hgl_pool.c"
-#include "../core/hgl_scroll.c"
-#include "../core/hgl_spr.c"
-#include "../core/hgl_text.c"
-#include "../core/default/hgl_mem.c"
-#include "../core/ctoy/hgl_file.c"
-#include "../game/camera.c"
-#include "../input/buttonstate.c"
-#include "../input/ctoy/input.c"
-#include "../media/ctoy/ctoy_fpg.c"
-#include "../media/fpg.c"
+#include "../../core/hgl_actor.c"
+#include "../../core/ctoy/hgl.c"
+#include "../../core/hgl_anim.c"
+#include "../../core/hgl_command.c"
+#include "../../core/hgl_ent.c"
+#include "../../core/hgl_pool.c"
+#include "../../core/hgl_scroll.c"
+#include "../../core/hgl_spr.c"
+#include "../../core/hgl_text.c"
+#include "../../core/default/hgl_mem.c"
+#include "../../core/ctoy/hgl_file.c"
+#include "../../game/camera.c"
+#include "../../input/buttonstate.c"
+#include "../../input/ctoy/input.c"
+#include "../../media/ctoy/ctoy_fpg.c"
+#include "../../media/fpg.c"
 
-#include "../engine/fader.c"
-#include "../engine/tilemap.c"
-#include "../engine/sprites.c"
-#include "../engine/text.c"
+#include "../../engine/fader.c"
+#include "../../engine/tilemap.c"
+#include "../../engine/sprites.c"
+#include "../../engine/text.c"
 #define rand m_rand
-#include "../engine/particle.c"
+#include "../../engine/particle.c"
 #undef rand
-#include "../engine/ctoy/ctoy_sprites.c"
-#include "../pool/FixedPool.c"
-#include "../pool/ObjectPool.c"
-#include "../utils/utils.c"
+#include "../../engine/ctoy/ctoy_sprites.c"
+#include "../../pool/FixedPool.c"
+#include "../../pool/ObjectPool.c"
+#include "../../utils/utils.c"
 
-#include "../game/data/gamedata.c"
-#include "../game/menu/coursemenu.c"
-#include "../game/state/gamestate.c"
+#include "../../game/data/gamedata.c"
+#include "../../game/menu/coursemenu.c"
+#include "../../game/state/gamestate.c"
 
 #define anim_patrol bee_anim_patrol
 #define updatePhysics bee_updatePhysics
 #define update bee_update
 #define constructor bee_constructor
-#include "../game/bee.c"
+#include "../../game/bee.c"
 #undef anim_patrol
 #undef updatePhysics
 #undef update
@@ -79,32 +79,32 @@ coro coroutine(void *function(void *arg)) { return NULL; }
 #define anim_patrol motobug_anim_patrol
 #define update motobug_update
 #define constructor motobug_constructor
-#include "../game/motobug.c"
+#include "../../game/motobug.c"
 #undef anim_patrol
 #undef update
 #undef constructor
 
 #define constructor coin_constructor
 #define update coin_update
-#include "../game/block.c"
+#include "../../game/block.c"
 #undef constructor
 #undef update
 
 #define constructor fallToBackgroundScript_constructor
 #define update fallToBackgroundScript_update
-#include "../game/fallToBackgroundScript.c"
+#include "../../game/fallToBackgroundScript.c"
 #undef constructor
 #undef update
 
 #define constructor triggerScript_constructor
 #define update triggerScript_update
-#include "../game/triggerScript.c"
+#include "../../game/triggerScript.c"
 #undef constructor
 #undef update
 
 #define constructor goal_constructor
 #define update goal_update
-#include "../game/goal.c"
+#include "../../game/goal.c"
 #undef constructor
 #undef update
 
@@ -115,7 +115,7 @@ coro coroutine(void *function(void *arg)) { return NULL; }
 #define Activated menustar_Activated
 #define stateIdle statemenustar_Idle
 #define stateActivated statemenustar_Activated
-#include "../game/menustar.c"
+#include "../../game/menustar.c"
 #undef constructor
 #undef destructor
 #undef update
@@ -129,19 +129,19 @@ coro coroutine(void *function(void *arg)) { return NULL; }
 #define constructor sonic_constructor
 #define update sonic_update
 #define fsmState sonicFsmState
-#include "../game/sonic.c"
+#include "../../game/sonic.c"
 #undef playerEventHandler
 #undef input
 #undef constructor
 #undef update
 #undef fsmState 
 
-#include "../game/actors.c"
-#include "../game/enemyupdate.c"
+#include "../../game/actors.c"
+#include "../../game/enemyupdate.c"
 
 
-#include "../smb3scene.h"
-#include "../smb3col.h"
+#include "../../smb3scene.h"
+#include "../../smb3col.h"
 
 
 struct m_image sonic_image = M_IMAGE_IDENTITY();
@@ -452,7 +452,6 @@ int frames = 0;
 void ctoy_main_loop(void)
 {
    // enter / exit fullscreen
-
    if (ctoy_key_press(CTOY_KEY_F)) {
       fullscreen = !fullscreen;
       ctoy_window_fullscreen(fullscreen);
@@ -467,7 +466,7 @@ void ctoy_main_loop(void)
    // printf("ctoy_main_loop\n");
    gameUpdate();
    return;
-
+/*
     SaveGameState *state = (SaveGameState *)persistent_memory; // access a piece of persistent memory
 
     //gameUpdate();
@@ -520,6 +519,6 @@ void ctoy_main_loop(void)
 
     blit_ex(&buffer, &sonic_image, state->x, state->y, sx, sy, 48, 48, 0);
 
-    HGL_frame();
+    HGL_frame();*/
 
 }

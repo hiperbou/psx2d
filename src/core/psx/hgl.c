@@ -1,4 +1,4 @@
-#include "system.h"
+#include <platform/psx/system.h>
 #include "input.h"
 #include "sprites.h"
 #include "fpg.h"

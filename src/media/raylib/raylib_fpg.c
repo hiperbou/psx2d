@@ -3,7 +3,6 @@
 #include "../../engine/sprites.h"
 #include "../../pool/FixedPool.h"
 
-
 void CopySprite(SPRITE *original, SPRITE *sprite) {
     sprite->m_image.id = original->m_image.id;
     sprite->m_image.width = original->m_image.width;

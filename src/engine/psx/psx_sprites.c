@@ -1,5 +1,5 @@
 #include "../../core/hgl.h"
-#include "system.h"
+#include <platform/psx/system.h>
 #include "input.h"
 #include "../sprites.h"
 #include "../../engine/tilemap.h"
@@ -11,7 +11,6 @@
 #include <libetc.h>	// Includes some functions that controls the display
 #include <libgte.h>	// GTE header, not really used but libgpu.h depends on it
 #include <libgpu.h>	// GPU library header
-
 
 void draw_sprite(Tsprite * spr) {
     if (spr->graph <= 0 || spr->id < 0) return;

@@ -8,7 +8,7 @@
 #include <libgpu.h>	// GPU library header
 #include <libcd.h>
 
-#include "../media/psx/psx_fpg.h"
+#include "../../media/psx/psx_fpg.h"
 
 
 void initNTSCDisplay();
