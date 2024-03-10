@@ -33,9 +33,9 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "e1m1.h"
-#include "e1m1b.h"
-#include "e1m1c.h"
+#include "levels/e1m1.h"
+#include "levels/e1m1b.h"
+#include "levels/e1m1c.h"
 
 #include "utils/picoro.h"
 

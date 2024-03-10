@@ -8,7 +8,7 @@ fun main(args: Array<String>) {
     }
 
     val filename = args[0].removeSuffix(".tmx")
-    val variableName = filename.replace("-","_")
+    val variableName = filename.substringAfterLast("/").replace("-","_")
 
     val tiledTileMapXML = parseAs<TiledTileMapXML>("$filename.tmx")
 

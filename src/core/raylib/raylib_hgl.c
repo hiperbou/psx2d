@@ -8,6 +8,13 @@ static RenderTexture2D target;
 static const int gameScreenWidth = 320;
 static const int gameScreenHeight = 240;
 
+void setClearColor(uint8_t r, uint8_t g, uint8_t b) {
+    raylibClearColor.r = r;
+    raylibClearColor.g = g;
+    raylibClearColor.b = b;
+    raylibClearColor.a = 255;
+}
+
 void initDisplay() {
     const int windowWidth = 640;
     const int windowHeight = 480;
@@ -58,16 +65,6 @@ void HGL_frame() {
 
     BeginTextureMode(target);
     ClearBackground(raylibClearColor);
-}
-
-
-
-
-void setClearColor(uint8_t r, uint8_t g, uint8_t b) {
-    raylibClearColor.r = r;
-    raylibClearColor.g = g;
-    raylibClearColor.b = b;
-    raylibClearColor.a = 255;
 }
 
 static Color fadeBlackColor = (Color) { 0, 0, 0, 255 };

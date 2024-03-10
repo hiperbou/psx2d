@@ -12,6 +12,59 @@
 #define setjmp setjmp_win64
 #define longjmp longjmp_win64*/
 
+/*
+To make it work in Windows 10 64 bits w64devkit
+*/
+#ifdef _WIN64
+#define setjmp(A) _setjmp(A, NULL)
+#endif
+
+//Custom GCC implementation with w64devkit  https://nullprogram.com/blog/2023/02/12/
+/*__attribute__((naked,returns_twice))
+int my_setjmp(jmp_buf buf)
+{
+    (void)buf;
+    __asm(
+        "mov (%rsp), %rax\n"
+        "mov %rax,  0(%rcx)\n"
+        "lea 8(%rsp), %rax\n"
+        "mov %rax,  8(%rcx)\n"
+        "mov %rbp, 16(%rcx)\n"
+        "mov %rbx, 24(%rcx)\n"
+        "mov %rdi, 32(%rcx)\n"
+        "mov %rsi, 40(%rcx)\n"
+        "mov %r12, 48(%rcx)\n"
+        "mov %r13, 56(%rcx)\n"
+        "mov %r14, 64(%rcx)\n"
+        "mov %r15, 72(%rcx)\n"
+        "xor %eax, %eax\n"
+        "ret\n"
+    );
+}
+
+__attribute__((naked,noreturn))
+void my_longjmp(jmp_buf buf, int ret)
+{
+    (void)buf;
+    (void)ret;
+    __asm(
+        "mov 72(%rcx), %r15\n"
+        "mov 64(%rcx), %r14\n"
+        "mov 56(%rcx), %r13\n"
+        "mov 48(%rcx), %r12\n"
+        "mov 40(%rcx), %rsi\n"
+        "mov 32(%rcx), %rdi\n"
+        "mov 24(%rcx), %rbx\n"
+        "mov 16(%rcx), %rbp\n"
+        "mov  8(%rcx), %rsp\n"
+        "mov %edx, %eax\n"
+        "jmp *0(%rcx)\n"
+    );
+}
+#define setjmp(A) my_setjmp(A)
+#define longjmp(A,B) my_longjmp(A,B)*/
+
+
 #include <stdlib.h>
 
 #include "picoro.h"

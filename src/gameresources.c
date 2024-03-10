@@ -60,6 +60,10 @@ new_fpg();
 load_atlas(Smb3hTileset_res, "art/smb3h" , 16, 16, 4, 3);
 RESOURCE_END(Smb3hTileset)
 
+RESOURCE(IntroTileset)
+new_fpg();
+load_atlas(IntroTileset_res, "art/intro" , 16, 16, 10, 9);
+RESOURCE_END(IntroTileset)
 
 void initResources() {
     Resources.getFontAtlas = loadFontAtlas;
@@ -72,6 +76,8 @@ void initResources() {
 
     Resources.getSmb3uTileset = loadSmb3uTileset;
     Resources.getSmb3hTileset = loadSmb3hTileset;
+
+    Resources.getIntroTileset = loadIntroTileset;
 }
 
 #undef system_fpg

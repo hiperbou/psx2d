@@ -16,16 +16,16 @@ void HGL_SCROLL_init() {
 //void HGL_Scroll_update() {}
 
 
-static inline void HGL_SCROLL_render(const HGL_Scroll *scroll)
+static inline void HGL_SCROLL_render(int index, const HGL_Scroll *scroll)
 {
-    setScroll(0, scroll);
+    setScroll(index, scroll);
     //draw_tilemap_no_wrap(scroll->file, scroll->base_map, scroll->tilemap, scroll->offsetX, scroll->offsetY, scroll->flags);
 }
 
 void HGL_SCROLL_renderAll()
 {
     OBJECTPOOL_ITERATOR_ALLOCATED_START(scrollPool, HGL_Scroll)
-        HGL_SCROLL_render(it);
+        HGL_SCROLL_render(_i, it);
     OBJECTPOOL_ITERATOR_ALLOCATED_END
 }
 

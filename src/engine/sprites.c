@@ -1,5 +1,7 @@
 #include "sprites.h"
 
+#include <stdio.h>
+
 #include "../core/hgl.h"
 #include "../core/hgl_scroll.h"
 
@@ -229,8 +231,7 @@ static void buildDrawableList() {
 void draw_all_sprites_layer() {
     buildDrawableList();
     const Drawable * next = headDrawable;
-    Tsprite *sprite;
-    HGL_Scroll *scroll;
+
     while(next != NULL)
     {
         switch (next->type) {

@@ -48,6 +48,9 @@
 #define TILE_MASK_FLOOR 0xC0           //1100 0000
 #define TILE_MASK_SOLID_BREAKABLE 0xA0 //1010 0000
 
+#define JUMP_BUFFER_FRAMES 10
+#define COYOTE_TIME_FRAMES 3
+
 static fix32 posx = FIX32(128);
 static fix32 posy = FIX32(128);
 static fix32 speedX = FIX32(0);
@@ -292,7 +295,11 @@ inline static void updateMovement() {
     }
 }
 
+static int jumpBuffer = JUMP_BUFFER_FRAMES;
+static int coyoteTime = 0;
+
 inline static void jump(fix32 jumpSpeed){
+    jumpBuffer = 0;
     speedY = jumpSpeed;
     StateMachine.setJumping();
     //SND_startPlayPCM_XGM(SFX_JUMP, 1, SOUND_PCM_CH2);
@@ -406,6 +413,23 @@ static void checkGroundOnAir() {
     }
 }
 
+static void checkJumpBuffer() {
+    if (just_pressed & (BUTTON_A | BUTTON_B | BUTTON_C)) {
+        jumpBuffer = JUMP_BUFFER_FRAMES;
+    } else if (jumpBuffer) {
+        jumpBuffer--;
+    }
+}
+
+static void checkCoyoteTime() {
+    if (coyoteTime && just_pressed & (BUTTON_A | BUTTON_B | BUTTON_C)) {
+        jump(JUMP_SPEED);
+    } else if(coyoteTime) {
+        coyoteTime--;
+        speedY = 0;
+    }
+}
+
 static void stateJumping() {
     updateMovement();
 
@@ -418,6 +442,7 @@ static void stateJumping() {
     checkWalls();
     checkCeilings();
     checkGroundOnAir();
+    checkJumpBuffer();
 }
 
 static void stateFallingOffLedge() {
@@ -425,6 +450,8 @@ static void stateFallingOffLedge() {
     checkWalls();
     checkCeilings();
     checkGroundOnAir();
+    checkCoyoteTime();
+    checkJumpBuffer();
 }
 
 static void stateFallToBackground() {
@@ -436,13 +463,8 @@ static void stateFallToBackground() {
 }
 
 static void stateGrounded() {
-    if (just_pressed & (BUTTON_A | BUTTON_B | BUTTON_C)) {
+    if (just_pressed & (BUTTON_A | BUTTON_B | BUTTON_C) || (jumpBuffer && (input & (BUTTON_A | BUTTON_B | BUTTON_C)) )) {
         jump(JUMP_SPEED);
-        return;
-    }
-
-    if (just_pressed & BUTTON_WIN) {
-        setWinEnter();
         return;
     }
 
@@ -457,7 +479,8 @@ static void stateGrounded() {
     int groundYStep = getGroundXY(posx, posy);
 
     if (groundY > posy + SENSOR_VERTICAL_GROUND_LENGTH) {
-        speedY = GRAVITY;
+        speedY = 0;//GRAVITY;
+        coyoteTime = COYOTE_TIME_FRAMES;
         StateMachine.setFallingOffLedge();
     } else if(groundYStep<groundY) {
         posy = groundYStep;

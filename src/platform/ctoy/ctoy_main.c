@@ -392,7 +392,8 @@ void ctoy_begin(void)
     gameInit();
     initResources();
 
-    gameMain();
+    gameTitle();
+    //gameMain();
     return;
 
     HGL_init();
@@ -464,7 +465,8 @@ void ctoy_main_loop(void)
       return;
    }
    // printf("ctoy_main_loop\n");
-   gameUpdate();
+   gameTitleUpdate();
+   //gameUpdate();
    return;
 /*
     SaveGameState *state = (SaveGameState *)persistent_memory; // access a piece of persistent memory

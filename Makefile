@@ -108,6 +108,17 @@ define OBJCOPYME
 $(PREFIX)-objcopy -I binary --set-section-alignment .data=4 --rename-section .data=.rodata,alloc,load,readonly,data,contents -O $(FORMAT) -B mips $< $@
 endef
 
+# maps WIP #
+TMXS := $(wildcard references/intro/*.tmx)
+MAPS := $(subst .tmx,.h,$(subst references/intro/,src/levels/,$(TMXS)))
+src/levels/%.h: references/intro/%.tmx
+	java -jar tools/tmx2h-1.0-standalone.jar $< > $@;
+	touch src/gametitle.c
+
+buildMaps: $(MAPS)
+	@echo $(TMXS)
+	@echo $(MAPS)
+
 # convert TIM file to bin
 %.o: %.tim
 	$(call OBJCOPYME)
@@ -123,7 +134,7 @@ endef
 cleaniso:
 	-rm -f hello_cd.cue hello_cd.bin hello_cd.VCD
 
-iso: all cleaniso
+iso: buildMaps all cleaniso
 	mkpsxiso -y ./isoconfig.xml
 	-CUE2POPS_2_3 hello_cd.cue
 

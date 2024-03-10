@@ -13,6 +13,8 @@ typedef struct GameResources {
 
     int (*getSmb3uTileset)();
     int (*getSmb3hTileset)();
+
+    int (*getIntroTileset)();
 } GameResources;
 
 extern GameResources Resources;

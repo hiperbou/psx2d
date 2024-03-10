@@ -26,7 +26,7 @@ void init_particles() {
     initPool();
 }
 
-int random(int min, int max) {
+inline static int particle_random(int min, int max) {
     return rand() %((max + 1 ) - min) + min;
 }
 
@@ -34,14 +34,14 @@ void init_particle(Particle *particle, int x, int y) {
     *particle = (Particle) {
             .pos.x = FIX32(x),
             .pos.y = FIX32(y),
-            .speed.x = random(FIX32(-2), FIX32(2)),
-            .speed.y = random(FIX32(-5), 0),
+            .speed.x = particle_random(FIX32(-2), FIX32(2)),
+            .speed.y = particle_random(FIX32(-5), 0),
             .gravity.x = 0,
             .gravity.y = FIX32(0.1),
             .size = 100,
-            .incrSize = -random(0, 2),
-            .angle = random(0, FIX32(1)),
-            .incrAngle = random(-109, 109),
+            .incrSize = -particle_random(0, 2),
+            .angle = particle_random(0, FIX32(1)),
+            .incrAngle = particle_random(-109, 109),
 
             .life = 60 * 3,
             .fade = 1,
