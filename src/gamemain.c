@@ -625,7 +625,7 @@ static void loadLevel_e1m1() {
 
     newTriggerScript(&playerEventHandler, loadUndergroundLevelTriggerCallback, true, (AABB) { TILE_SIZE * 147 + 8, TILE_SIZE * 6, TILE_SIZE * 1,  TILE_SIZE * 1});
 
-    //sonic = newSonic(sonic_fpg, TILE(6), TILE(25), collisionTileMap, &playerEventHandler);
+    //sonic = newSonic(Resources.getSonicFpg(), TILE(6), TILE(25), collisionTileMap, &playerEventHandler);
     sonic = newSonic(Resources.getSonicFpg(), TILE(148), TILE(6), collisionTileMap, &playerEventHandler);
     playerEventHandler.player = sonic;
 

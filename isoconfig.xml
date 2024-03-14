@@ -104,6 +104,7 @@
                 <file name="smb3u.tim"   type="data" source="art\smb3u.tim"/>
                 <file name="smb3h.tim"   type="data" source="art\smb3h.tim"/>
                 <file name="gbs-mono.tim"   type="data" source="art\gbs-mono.tim"/>
+                <file name="intro.tim"   type="data" source="art\intro.tim"/>
             </dir>
 
             <dummy sectors="1024"/>
