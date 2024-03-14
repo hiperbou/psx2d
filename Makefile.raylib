@@ -1,3 +1,33 @@
+MODULES = core engine game game/data game/menu game/state input media pool utils
+MODULES_DEFAULT = core/default
+MODULES_RAYLIB = core/raylib engine/raylib input/raylib media/raylib
+
+SOURCES	= src $(addprefix src/,$(MODULES)) $(addprefix src/,$(MODULES_DEFAULT)) $(addprefix src/,$(MODULES_RAYLIB))
+
+CFILES		= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
+CPPFILES	= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.cpp))
+
+OBJ_DIR = obj/
+
+OBJECTS		= $(addprefix $(OBJ_DIR),$(CFILES:.c=.o))
+CPPOBJECTS	= $(addprefix $(OBJ_DIR),$(CPPFILES:.cpp=.o))
+
+INCLUDES  = $(addprefix -I,$(SOURCES))
+
+OPTS = -DRAYLIB
+
+ifeq ($(OS),Windows_NT)
+    makedir=@mkdir $(subst /,\,$(1)) &
+
+    define create_dir
+        @if not exist $(subst /,\,$(1)) $(makedir)
+    endef
+else
+    define create_dir
+        mkdir -p $(1);
+    endef
+endif
+
 #**************************************************************************************************
 #
 #   raylib makefile for Desktop platforms, Raspberry Pi, Android and HTML5
@@ -21,7 +51,7 @@
 #
 #**************************************************************************************************
 
-.PHONY: all clean run
+.PHONY: all clean run create_obj_dirs
 
 # Define required environment variables
 #------------------------------------------------------------------------------------------------
@@ -282,7 +312,7 @@ LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)/src
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # NOTE: The resource .rc file contains windows executable icon and properties
-        LDFLAGS += $(RAYLIB_PATH)/src/raylib.rc.data
+        # LDFLAGS += $(RAYLIB_PATH)/src/raylib.rc.data
         # -Wl,--subsystem,windows hides the console window
         ifeq ($(BUILD_MODE), RELEASE)
             LDFLAGS += -Wl,--subsystem,windows
@@ -399,42 +429,43 @@ endif
 
 # Define source code object files required
 #------------------------------------------------------------------------------------------------
-PROJECT_SOURCE_FILES ?= \
-    raylib_game.c \
-    screen_logo.c \
-    screen_title.c \
-    screen_options.c \
-    screen_gameplay.c \
-    screen_ending.c
 
-# Define all object files from source files
-OBJS = $(patsubst %.c, %.o, $(PROJECT_SOURCE_FILES))
-
+PROJECT_SOURCE_FILES ?= $(CFILES) $(CPPFILES)
+OBJS = $(OBJECTS) $(CPPOBJECTS)
+INCLUDE_PATHS += $(INCLUDES)
 
 # Define processes to execute
 #------------------------------------------------------------------------------------------------
 # For Android platform we call a custom Makefile.Android
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    MAKEFILE_PARAMS = -f Makefile.Android
+    MAKEFILE_PARAMS = -f Makefile.raylib.Android
     export PROJECT_NAME
     export PROJECT_SOURCE_FILES
 else
-    MAKEFILE_PARAMS = $(PROJECT_NAME)
+    MAKEFILE_PARAMS = -f Makefile.raylib $(PROJECT_NAME)
 endif
 
 # Default target entry
 # NOTE: We call this Makefile target or Makefile.Android target
-all:
+all: 
 	$(MAKE) $(MAKEFILE_PARAMS)
 
+create_obj_dirs:
+	$(foreach dir, $(addprefix $(OBJ_DIR),$(SOURCES)), $(call create_dir, $(dir)))
+
 # Project target defined by PROJECT_NAME
-$(PROJECT_NAME): $(OBJS)
-	$(CC) -o $(PROJECT_NAME)$(EXT) $(OBJS) $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+$(PROJECT_NAME): create_obj_dirs $(OBJS) 
+	$(CC) -o $(PROJECT_NAME)$(EXT) $(OBJS) $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) $(OPTS)
 
 # Compile source files
 # NOTE: This pattern will compile every module defined on $(OBJS)
-%.o: %.c
-	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
+# mkdir $(subst /,\, $(@D))
+$(OBJ_DIR)%.o: %.c
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) $(OPTS)
+
+# @mkdir -p $(@D)
+$(OBJ_DIR)%.o: %.cpp
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) $(OPTS)
 
 run:
 	$(MAKE) $(MAKEFILE_PARAMS)
@@ -460,32 +491,28 @@ clean:	clean_shell_$(PLATFORM_SHELL)
 clean_shell_sh:
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
-		find . -type f -executable -delete
-		rm -fv *.o
+		rm -fv ./$(PROJECT_NAME) $(OBJECTS)
     endif
     ifeq ($(PLATFORM_OS),OSX)
-		find . -type f -perm +ugo+x -delete
-		rm -f *.o
+		rm -f ./$(PROJECT_NAME) $(OBJECTS)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-	find . -type f -executable -delete
-	rm -fv *.o
+	rm -fv ./$(PROJECT_NAME) $(OBJECTS)
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
-	find . -type f -executable -delete
-	rm -fv *.o
+	rm -fv ./$(PROJECT_NAME) $(OBJECTS)
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     ifeq ($(PLATFORM_OS),LINUX)
-		rm -fv *.o $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm
+		rm -fv $(OBJECTS) $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm
     endif
     ifeq ($(PLATFORM_OS),OSX)
-		rm -f *.o $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm
+		rm -f $(OBJECTS) $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm
     endif
 endif
 
 # Set specific target variable
 clean_shell_cmd: SHELL=cmd
 clean_shell_cmd:
-	del *.o *.exe $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm /s
+	rm -f $(PROJECT_NAME).exe $(OBJECTS) $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm /s
