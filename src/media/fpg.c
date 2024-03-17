@@ -5,6 +5,7 @@
 #include "fpgInternal.h"
 #include "../pool/FixedPool.h"
 
+#include <stdio.h>
 #include <stdint.h>
 
 div_fpg *fpg[MAX_NUM_FPGS];

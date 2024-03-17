@@ -36,7 +36,7 @@
 #include "levels/e1m1.h"
 #include "levels/e1m1b.h"
 #include "levels/e1m1c.h"
-
+/*
 #include "utils/picoro.h"
 
 #define FRAME yield(0)
@@ -85,7 +85,7 @@ void co_hello(void *arg) {
         resume(wait, 1);
         yield(-2);
     }*/
-    waitFrames(20);
+ /*   waitFrames(20);
 
 
     print("resumed inner_coro");
@@ -111,7 +111,7 @@ void picoroTest() {
     //printf("picoroTest.coroutine resumed %i\n", result2);
     print("picoroTest.end");
 }
-
+*/
 /*
 #include "lua/src/lua.h"
 #include "lua/src/lualib.h"
@@ -293,7 +293,7 @@ bool onPlayerGrounded(PlayerEventHandler*playerEventHandler, Tile tile) {
     return false;
 }
 
-void goToMainMenuCommandCallback();
+void goToMainMenuCommandCallback(DelayedCommand * command);
 
 void newGoToMainMenuCommand(int delay, int8_t value) {
     HGL_COMMAND_create(delay, goToMainMenuCommandCallback, NULL, value);
@@ -724,7 +724,7 @@ static void stateLoadMenu() {
     GameStateMachine.setMenu();
     fadeIn();
 }
-
+/*
 void waitFadeIn() {
     fadeIn();
     waitUntil(fadeFinished());
@@ -759,7 +759,7 @@ static void stateMenuCoroutine(void * args) {
     GameStateMachine.setGame();
     HGL_COMMAND_create(1, fadeIn, NULL, NULL);
 }
-
+*/
 static int stateMenuSwitch(int state) {
     switch (state) {
         case 0:
@@ -789,7 +789,7 @@ static int stateMenuSwitch(int state) {
             currentLevel = nextLevel;
             levels[nextLevel]();
             GameStateMachine.setGame();
-            HGL_COMMAND_create(1, fadeIn, NULL, NULL);
+            HGL_COMMAND_create(1, fadeIn, NULL, 0);
             return 0;
         default:
             break;
@@ -803,7 +803,7 @@ static void stateMenuSw() {
     menuState = stateMenuSwitch(menuState);
     drawCourseMenu(&courseMenu);
 }
-
+/*
 static void stateMenuCo() {
     static coro coroStateMenu = NULL;
 
@@ -818,7 +818,7 @@ static void stateMenuCo() {
 
     drawCourseMenu(&courseMenu);
 }
-
+*/
 static void stateMenu() {
     ////drawTestMenu();
     updateCourseMenuInput(&courseMenu);
@@ -859,7 +859,7 @@ static void stateLoadLevel() {
     currentLevel = nextLevel;
     levels[nextLevel]();
     GameStateMachine.setGame();
-    HGL_COMMAND_create(1, fadeIn, NULL, NULL);
+    HGL_COMMAND_create(1, fadeIn, NULL, 0);
 }
 
 static void stateUnloadLevelBackToMenu() {

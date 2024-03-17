@@ -3,6 +3,7 @@
 #include "../../media/fpg.h"
 #include "../../utils/utils.h"
 #include <raylib.h>
+#include <string.h>
 
 void GetSprite(Texture *tim, SPRITE *sprite) {
     sprite->m_image = *tim;

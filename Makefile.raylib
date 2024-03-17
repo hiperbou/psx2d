@@ -5,12 +5,12 @@ MODULES_RAYLIB = core/raylib engine/raylib input/raylib media/raylib
 SOURCES	= src $(addprefix src/,$(MODULES)) $(addprefix src/,$(MODULES_DEFAULT)) $(addprefix src/,$(MODULES_RAYLIB))
 
 CFILES		= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
-CPPFILES	= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.cpp))
+#CPPFILES	= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.cpp))
 
 OBJ_DIR = obj/
 
 OBJECTS		= $(addprefix $(OBJ_DIR),$(CFILES:.c=.o))
-CPPOBJECTS	= $(addprefix $(OBJ_DIR),$(CPPFILES:.cpp=.o))
+#CPPOBJECTS	= $(addprefix $(OBJ_DIR),$(CPPFILES:.cpp=.o))
 
 INCLUDES  = $(addprefix -I,$(SOURCES))
 
@@ -243,7 +243,7 @@ endif
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 #  -Wno-unused-value    ignore unused return values of some functions (i.e. fread())
 #  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
-CFLAGS = -std=c99 -Wall -Wno-missing-braces -Wunused-result -D_DEFAULT_SOURCE
+CFLAGS = -std=c99 -w -Wno-missing-braces -Wunused-result -D_DEFAULT_SOURCE
 
 ifeq ($(BUILD_MODE),DEBUG)
     CFLAGS += -g -D_DEBUG
