@@ -1,7 +1,7 @@
 #include "../../engine/sprites.h"
 #include "../../media/fpg.h"
 
-#include "raylib.h"
+#include <raylib.h>
 
 static Color raylibClearColor;
 static RenderTexture2D target;

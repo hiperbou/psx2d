@@ -1,6 +1,6 @@
 #ifndef RAYLIB_FPG_H
 #define RAYLIB_FPG_H
-#include "raylib.h"
+#include <raylib.h>
 
 typedef struct SPRITE {
     Texture2D m_image;

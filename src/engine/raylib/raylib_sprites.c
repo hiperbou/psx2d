@@ -5,7 +5,7 @@
 #include "../../engine/particle.h"
 #include "../../core/hgl_types.h"
 
-#include "raylib.h"
+#include <raylib.h>
 
 /*
 // Texture drawing functions

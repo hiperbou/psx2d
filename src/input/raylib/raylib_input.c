@@ -1,5 +1,5 @@
 #include "../input.h"
-#include "raylib.h"
+#include <raylib.h>
 
 void initInput() {}
 
