@@ -1,0 +1,84 @@
+name: Mingw
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/**'
+      - '.github/workflows/mingw-w64.yml'
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    env:
+      PROJECT_NAME: ${{ github.event.repository.name }}
+      PROJECT_BUILD_PATH: ${{ github.event.repository.name }}
+      PROJECT_RELEASE_PATH: ${{ github.event.repository.name }}_dev_64_mingw-w64
+      PROJECT_CUSTOM_FLAGS: ""
+    
+    steps:
+    - name: Checkout this repo
+      uses: actions/checkout@master
+      with:
+        path: ${{ env.PROJECT_NAME }}
+      
+    - name: Checkout raylib repo
+      uses: actions/checkout@v4
+      with:
+        repository: raysan5/raylib
+        path: raylib
+        
+    - name: Setup Release Paths
+      run: |
+        echo "PROJECT_RELEASE_PATH=${{ env.PROJECT_NAME }}_v${{ github.event.release.tag_name }}_64_mingw-w64" >> $GITHUB_ENV
+      shell: bash
+      if: github.event_name == 'release' && github.event.action == 'published'
+    
+    - name: Setup Environment
+      run: | 
+        mkdir ${{ env.PROJECT_RELEASE_PATH }}
+        dir
+      shell: cmd
+        
+    - name: Build raylib Library
+      run: |
+        cd raylib\src
+        x86_64-w64-mingw32-gcc.exe --version
+        windres.exe --version
+        dir C:\msys64\mingw64\bin
+        make PLATFORM=PLATFORM_DESKTOP CC=x86_64-w64-mingw32-gcc.exe RAYLIB_LIBTYPE=STATIC RAYLIB_RELEASE_PATH=. CUSTOM_CFLAGS=""
+      shell: cmd
+
+    - name: Build Product
+      run: |
+        cd ${{ env.PROJECT_NAME }}
+        dir
+        make -f Makefile.raylib CC=x86_64-w64-mingw32-gcc.exe PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE PROJECT_CUSTOM_FLAGS=${{ env.PROJECT_CUSTOM_FLAGS }} PROJECT_BUILD_PATH=. RAYLIB_PATH=../raylib
+      shell: cmd
+
+    - name: Generate Artifacts
+      run: |
+        dir ${{ env.PROJECT_BUILD_PATH }}
+        copy /Y ${{ env.PROJECT_BUILD_PATH }}\${{ env.PROJECT_NAME }}.exe ${{ env.PROJECT_RELEASE_PATH }}\${{ env.PROJECT_NAME }}.exe
+        copy /Y ${{ env.PROJECT_NAME }}\README.md ${{ env.PROJECT_RELEASE_PATH }}\README.md
+        copy /Y ${{ env.PROJECT_NAME }}\LICENSE ${{ env.PROJECT_RELEASE_PATH }}\LICENSE
+        dir ${{ env.PROJECT_RELEASE_PATH }}
+        7z a .\${{ env.PROJECT_RELEASE_PATH }}.zip .\${{ env.PROJECT_RELEASE_PATH }}
+      shell: cmd
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.PROJECT_RELEASE_PATH }}.zip
+        path: ./${{ env.PROJECT_RELEASE_PATH }}.zip
+
+    - name: Upload Artifact to Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ${{ env.PROJECT_RELEASE_PATH }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: github.event_name == 'release' && github.event.action == 'published'
