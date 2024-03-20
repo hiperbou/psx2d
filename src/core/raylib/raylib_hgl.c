@@ -2,9 +2,10 @@
 #include "../../media/fpg.h"
 
 #include <raylib.h>
+#include "rlgl.h"
 
 static Color raylibClearColor;
-static RenderTexture2D target;
+
 static const int gameScreenWidth = 320;
 static const int gameScreenHeight = 240;
 
@@ -15,6 +16,46 @@ void setClearColor(uint8_t r, uint8_t g, uint8_t b) {
     raylibClearColor.a = 255;
 }
 
+static void startFrame() {
+    //int screen_width = (GetScreenWidth() / gameScreenWidth) * gameScreenWidth;  
+    //int screen_height = (GetScreenHeight() / gameScreenHeight) * gameScreenHeight; 
+    int screen_width = GetScreenWidth();  
+    int screen_height = GetScreenHeight(); 
+
+    int virtual_width = gameScreenWidth;
+    int virtual_height = gameScreenHeight;
+      
+    float targetAspectRatio = virtual_width/(float)virtual_height;
+      
+    int width = screen_width ;
+    int height = (int)(width / targetAspectRatio + 0.5f);
+
+    if (height > screen_height )
+    {
+        height = screen_height ;
+        width = (int)(height * targetAspectRatio + 0.5f);
+    }
+
+    int vp_x = (screen_width  * 0.5) - (width * 0.5);
+    int vp_y = (screen_height * 0.5) - (height * 0.5);
+
+    float scale_x = screen_width / (float)virtual_width;
+    float scale_y = screen_height / (float)virtual_height;
+      
+    rlViewport(vp_x,vp_y,width,height);
+
+    rlMatrixMode(RL_PROJECTION);
+    rlLoadIdentity();
+
+    rlOrtho(0, screen_width, screen_height, 0, 0.0f, 1.0f);
+
+    rlMatrixMode(RL_MODELVIEW);
+
+    BeginDrawing();
+        rlScalef(scale_x, scale_y, 1.0f);
+        ClearBackground(raylibClearColor);
+}
+
 void initDisplay() {
     const int windowWidth = 640;
     const int windowHeight = 480;
@@ -23,15 +64,11 @@ void initDisplay() {
     InitWindow(windowWidth, windowHeight, "Game!");
     SetWindowMinSize(gameScreenWidth, gameScreenHeight);
 
-    target = LoadRenderTexture(gameScreenWidth, gameScreenHeight);
-    SetTextureFilter(target.texture, TEXTURE_FILTER_POINT); 
-
     SetTargetFPS(60);  
 
     setClearColor(0, 0, 0);
 
-    BeginTextureMode(target);
-    ClearBackground(raylibClearColor);
+    startFrame();
 }
 
 void HGL_init() {
@@ -51,20 +88,8 @@ void HGL_init() {
 void clear(struct m_image *dest);
 
 void HGL_frame() {
-    EndTextureMode();
-
-    float scale = MIN((float)GetScreenWidth()/gameScreenWidth, (float)GetScreenHeight()/gameScreenHeight);
-    float gameScreenWidthTimesScale = (float)gameScreenWidth*scale;
-    float gameScreenHeightTimesScale = (float)gameScreenHeight*scale;
-    
-    BeginDrawing();
-        DrawTexturePro(target.texture, (Rectangle){ 0.0f, 0.0f, (float)target.texture.width, (float)-target.texture.height },
-                        (Rectangle){ (GetScreenWidth() - gameScreenWidthTimesScale) * 0.5f, (GetScreenHeight() - gameScreenHeightTimesScale) * 0.5f,
-                        gameScreenWidthTimesScale, gameScreenHeightTimesScale }, (Vector2){ 0, 0 }, 0.0f, WHITE);
     EndDrawing();
-
-    BeginTextureMode(target);
-    ClearBackground(raylibClearColor);
+    startFrame();
 }
 
 static Color fadeBlackColor = (Color) { 0, 0, 0, 255 };

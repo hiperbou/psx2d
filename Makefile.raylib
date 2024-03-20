@@ -455,17 +455,17 @@ create_obj_dirs:
 
 # Project target defined by PROJECT_NAME
 $(PROJECT_NAME): create_obj_dirs $(OBJS) 
-	$(CC) -o $(PROJECT_NAME)$(EXT) $(OBJS) $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) $(OPTS)
+	$(CC) -o $(PROJECT_NAME)$(EXT) $(OBJS) $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) $(OPTS) $(CUSTOM_CFLAGS)
 
 # Compile source files
 # NOTE: This pattern will compile every module defined on $(OBJS)
 # mkdir $(subst /,\, $(@D))
 $(OBJ_DIR)%.o: %.c
-	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) $(OPTS)
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) $(OPTS) $(CUSTOM_CFLAGS)
 
 # @mkdir -p $(@D)
 $(OBJ_DIR)%.o: %.cpp
-	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) $(OPTS)
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) $(OPTS) $(CUSTOM_CFLAGS)
 
 run:
 	$(MAKE) $(MAKEFILE_PARAMS)
