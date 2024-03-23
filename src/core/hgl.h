@@ -21,4 +21,7 @@ inline void setClearColor2(const ClearColor * clearColor) {
 void fadeToBlack(uint8_t fade);
 void fadeToWhite(uint8_t fade);
 
+typedef void MainLoopCallback(void);
+void setMainLoopCallback(MainLoopCallback *mainLoop);
+
 #endif
