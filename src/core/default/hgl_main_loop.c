@@ -1,4 +1,4 @@
-
+#include <stdbool.h>
 #include "../hgl.h"
 
 #ifdef __EMSCRIPTEN__
