@@ -182,10 +182,10 @@ void waitCommandArray(DelayedCommand * command) {
     printf("run waitCommand array!\n");
     FunctionArray * functionArray = command->target;
     for (int i=0; i < command->data; i++) {
-        printf("iteration %i %i\n", i, functionArray);
+        //printf("iteration %i %i\n", i, functionArray);
         //((void (*)())(*functionArray->functions[i]))();
         ((void (*)())functionArray->functions[i])();
-        printf("Called OK %i\n", *(int*)functionArray);
+        //printf("Called OK %i\n", *(int*)functionArray);
 
     }
 }
@@ -599,8 +599,8 @@ static void loadLevel_e1m1c() {
     nextLevel = 0;
 }
 
-static void loadUndergroundLevelTriggerCallback();
-static void loadSecretLevelTriggerCallback();
+static void loadUndergroundLevelTriggerCallback(Actor * trigger);
+static void loadSecretLevelTriggerCallback(Actor * trigger);
 
 static void loadLevel_e1m1() {
     bgaTileMap = fromTiledBin(smb3_2_layer);
@@ -703,6 +703,10 @@ void loadUnderGroundLevelCommand(DelayedCommand * command) {
     //loadNextLevel(1);
 }
 
+void fadeInCommand(DelayedCommand* command) {
+    fadeIn();
+}
+
 static void loadUndergroundLevelTriggerCallback(Actor * trigger) {
     if (buttonState.btn & PAD_DOWN) {
         deleteActor(trigger);
@@ -789,7 +793,7 @@ static int stateMenuSwitch(int state) {
             currentLevel = nextLevel;
             levels[nextLevel]();
             GameStateMachine.setGame();
-            HGL_COMMAND_create(1, fadeIn, NULL, 0);
+            HGL_COMMAND_create(1, fadeInCommand, NULL, 0);
             return 0;
         default:
             break;
@@ -859,7 +863,7 @@ static void stateLoadLevel() {
     currentLevel = nextLevel;
     levels[nextLevel]();
     GameStateMachine.setGame();
-    HGL_COMMAND_create(1, fadeIn, NULL, 0);
+    HGL_COMMAND_create(1, fadeInCommand, NULL, 0);
 }
 
 static void stateUnloadLevelBackToMenu() {

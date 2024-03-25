@@ -8,7 +8,7 @@
 
 void setMainLoopCallback(MainLoopCallback *mainLoop) {
     #ifdef __EMSCRIPTEN__
-        emscripten_set_main_loop(mainLoop, 60, true);
+        emscripten_set_main_loop(mainLoop, 0, false);
     #else
 	while(1) {
 		mainLoop();

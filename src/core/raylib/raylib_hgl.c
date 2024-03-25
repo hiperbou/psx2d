@@ -16,7 +16,36 @@ void setClearColor(uint8_t r, uint8_t g, uint8_t b) {
     raylibClearColor.a = 255;
 }
 
-static void startFrame() {
+
+void initDisplay() {
+    const int windowWidth = 640;
+    const int windowHeight = 480;
+
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
+    InitWindow(windowWidth, windowHeight, "Game!");
+    SetWindowMinSize(gameScreenWidth, gameScreenHeight);
+
+    SetTargetFPS(60);  
+
+    setClearColor(0, 0, 0);
+}
+
+void HGL_init() {
+    initDisplay();
+    //initCD();
+    //initMemory();
+    //initFont();
+    //initInput();
+
+    initSprites();
+    init_particles();
+    
+    init_fpgs();
+
+}
+
+
+void HGL_frame() {
     //int screen_width = (GetScreenWidth() / gameScreenWidth) * gameScreenWidth;  
     //int screen_height = (GetScreenHeight() / gameScreenHeight) * gameScreenHeight; 
     int screen_width = GetScreenWidth();  
@@ -54,42 +83,7 @@ static void startFrame() {
     BeginDrawing();
         rlScalef(scale_x, scale_y, 1.0f);
         ClearBackground(raylibClearColor);
-}
-
-void initDisplay() {
-    const int windowWidth = 640;
-    const int windowHeight = 480;
-
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
-    InitWindow(windowWidth, windowHeight, "Game!");
-    SetWindowMinSize(gameScreenWidth, gameScreenHeight);
-
-    SetTargetFPS(60);  
-
-    setClearColor(0, 0, 0);
-
-    startFrame();
-}
-
-void HGL_init() {
-    initDisplay();
-    //initCD();
-    //initMemory();
-    //initFont();
-    //initInput();
-
-    initSprites();
-    init_particles();
-    
-    init_fpgs();
-
-}
-
-void clear(struct m_image *dest);
-
-void HGL_frame() {
     EndDrawing();
-    startFrame();
 }
 
 static Color fadeBlackColor = (Color) { 0, 0, 0, 255 };
