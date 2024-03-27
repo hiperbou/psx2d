@@ -27,6 +27,7 @@
 #include "game/data/gamedata.h"
 #include "game/state/gamestate.h"
 #include "game/menu/coursemenu.h"
+//#include "utils/async.h"
 #include "utils/utils.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -36,138 +37,7 @@
 #include "levels/e1m1.h"
 #include "levels/e1m1b.h"
 #include "levels/e1m1c.h"
-/*
-#include "utils/picoro.h"
 
-#define FRAME yield(0)
-#define WAIT_FRAMES(X) \
-    int _coroutine_frame_delay = (X); \
-    while(_coroutine_frame_delay-- > 0) {  yield(0); }\
-
-#define repeat do
-#define until(exp) while(!(exp))
-
-#define waitUntil(X) repeat { FRAME; } until (X);
-#define waitForInput(X) waitUntil(X);
-
-
-void co_wait(int delay) { WAIT_FRAMES(delay); }
-
-void waitFrames(int delay) {
-    coro waitCoroutine = coroutine(co_wait);
-    while(resumable(waitCoroutine)) {
-        yield(resume(waitCoroutine, delay));
-    }
-}
-
-void co_inner(void *arg) {
-    print("mocos con setas");
-    println("mocos con setas %i", 666);
-    println("init oc_inner %i", arg);
-    yield(123);
-    print("co_inner yielded 1");
-    yield(456);
-    print("co_inner yielded");
-    yield(789);
-    print("co_inner yielded 3");
-}
-
-void co_hello(void *arg) {
-    println("init co_hello %i", arg);
-    coro inner_coro = coroutine(co_inner);
-    while(resumable(inner_coro)) {
-        resume(inner_coro, 0);
-        yield(-1);
-    }
-
-    /*coro wait = coroutine(co_wait);
-    while(resumable(wait)) {
-        resume(wait, 1);
-        yield(-2);
-    }*/
- /*   waitFrames(20);
-
-
-    print("resumed inner_coro");
-    int * result = yield(666);
-    println("co_hello continue %i", result);
-}
-
-void picoroTest() {
-    print("picoroTest");
-    coro helloCoro = coroutine(co_hello);
-    //coro helloCoro2 = coroutine(co_hello);
-    println("picoroTest.coroutine created %u", helloCoro);
-    int* result = resume(helloCoro, 0);
-    //int* result2 = resume(helloCoro2, 0);
-    println("picoroTest.coroutine resumed %i", result);
-    //printf("picoroTest.coroutine2 resumed %i\n", result2);
-    while(resumable(helloCoro)) {
-        result = resume(helloCoro, 1);
-        println("picoroTest.coroutine resumed %i", result);
-    }
-    //printf("resumable %i %i\n", resumable(helloCoro), resumable(helloCoro2));
-    //result2 = resume(helloCoro2, 1);
-    //printf("picoroTest.coroutine resumed %i\n", result2);
-    print("picoroTest.end");
-}
-*/
-/*
-#include "lua/src/lua.h"
-#include "lua/src/lualib.h"
-#include "lua/src/lauxlib.h"
-
-
-int lua_hello(lua_State *L) {
-    printf("hello called from lua\n");
-    return(0);
-}
-
-void luaTest() {
-    printf("luaTest\n");
-    lua_State *L = lua_open();
-    printf("luaTest.1\n");
-    luaL_openlibs(L);
-    printf("luaTest.1.2\n");
-    lua_register(L, "hello", lua_hello);
-    printf("luaTest.2\n");
-    const char * code = R"####(
-            hello()
-        )####";
-    if (luaL_loadstring(L, code) == 0) {
-        printf("luaTest.3\n");
-        if (lua_pcall(L, 0, 0, 0) == 0) {
-            printf("luaTest.4\n");
-            // If it was executed successfuly we
-            // remove the code from the stack
-            lua_pop(L, lua_gettop(L));
-        }
-    }
-    printf("luaTest.close\n");
-    lua_close(L);
-}
-*/
-/*
-#include <setjmp.h>
-void jumpTest() {
-    jmp_buf state;
-    int jmp = 0;
-
-    jmp = setjmp(state);
-    if(!jmp)
-        printf("jmp available\n");
-    else
-        printf("jumped back!\n");
-
-    if(jmp == 0) {
-        printf("calling longjmp\n");
-        longjmp(state, 1);
-    } else {
-        printf("keep with the code :)\n");
-    }
-}*/
-
-//#include "memory.h"
 void wait(int wait);
 
 void waitCommand(DelayedCommand * command) {
@@ -340,7 +210,7 @@ void checkCoin(TileMap* tileMap, Actor * actor) {
 }
 
 #include "engine/fsm.h"
-CREATE_STATE_MACHINE(GameStateMachine, LoadMenu, Menu, LoadLevelEnter, LoadLevel, Game, UnloadLevelBackToMenu)
+CREATE_STATE_MACHINE(GameStateMachine, Menu, LoadLevel, Game, UnloadLevelBackToMenu)
 
 
 static int bgbx = 0;
@@ -679,14 +549,14 @@ static void unloadLevel() {
     HGL_SCROLL_deleteAll();
     HGL_ANIM_deleteAll();
     remove_Particles();
-    HGL_free((void*)bgaTileMap.map);
-    HGL_free((void*)collisionTileMap.map);
+    freeTileMap(&bgaTileMap);
+    freeTileMap(&collisionTileMap);
     initSprites();
 }
 
 static void loadNextLevel(int levelIndex) {
     nextLevel = levelIndex;
-    GameStateMachine.setLoadLevelEnter();
+    GameStateMachine.setLoadLevel();
 }
 
 void loadNextLevelCommand(DelayedCommand * command) {
@@ -721,168 +591,69 @@ static void loadSecretLevelTriggerCallback(Actor* trigger) {
     createLoadNextLevelCommand(2);
 }
 
-static void stateLoadMenu() {
-    setClearColor(175, 249, 240);
-    initCourseMenu(&courseMenu, &gameData.course[0], &gameState);
-    loadCourseMenu(&courseMenu);
-    GameStateMachine.setMenu();
-    fadeIn();
-}
+//#include "utils/async.h"
+#include "utils/script.h"
+
 /*
-void waitFadeIn() {
-    fadeIn();
-    waitUntil(fadeFinished());
-}
+#define FRAME yield(0)
+#define WAIT_FRAMES(X) \
+    int _coroutine_frame_delay = (X); \
+    while(_coroutine_frame_delay-- > 0) {  yield(0); }\
 
-void waitWhiteFadeOut() {
-    whiteFadeOut();
-    waitUntil(fadeFinished());
-}
+#define repeat do
+#define until(exp) while(!(exp))
 
-void waitFade(void *fadeFun(void)) {
-    fadeFun();
-    waitUntil(fadeFinished());
-}
-
-static void stateMenuCoroutine(void * args) {
-    setClearColor(175, 249, 240);
-    initCourseMenu(&courseMenu, &gameData.course[0], &gameState);
-    loadCourseMenu(&courseMenu);
-
-    waitFade(fadeIn);
-    waitUntil(updateCourseMenuInput(&courseMenu));
-    waitFade(whiteFadeOut);
-
-    HGL_ACTOR_deleteAll();
-    HGL_TEXT_deleteAll();
-    HGL_ANIM_deleteAll();
-    initSprites();
-
-    currentLevel = nextLevel;
-    levels[nextLevel]();
-    GameStateMachine.setGame();
-    HGL_COMMAND_create(1, fadeIn, NULL, NULL);
-}
+#define waitUntil(X) repeat { FRAME; } until (X);
+#define waitForInput(X) waitUntil(X);
 */
-static int stateMenuSwitch(int state) {
-    switch (state) {
-        case 0:
-            setClearColor(175, 249, 240);
-            initCourseMenu(&courseMenu, &gameData.course[0], &gameState);
-            loadCourseMenu(&courseMenu);
-            //GameStateMachine.setMenu();
-            fadeIn();
-            return 1;
-        case 1:
-            if (buttonState.just_pressed & PAD_START) return 2;
-            return 1;
-        case 2:
-            whiteFadeOut();
-            static int _coroutine_frame_delay = 20;
-            _coroutine_frame_delay = 20;
-        case 3:
-            if (_coroutine_frame_delay-- > 0) return 3;
-            _coroutine_frame_delay = 0;
-            return 4;
-        case 4:
-            HGL_ACTOR_deleteAll();
-            HGL_TEXT_deleteAll();
-            HGL_ANIM_deleteAll();
-            initSprites();
 
-            currentLevel = nextLevel;
-            levels[nextLevel]();
-            GameStateMachine.setGame();
-            HGL_COMMAND_create(1, fadeInCommand, NULL, 0);
-            return 0;
-        default:
-            break;
-    }
-    return 0;
-}
+//#define await_frames(X) \
+    //int _coroutine_frame_delay = (X); \ // you can't declare variables here
+    //await_while(_coroutine_frame_delay-- > 0)
+#define awaitFadeIn() \
+    fadeIn(); \
+    await(isFading());
 
-static void stateMenuSw() {
-    updateCourseMenuInput(&courseMenu);
-    static int menuState = 0;
-    menuState = stateMenuSwitch(menuState);
-    drawCourseMenu(&courseMenu);
-}
-/*
-static void stateMenuCo() {
-    static coro coroStateMenu = NULL;
+#define awaitFade(fadeFun) \
+    fadeFun(); \
+    await(fadeFinished()); 
 
-    if(coroStateMenu == NULL) {
-        coroStateMenu = coroutine(stateMenuCoroutine);
-    }
-    if (resumable(coroStateMenu)) {
-        resume(coroStateMenu, 0);
-    } else {
-        coroStateMenu = NULL;
-    }
+#define fsm_script_begin async_begin(&GameStateMachine.asyncState);
 
-    drawCourseMenu(&courseMenu);
-}
-*/
 static void stateMenu() {
-    ////drawTestMenu();
     updateCourseMenuInput(&courseMenu);
+    fsm_script_begin
+        setClearColor(175, 249, 240);
+        initCourseMenu(&courseMenu, &gameData.course[0], &gameState);
+        loadCourseMenu(&courseMenu);
+        awaitFade(fadeIn);
+        await(buttonState.just_pressed & PAD_START);
+        awaitFade(whiteFadeOut);
+        GameStateMachine.setLoadLevel();
+        HGL_ACTOR_deleteAll();
+        HGL_TEXT_deleteAll();
+        HGL_ANIM_deleteAll();
+        initSprites();
+    script_end;
+
     drawCourseMenu(&courseMenu);
-
-    if (buttonState.just_pressed & PAD_START) {
-        whiteFadeOut();
-        //wait(20);
-        //GameStateMachine.setLoadLevel();
-        //HGL_ACTOR_deleteAll();
-        //HGL_TEXT_deleteAll();
-        //HGL_ANIM_deleteAll();
-        //initSprites();
-        /*newWaitCommand(20, GameStateMachine.setLoadLevel);
-        newWaitCommand(20, HGL_ACTOR_deleteAll);
-        newWaitCommand(20, HGL_TEXT_deleteAll);
-        newWaitCommand(20, HGL_ANIM_deleteAll);
-        newWaitCommand(20, initSprites);*/
-
-        static FunctionArray functionArray;
-        functionArray = (FunctionArray) {
-            GameStateMachine.setLoadLevel,
-            HGL_ACTOR_deleteAll,
-            HGL_TEXT_deleteAll,
-            HGL_ANIM_deleteAll,
-            initSprites
-        };
-        newWaitCommandArray(20, &functionArray, 5);
-    }
-}
-
-static void stateLoadLevelEnter() {
-    unloadLevel();
-    GameStateMachine.setLoadLevel();
 }
 
 static void stateLoadLevel() {
+    unloadLevel();
     currentLevel = nextLevel;
     levels[nextLevel]();
     GameStateMachine.setGame();
-    HGL_COMMAND_create(1, fadeInCommand, NULL, 0);
 }
 
 static void stateUnloadLevelBackToMenu() {
     unloadLevel();
-    GameStateMachine.setLoadMenu();
-    //GameStateMachine.setMenu(); //Coroutine picoro
+    GameStateMachine.setMenu();
 }
 
 void draw_all_sprites_zorder2();
 
-static void stateGame() {
-    if (buttonState.just_pressed & PAD_START) {
-        whiteFadeOut();
-        //wait(20);
-        //GameStateMachine.setUnloadLevelBackToMenu();
-        //HGL_COMMAND_create(20, waitCommand, GameStateMachine.setUnloadLevelBackToMenu, 0);
-        newWaitCommand(20, GameStateMachine.setUnloadLevelBackToMenu);
-    }
-
+static void stateGameUpdate() {
     sonic->sonic.inputHandler.handleInput(&buttonState);
     if(fallToBackgroundScript) fallToBackgroundScript->inputHandler.handleInput(&buttonState);
 
@@ -926,6 +697,16 @@ static void stateGame() {
     draw_text8(0, font_atlas, "Hello", 8, 24, 0, -1);
 }
 
+static void stateGame() {
+    stateGameUpdate();
+    fsm_script_begin
+        awaitFadeIn();
+        await(buttonState.just_pressed & PAD_START);
+        awaitFade(whiteFadeOut);
+        GameStateMachine.setUnloadLevelBackToMenu();
+    script_end;
+}
+
 void goToMainMenuCommandCallback(DelayedCommand * command) {
     int8_t mission = (int8_t)command->data;
 
@@ -945,20 +726,6 @@ void goToMainMenuCommandCallback(DelayedCommand * command) {
 
 int gameMain() {
     printf("gameMain\n");
-    //jumpTest();
-    //picoroTest();
-    //luaTest();
-
-    //int tiles2_fpg = new_fpg();
-
-    //int texture64_map = load_map_from_memory(system_fpg, texture64);
-    //int girl01_map = load_map_from_memory(girl_fpg, girl01);
-    //int girl02_map = load_map_from_memory(girl_fpg, girl02);
-
-    //int texture64_map = load_map(system_fpg, "art/texture6");
-    //printf("texture64_map %i\n", texture64_map);
-    //int girl01_map = load_map(girl_fpg, "art/girl01");
-    //int girl02_map = load_map(girl_fpg, "art/girl02");
 
     tileset_fpgs[0] = Resources.getSmb3tTileset();
     tileset_fpgs[1] = Resources.getSmb3t2Tileset();
