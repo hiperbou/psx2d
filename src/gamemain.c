@@ -142,11 +142,19 @@ void initPlayerEventHandler(PlayerEventHandler*playerEventHandler, TileMap *tile
     playerEventHandler->onGrounded = onPlayerGrounded;
 }
 
-static int currentLevel = 0;
-static int nextLevel = 0;
+
+typedef enum {
+    LevelIndex_PLAINS,
+    LevelIndex_UNDERGROUND,
+    LevelIndex_SECRET
+} LevelIndex;
+
+static int currentLevel = LevelIndex_PLAINS;
+static int nextLevel = LevelIndex_PLAINS;
+
 
 void checkCoin(TileMap* tileMap, Actor * actor) {
-    if(currentLevel == 2) return;
+    if(currentLevel == LevelIndex_SECRET) return;
 
     int actorHalfWidth = FIX32(6);
     int actorHalfHeight = FIX32(6);
@@ -379,7 +387,7 @@ static void loadLevel_e1m1b() {
 
     newGoalFloating(tileset_fpgs[0], TILE(23), TILE(5), sonic)->goal.mission = 3;
 
-    nextLevel = 0;
+    nextLevel = LevelIndex_PLAINS;
 }
 
 static void openChestTriggerCallback(Actor* trigger) {
@@ -420,7 +428,7 @@ static void loadLevel_e1m1c() {
     newTriggerScript(&playerEventHandler, openChestTriggerCallback, true, (AABB) { TILE_SIZE * 7, TILE_SIZE * 9, TILE_SIZE * 2, TILE_SIZE * 2});
     newGoalHiddenChest(tileset_fpgs[0], TILE(8), TILE(9), sonic)->goal.mission = 5;
 
-    nextLevel = 0;
+    nextLevel = LevelIndex_PLAINS;
 }
 
 static void loadUndergroundLevelTriggerCallback(Actor * trigger);
@@ -574,13 +582,13 @@ static void loadUndergroundLevelTriggerCallback(Actor * trigger) {
     if (buttonState.btn & PAD_DOWN) {
         deleteActor(trigger);
         sonic->sonic.doPipeDown(FIX32(16 * 148));
-        HGL_SCRIPT_create(60, loadLevelScript, NULL, 1);
+        HGL_SCRIPT_create(60, loadLevelScript, NULL, LevelIndex_UNDERGROUND);
     }
 }
 
 static void loadSecretLevelTriggerCallback(Actor* trigger) {
     deleteActor(trigger);
-    HGL_SCRIPT_create(0, loadLevelScript, NULL, 2);
+    HGL_SCRIPT_create(0, loadLevelScript, NULL, LevelIndex_SECRET);
 }
 
 #define fsm_script_begin script_begin_with(&GameStateMachine.asyncState);
