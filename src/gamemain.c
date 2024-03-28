@@ -594,21 +594,19 @@ static void loadSecretLevelTriggerCallback(Actor* trigger) {
     fadeFun(); \
     await(fadeFinished()); 
 
-async goToMainMenuScript(AsyncScript* asyncScript) {
-    async_begin(&asyncScript->asyncState)
-        int8_t mission = (int8_t)asyncScript->data;
+ASYNC_SCRIPT(goToMainMenuScript)
+    int8_t mission = (int8_t)asyncScript->data;
 
-        printf("Completed mission %i\n", mission);
+    printf("Completed mission %i\n", mission);
 
-        CourseMissionState * courseMissionState = &gameState.courseMissionState[0];
+    CourseMissionState * courseMissionState = &gameState.courseMissionState[0];
 
-        CourseMissionState_completeMission(courseMissionState, mission);
-        CourseMissionState_activateMission(courseMissionState, CourseMissionState_getNextMission(courseMissionState));
+    CourseMissionState_completeMission(courseMissionState, mission);
+    CourseMissionState_activateMission(courseMissionState, CourseMissionState_getNextMission(courseMissionState));
 
-        async_awaitFade(whiteFadeOut);
-        GameStateMachine.setUnloadLevelBackToMenu();
-    async_end;
-}
+    async_awaitFade(whiteFadeOut);
+    GameStateMachine.setUnloadLevelBackToMenu();
+ASYNC_SCRIPT_END
 
 void doPlayerWinAnimationParticles(Actor*player, int8_t mission) {
     int x = TILE_CENTER_X_TO_SCREEN(POS_TO_TILE_16(player->entity->x));

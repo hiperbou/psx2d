@@ -4,13 +4,6 @@
 #include <stdint.h>
 #include "../utils/script.h"
 
-/*
-async asyncMainLoop(struct async *mainLoopAsyncState) {
-    async_begin(mainLoopAsyncState);
-    await(gameUpdate());
-    async_end;
-}*/
-
 typedef struct async AsyncState;
 typedef struct AsyncScript AsyncScript;
 
@@ -31,5 +24,12 @@ void HGL_SCRIPT_delete(AsyncScript *e);
 void HGL_SCRIPT_updateAll();
 void HGL_SCRIPT_deleteAll();
 
+#define ASYNC_SCRIPT(x) \
+async x(AsyncScript* asyncScript) { \
+    async_begin(&asyncScript->asyncState) 
+
+#define ASYNC_SCRIPT_END \
+    async_end; \
+}
 
 #endif //DEMO_HGL_SCRIPT_H
