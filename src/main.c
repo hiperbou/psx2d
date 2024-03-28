@@ -3,6 +3,7 @@
 #include "gameresources.h"
 
 #include "utils/async.h"
+#include "utils/script.h"
 //#include "cppfunction.h"
 
 int gameMain();
@@ -14,29 +15,23 @@ int gameTitleUpdate();
 int gameEnding();
 int gameEndingUpdate();
 
-async asyncMainLoop(struct async *mainLoopAsyncState) {
-    async_begin(mainLoopAsyncState);
-    gameInit();
-    initResources();
-    gameTitle();
-    await_while(gameTitleUpdate());
-    gameEnding();
-    await_while(gameEndingUpdate());
-    initButtonStateInput();
-    gameMain();
-    await(gameUpdate());
-    async_end;
-}
-
-static struct async mainLoopAsyncState;
 static void mainLoop() {
-    asyncMainLoop(&mainLoopAsyncState);
+    script_begin
+        gameInit();
+        initResources();
+        gameTitle();
+        script_await_while(gameTitleUpdate());
+        gameEnding();
+        script_await_while(gameEndingUpdate());
+        initButtonStateInput();
+        gameMain();
+        script_await(gameUpdate());
+    script_end;
 }
 
 int main() {
     //int result = someCppFunction(1,2);
     //printf("result from cpp %i\n", result);
-    async_init(&mainLoopAsyncState);
     setMainLoopCallback(&mainLoop);
     return 0;
 }

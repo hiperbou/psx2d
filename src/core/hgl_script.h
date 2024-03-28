@@ -26,7 +26,7 @@ void HGL_SCRIPT_deleteAll();
 
 #define ASYNC_SCRIPT(x) \
 async x(AsyncScript* asyncScript) { \
-    async_begin(&asyncScript->asyncState) 
+    async_begin(&asyncScript->asyncState);
 
 #define ASYNC_SCRIPT_END \
     async_end; \

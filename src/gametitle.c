@@ -39,8 +39,6 @@
 #include "levels/intro.h"
 #include "levels/introground.h"
 
-#include "utils/picoro.h"
-
 #include "engine/fsm.h"
 CREATE_STATE_MACHINE(TitleStateMachine, Title, UnloadTitle, LoadGame)
 
