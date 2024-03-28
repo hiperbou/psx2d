@@ -39,12 +39,6 @@
 #include "levels/e1m1b.h"
 #include "levels/e1m1c.h"
 
-void wait(int wait);
-
-void waitCommand(DelayedCommand * command) {
-    ((void (*)())command->target)();
-}
-
 #define TILE_SIZE 16
 #define HALF_TILE_SIZE (TILE_SIZE/2)
 #define TILE(X) FIX32((X)*TILE_SIZE)
@@ -140,8 +134,6 @@ bool onPlayerGrounded(PlayerEventHandler*playerEventHandler, Tile tile) {
     return false;
 }
 
-
-
 void initPlayerEventHandler(PlayerEventHandler*playerEventHandler, TileMap *tilemap, TileMap* collisionTileMap) {
     playerEventHandler->collisionTileMap = collisionTileMap;
     playerEventHandler->tilemap = tilemap;
@@ -177,7 +169,6 @@ void checkCoin(TileMap* tileMap, Actor * actor) {
 
 #include "engine/fsm.h"
 CREATE_STATE_MACHINE(GameStateMachine, Menu, LoadLevel, Game, UnloadLevelBackToMenu)
-
 
 static int bgbx = 0;
 static int bgby = 0;
@@ -216,7 +207,6 @@ static void drawTestMenu() {
     draw_text8(0, font_atlas, text, 16, 160+32, 0, typewritter2 >> 2);
     draw_text8(0, font_atlas, text, 16, 160+48, 0, typewritter3 >> 3);
 }
-
 
 GameState gameState = {
     .lastCourse = 0,
@@ -351,12 +341,9 @@ static void drawCourseMenu(CourseMenu *courseMenu) {
     draw_all_sprites_basic();
 }
 
-
 Actor* spawnGoal(int tileX, int tileY) {
     return newGoalActivated(tileset_fpgs[0], TILE_CENTER(tileX), TILE_CENTER(tileY), sonic);
 }
-
-
 
 static void loadLevel_e1m1b() {
     bgaTileMap = fromTiledBin(smb3_1_1_underground_layer);
@@ -508,7 +495,6 @@ static functionPointer levels[] = {
     loadLevel_e1m1c
 };
 
-
 static void unloadLevel() {
     HGL_ACTOR_deleteAll();
     HGL_COMMAND_deleteAll();
@@ -520,43 +506,6 @@ static void unloadLevel() {
     freeTileMap(&bgaTileMap);
     freeTileMap(&collisionTileMap);
     initSprites();
-}
-
-static void loadNextLevel(int levelIndex) {
-    nextLevel = levelIndex;
-    GameStateMachine.setLoadLevel();
-}
-
-void loadNextLevelCommand(DelayedCommand * command) {
-    loadNextLevel(command->data);
-}
-
-inline static void createLoadNextLevelCommand(int nextLevelIndex) {
-    HGL_COMMAND_create(30, loadNextLevelCommand, NULL, nextLevelIndex);
-}
-
-void loadUnderGroundLevelCommand(DelayedCommand * command) {
-    blackFadeOut();
-    createLoadNextLevelCommand(1);
-    //loadNextLevel(1);
-}
-
-void fadeInCommand(DelayedCommand* command) {
-    fadeIn();
-}
-
-static void loadUndergroundLevelTriggerCallback(Actor * trigger) {
-    if (buttonState.btn & PAD_DOWN) {
-        deleteActor(trigger);
-        sonic->sonic.doPipeDown(FIX32(16 * 148));
-        HGL_COMMAND_create(60, loadUnderGroundLevelCommand, NULL, 0);
-    }
-}
-
-static void loadSecretLevelTriggerCallback(Actor* trigger) {
-    deleteActor(trigger);
-    blackFadeOut();
-    createLoadNextLevelCommand(2);
 }
 
 #include "utils/async.h"
@@ -613,6 +562,25 @@ void doPlayerWinAnimationParticles(Actor*player, int8_t mission) {
     int y = TILE_CENTER_Y_TO_SCREEN(POS_TO_TILE_16(player->entity->y));
     REPEAT25(new_Particle(x, y))
     HGL_SCRIPT_create(120, goToMainMenuScript, NULL, mission);
+}
+
+ASYNC_SCRIPT(loadLevelScript)
+    async_awaitFade(blackFadeOut);
+    nextLevel = asyncScript->data;
+    GameStateMachine.setLoadLevel();
+ASYNC_SCRIPT_END
+
+static void loadUndergroundLevelTriggerCallback(Actor * trigger) {
+    if (buttonState.btn & PAD_DOWN) {
+        deleteActor(trigger);
+        sonic->sonic.doPipeDown(FIX32(16 * 148));
+        HGL_SCRIPT_create(60, loadLevelScript, NULL, 1);
+    }
+}
+
+static void loadSecretLevelTriggerCallback(Actor* trigger) {
+    deleteActor(trigger);
+    HGL_SCRIPT_create(0, loadLevelScript, NULL, 2);
 }
 
 #define fsm_script_begin script_begin_with(&GameStateMachine.asyncState);
@@ -736,18 +704,4 @@ int gameUpdate() {
     updateFader();
     HGL_frame();
     return 0;
-}
-
-
-void wait(int wait) {
-    initButtonStateInput();
-    while(wait) {
-        wait--;
-        GameStateMachine.update();
-        updateFader();
-        HGL_frame();
-
-    }
-    //updateFader();
-    //HGL_frame();
 }
