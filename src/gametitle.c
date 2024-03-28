@@ -19,6 +19,7 @@
 #include "core/hgl_command.h"
 #include "core/hgl_mem.h"
 #include "core/hgl_scroll.h"
+#include "core/hgl_script.h"
 #include "core/hgl_text.h"
 #include "engine/fader.h"
 
@@ -185,6 +186,7 @@ static void stateUnloadTitle() {
     HGL_COMMAND_deleteAll();
     HGL_TEXT_deleteAll();
     HGL_SCROLL_deleteAll();
+    HGL_SCRIPT_deleteAll();
     HGL_ANIM_deleteAll();
     remove_Particles();
     HGL_free((void*)bgaTileMap.map);

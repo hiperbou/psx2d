@@ -18,6 +18,7 @@
 #include "core/hgl_command.h"
 #include "core/hgl_mem.h"
 #include "core/hgl_scroll.h"
+#include "core/hgl_script.h"
 #include "core/hgl_text.h"
 #include "engine/fader.h"
 
@@ -42,30 +43,6 @@ void wait(int wait);
 
 void waitCommand(DelayedCommand * command) {
     ((void (*)())command->target)();
-}
-
-typedef struct FunctionArray {
-   void *(functions)[10];
-}FunctionArray;
-
-void waitCommandArray(DelayedCommand * command) {
-    printf("run waitCommand array!\n");
-    FunctionArray * functionArray = command->target;
-    for (int i=0; i < command->data; i++) {
-        //printf("iteration %i %i\n", i, functionArray);
-        //((void (*)())(*functionArray->functions[i]))();
-        ((void (*)())functionArray->functions[i])();
-        //printf("Called OK %i\n", *(int*)functionArray);
-
-    }
-}
-
-void newWaitCommand(int delay, void *func) {
-    HGL_COMMAND_create(delay, waitCommand, func, 0);
-}
-
-void newWaitCommandArray(int delay, FunctionArray *func, int numFunctions) {
-    HGL_COMMAND_create(delay, waitCommandArray, func, numFunctions);
 }
 
 #define TILE_SIZE 16
@@ -163,18 +140,7 @@ bool onPlayerGrounded(PlayerEventHandler*playerEventHandler, Tile tile) {
     return false;
 }
 
-void goToMainMenuCommandCallback(DelayedCommand * command);
 
-void newGoToMainMenuCommand(int delay, int8_t value) {
-    HGL_COMMAND_create(delay, goToMainMenuCommandCallback, NULL, value);
-}
-
-void doPlayerWinAnimationParticles(Actor*player, int8_t mission) {
-    int x = TILE_CENTER_X_TO_SCREEN(POS_TO_TILE_16(player->entity->x));
-    int y = TILE_CENTER_Y_TO_SCREEN(POS_TO_TILE_16(player->entity->y));
-    REPEAT25(new_Particle(x, y))
-    newGoToMainMenuCommand(120, mission);
-}
 
 void initPlayerEventHandler(PlayerEventHandler*playerEventHandler, TileMap *tilemap, TileMap* collisionTileMap) {
     playerEventHandler->collisionTileMap = collisionTileMap;
@@ -380,6 +346,7 @@ static void drawCourseMenu(CourseMenu *courseMenu) {
     HGL_ACTOR_updateAll();
     HGL_ENT_renderAll(0, 0);
     HGL_SPR_renderAll();
+    HGL_SCRIPT_updateAll();
     HGL_TEXT_renderAll();
     draw_all_sprites_basic();
 }
@@ -547,6 +514,7 @@ static void unloadLevel() {
     HGL_COMMAND_deleteAll();
     HGL_TEXT_deleteAll();
     HGL_SCROLL_deleteAll();
+    HGL_SCRIPT_deleteAll();
     HGL_ANIM_deleteAll();
     remove_Particles();
     freeTileMap(&bgaTileMap);
@@ -591,7 +559,7 @@ static void loadSecretLevelTriggerCallback(Actor* trigger) {
     createLoadNextLevelCommand(2);
 }
 
-//#include "utils/async.h"
+#include "utils/async.h"
 #include "utils/script.h"
 
 /*
@@ -610,15 +578,46 @@ static void loadSecretLevelTriggerCallback(Actor* trigger) {
 //#define await_frames(X) \
     //int _coroutine_frame_delay = (X); \ // you can't declare variables here
     //await_while(_coroutine_frame_delay-- > 0)
-#define awaitFadeIn() \
+#define script_awaitFadeIn() \
+    fadeIn(); \
+    script_await(isFading());
+
+#define script_awaitFade(fadeFun) \
+    fadeFun(); \
+    script_await(fadeFinished()); 
+
+#define async_awaitFadeIn() \
     fadeIn(); \
     await(isFading());
 
-#define awaitFade(fadeFun) \
+#define async_awaitFade(fadeFun) \
     fadeFun(); \
     await(fadeFinished()); 
 
-#define fsm_script_begin async_begin(&GameStateMachine.asyncState);
+async goToMainMenuScript(AsyncScript* asyncScript) {
+    async_begin(&asyncScript->asyncState)
+        int8_t mission = (int8_t)asyncScript->data;
+
+        printf("Completed mission %i\n", mission);
+
+        CourseMissionState * courseMissionState = &gameState.courseMissionState[0];
+
+        CourseMissionState_completeMission(courseMissionState, mission);
+        CourseMissionState_activateMission(courseMissionState, CourseMissionState_getNextMission(courseMissionState));
+
+        async_awaitFade(whiteFadeOut);
+        GameStateMachine.setUnloadLevelBackToMenu();
+    async_end;
+}
+
+void doPlayerWinAnimationParticles(Actor*player, int8_t mission) {
+    int x = TILE_CENTER_X_TO_SCREEN(POS_TO_TILE_16(player->entity->x));
+    int y = TILE_CENTER_Y_TO_SCREEN(POS_TO_TILE_16(player->entity->y));
+    REPEAT25(new_Particle(x, y))
+    HGL_SCRIPT_create(120, goToMainMenuScript, NULL, mission);
+}
+
+#define fsm_script_begin script_begin_with(&GameStateMachine.asyncState);
 
 static void stateMenu() {
     updateCourseMenuInput(&courseMenu);
@@ -626,9 +625,9 @@ static void stateMenu() {
         setClearColor(175, 249, 240);
         initCourseMenu(&courseMenu, &gameData.course[0], &gameState);
         loadCourseMenu(&courseMenu);
-        awaitFade(fadeIn);
-        await(buttonState.just_pressed & PAD_START);
-        awaitFade(whiteFadeOut);
+        script_awaitFade(fadeIn);
+        script_await(buttonState.just_pressed & PAD_START);
+        script_awaitFade(whiteFadeOut);
         GameStateMachine.setLoadLevel();
         HGL_ACTOR_deleteAll();
         HGL_TEXT_deleteAll();
@@ -658,6 +657,7 @@ static void stateGameUpdate() {
     if(fallToBackgroundScript) fallToBackgroundScript->inputHandler.handleInput(&buttonState);
 
     HGL_COMMAND_updateAll();
+    HGL_SCRIPT_updateAll();
     HGL_ANIM_updateAll();
 
     bgbx = camposx;
@@ -700,29 +700,13 @@ static void stateGameUpdate() {
 static void stateGame() {
     stateGameUpdate();
     fsm_script_begin
-        awaitFadeIn();
-        await(buttonState.just_pressed & PAD_START);
-        awaitFade(whiteFadeOut);
+        script_awaitFadeIn();
+        script_await(buttonState.just_pressed & PAD_START);
+        script_awaitFade(whiteFadeOut);
         GameStateMachine.setUnloadLevelBackToMenu();
     script_end;
 }
 
-void goToMainMenuCommandCallback(DelayedCommand * command) {
-    int8_t mission = (int8_t)command->data;
-
-    printf("Completed mission %i\n", mission);
-
-    CourseMissionState * courseMissionState = &gameState.courseMissionState[0];
-
-    CourseMissionState_completeMission(courseMissionState, mission);
-    CourseMissionState_activateMission(courseMissionState, CourseMissionState_getNextMission(courseMissionState));
-
-    whiteFadeOut();
-    //wait(20);
-    //GameStateMachine.setUnloadLevelBackToMenu();
-    //HGL_COMMAND_create(20, waitCommand, GameStateMachine.setUnloadLevelBackToMenu, 0);
-    newWaitCommand(20, GameStateMachine.setUnloadLevelBackToMenu);
-}
 
 int gameMain() {
     printf("gameMain\n");

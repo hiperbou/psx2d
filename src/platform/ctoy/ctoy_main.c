@@ -8,6 +8,7 @@
 #include "../../core/hgl_command.h"
 #include "../../core/hgl_ent.h"
 #include "../../core/hgl_scroll.h"
+#include "../../core/hgl_script.h"
 #include "../../core/hgl_spr.h"
 #include "../../core/hgl_text.h"
 #include "../../engine/sprites.h"
@@ -40,6 +41,7 @@ coro coroutine(void *function(void *arg)) { return NULL; }
 #include "../../core/hgl_ent.c"
 #include "../../core/hgl_pool.c"
 #include "../../core/hgl_scroll.c"
+#include "../../core/hgl_script.c"
 #include "../../core/hgl_spr.c"
 #include "../../core/hgl_text.c"
 #include "../../core/default/hgl_mem.c"
@@ -399,6 +401,7 @@ void ctoy_begin(void)
     HGL_init();
 
     HGL_COMMAND_init();
+    HGL_SCRIPT_init();
     HGL_ANIM_init();
     HGL_SPR_init();
     HGL_ENT_init();
@@ -501,6 +504,7 @@ void ctoy_main_loop(void)
     int bgby = state->y;
 
     HGL_COMMAND_updateAll();
+    HGL_SCRIPT_updateAll();
     HGL_ANIM_updateAll();
     HGL_ENT_updateAll();
     HGL_ACTOR_updateAll();
