@@ -95,7 +95,7 @@ struct async { async_state; };
  * Wait until the condition succeeds
  * @param cond The condition that must be satisfied before execution can proceed
  */
-#define await(cond) await_while(!(cond))
+#define async_await(cond) await_while(!(cond))
 
 /**
  * Wait while the condition succeeds
@@ -124,6 +124,8 @@ struct async { async_state; };
  * @param state The async procedure state to check
  */
 #define async_done(state) (state)->_async_k==ASYNC_DONE
+
+#define async_not_done(state) (state)->_async_k!=ASYNC_DONE
 
 /**
  * Resume a running async computation and check for completion

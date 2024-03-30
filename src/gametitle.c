@@ -40,7 +40,7 @@
 #include "levels/introground.h"
 
 #include "engine/fsm.h"
-CREATE_STATE_MACHINE(TitleStateMachine, Title, UnloadTitle, LoadGame)
+CREATE_STATE_MACHINE(TitleStateMachine, Title, LoadGame)
 
 CREATE_STATE_MACHINE(SequenceStateMachine, SeqInit, SeqStart, SeqUp, SeqWait, SeqTitleFall, SeqShake, SeqStartFade, SeqFade, SeqFinishFade, SeqPressStart)
 
@@ -147,14 +147,7 @@ static void loadLevel_intro() {
 
 }
 
-static void stateTitle() {
-    if (buttonState.just_pressed & PAD_START) {
-        whiteFadeOut();
-        setUnloadTitle();
-    }
-
-    SequenceStateMachine.update();
-
+static void renderGameTitle() {
     HGL_SCROLL_setOffset(scroll, bgbx, bgby);
 
     HGL_ENT_updateAll();
@@ -177,21 +170,26 @@ static void stateTitle() {
 #endif
 }
 
-static void stateUnloadTitle() {
-    if(isFading()) return;
+static void stateTitle() {
+    SequenceStateMachine.update();
+    renderGameTitle();
 
-    HGL_ACTOR_deleteAll();
-    HGL_COMMAND_deleteAll();
-    HGL_TEXT_deleteAll();
-    HGL_SCROLL_deleteAll();
-    HGL_SCRIPT_deleteAll();
-    HGL_ANIM_deleteAll();
-    remove_Particles();
-    freeTileMap(&bgaTileMap);
-    //HGL_free((void*)collisionTileMap.map);
-    initSprites();
+    script_begin
+        script_await_while(isFading());
+        script_await(buttonState.just_pressed & PAD_START);
+        script_awaitFade(whiteFadeOut);
+        HGL_ACTOR_deleteAll();
+        HGL_COMMAND_deleteAll();
+        HGL_TEXT_deleteAll();
+        HGL_SCROLL_deleteAll();
+        HGL_SCRIPT_deleteAll();
+        HGL_ANIM_deleteAll();
+        remove_Particles();
+        freeTileMap(&bgaTileMap);
+        initSprites();
 
-    setLoadGame();
+        setLoadGame();
+    script_end
 }
 
 static void stateLoadGame() { }

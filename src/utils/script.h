@@ -126,6 +126,8 @@
  */
 #define script_done(state) (state)->_async_k==ASYNC_DONE
 
+#define script_not_done(state) (state)->_async_k!=ASYNC_DONE
+
 /**
  * Resume a running async computation and check for completion
  *
@@ -143,5 +145,24 @@
     script_begin_with(&asyncState);
 
 #define script_end script_end_and_init
+
+
+/*
+#define FRAME yield(0)
+#define WAIT_FRAMES(X) \
+    int _coroutine_frame_delay = (X); \
+    while(_coroutine_frame_delay-- > 0) {  yield(0); }\
+
+#define repeat do
+#define until(exp) while(!(exp))
+
+#define waitUntil(X) repeat { FRAME; } until (X);
+#define waitForInput(X) waitUntil(X);
+*/
+
+//#define await_frames(X) \
+    //int _coroutine_frame_delay = (X); \ // you can't declare variables here
+    //await_while(_coroutine_frame_delay-- > 0)
+
 
 #endif

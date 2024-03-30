@@ -32,4 +32,21 @@ async x(AsyncScript* asyncScript) { \
     async_end; \
 }
 
+
+#define script_awaitFadeIn() \
+    fadeIn(); \
+    script_await_while(isFading());
+
+#define script_awaitFade(fadeFun) \
+    fadeFun(); \
+    script_await(fadeFinished()); 
+
+#define async_awaitFadeIn() \
+    fadeIn(); \
+    script_await_while(isFading());
+
+#define async_awaitFade(fadeFun) \
+    fadeFun(); \
+    async_await(fadeFinished()); 
+
 #endif //DEMO_HGL_SCRIPT_H

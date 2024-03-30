@@ -545,38 +545,6 @@ static void unloadLevel() {
 #include "utils/async.h"
 #include "utils/script.h"
 
-/*
-#define FRAME yield(0)
-#define WAIT_FRAMES(X) \
-    int _coroutine_frame_delay = (X); \
-    while(_coroutine_frame_delay-- > 0) {  yield(0); }\
-
-#define repeat do
-#define until(exp) while(!(exp))
-
-#define waitUntil(X) repeat { FRAME; } until (X);
-#define waitForInput(X) waitUntil(X);
-*/
-
-//#define await_frames(X) \
-    //int _coroutine_frame_delay = (X); \ // you can't declare variables here
-    //await_while(_coroutine_frame_delay-- > 0)
-#define script_awaitFadeIn() \
-    fadeIn(); \
-    script_await(isFading());
-
-#define script_awaitFade(fadeFun) \
-    fadeFun(); \
-    script_await(fadeFinished()); 
-
-#define async_awaitFadeIn() \
-    fadeIn(); \
-    await(isFading());
-
-#define async_awaitFade(fadeFun) \
-    fadeFun(); \
-    await(fadeFinished()); 
-
 ASYNC_SCRIPT(goToMainMenuScript)
     int8_t mission = (int8_t)asyncScript->data;
 

@@ -19,6 +19,7 @@
 #include "core/hgl_command.h"
 #include "core/hgl_mem.h"
 #include "core/hgl_scroll.h"
+#include "core/hgl_script.h"
 #include "core/hgl_text.h"
 #include "engine/fader.h"
 
@@ -29,32 +30,27 @@
 #include "game/state/gamestate.h"
 #include "game/menu/coursemenu.h"
 #include "utils/utils.h"
+#include "utils/async.h"
+#include "utils/script.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
 
-#include "engine/fsm.h"
-CREATE_STATE_MACHINE(EndingStateMachine, Ending, UnloadEnding, ExitEnding)
+static AsyncState asyncState = { ASYNC_INIT };
 
-static void stateEnding() {
-    if (buttonState.just_pressed & PAD_START) {
-        whiteFadeOut();
-        setUnloadEnding();
-    }
-
+async endingAsync(AsyncState* asyncState) { 
     int font_atlas =  Resources.getFontAtlas();
-    //Thank you so much a-for-to playing my game
     draw_text8(0, font_atlas, "THANK YOU SO MUCH A-FOR-TO", 8, 108, 0, -1);
     draw_text8(0, font_atlas, "PLAYING MY GAME!", 8, 116, 0, -1);
     draw_text8(0, font_atlas, "HIPERBOU", 8, 132, 0, -1);
-}
 
-static void stateUnloadEnding() {
-    if(isNotFading()) setExitEnding();
+    async_begin(asyncState);
+        async_awaitFadeIn();
+        async_await(buttonState.just_pressed & PAD_START);
+        async_awaitFade(whiteFadeOut);
+    async_end;
 }
-
-static void stateExitEnding() { }
 
 int gameEndingUpdate() {
     if (isFaded()) {
@@ -62,17 +58,16 @@ int gameEndingUpdate() {
     } else {
         updateInput();
     }
-    EndingStateMachine.update();
+
+    endingAsync(&asyncState);
+
     updateFader();
     HGL_frame();
-    return isNotExitEnding();
+    return async_not_done(&asyncState);
 }
 
 int gameEnding() {
     printf("gameEnding\n");
-
-    initEndingStateMachine();
-
-    fadeIn();
+    async_init(&asyncState);
     return 0;
 }
