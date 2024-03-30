@@ -187,7 +187,7 @@ static void stateUnloadTitle() {
     HGL_SCRIPT_deleteAll();
     HGL_ANIM_deleteAll();
     remove_Particles();
-    HGL_free((void*)bgaTileMap.map);
+    freeTileMap(&bgaTileMap);
     //HGL_free((void*)collisionTileMap.map);
     initSprites();
 
@@ -214,5 +214,6 @@ int gameTitle() {
 
     initTitleStateMachine();
     initSequenceStateMachine();
+    if (isFaded()) fadeIn();
     return 0;
 }

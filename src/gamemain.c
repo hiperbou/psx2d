@@ -142,7 +142,6 @@ void initPlayerEventHandler(PlayerEventHandler*playerEventHandler, TileMap *tile
     playerEventHandler->onGrounded = onPlayerGrounded;
 }
 
-
 typedef enum {
     LevelIndex_PLAINS,
     LevelIndex_UNDERGROUND,
@@ -176,7 +175,7 @@ void checkCoin(TileMap* tileMap, Actor * actor) {
 }
 
 #include "engine/fsm.h"
-CREATE_STATE_MACHINE(GameStateMachine, Menu, LoadLevel, Game, UnloadLevelBackToMenu)
+CREATE_STATE_MACHINE(GameStateMachine, Menu, LoadLevel, Game, UnloadLevelBackToMenu, GameCompleted)
 
 static int bgbx = 0;
 static int bgby = 0;
@@ -295,6 +294,15 @@ static void loadCourseMenu(CourseMenu *courseMenu) {
     }
     Actor * star = courseMenu->stars[courseMenu->selectedItem];
     star->menuStar.select(star);
+}
+
+bool isCourseCompleted(CourseMenu * courseMenu) {
+    for (int i=0; i<courseMenu->numStars; i++){
+        if(courseMenu->missionState[i] != completed) {
+            return false;
+        }
+    }
+    return true;
 }
 
 void updateMissionText(CourseMenu *courseMenu) {
@@ -601,8 +609,8 @@ static void stateMenu() {
         loadCourseMenu(&courseMenu);
         script_awaitFade(fadeIn);
         script_await(buttonState.just_pressed & PAD_START);
-        script_awaitFade(whiteFadeOut);
-        GameStateMachine.setLoadLevel();
+        script_awaitFade(whiteFadeOut)
+        if(isCourseCompleted(&courseMenu)) GameStateMachine.setGameCompleted(); else GameStateMachine.setLoadLevel();
         HGL_ACTOR_deleteAll();
         HGL_TEXT_deleteAll();
         HGL_ANIM_deleteAll();
@@ -623,6 +631,8 @@ static void stateUnloadLevelBackToMenu() {
     unloadLevel();
     GameStateMachine.setMenu();
 }
+
+static void stateGameCompleted() { }
 
 void draw_all_sprites_zorder2();
 
@@ -681,7 +691,6 @@ static void stateGame() {
     script_end;
 }
 
-
 int gameMain() {
     printf("gameMain\n");
 
@@ -711,5 +720,5 @@ int gameUpdate() {
     GameStateMachine.update();
     updateFader();
     HGL_frame();
-    return 0;
+    return isNotGameCompleted();
 }

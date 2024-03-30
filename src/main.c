@@ -17,21 +17,22 @@ int gameEndingUpdate();
 
 static void mainLoop() {
     script_begin
-        gameInit();
-        initResources();
         gameTitle();
         script_await_while(gameTitleUpdate());
-        gameEnding();
-        script_await_while(gameEndingUpdate());
         initButtonStateInput();
         gameMain();
-        script_await(gameUpdate());
+        script_await_while(gameUpdate());
+        gameEnding();
+        script_await_while(gameEndingUpdate());
     script_end;
 }
 
 int main() {
     //int result = someCppFunction(1,2);
     //printf("result from cpp %i\n", result);
+    gameInit();
+    initResources();
+
     setMainLoopCallback(&mainLoop);
     return 0;
 }

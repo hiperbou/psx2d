@@ -34,12 +34,8 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "utils/picoro.h"
-
 #include "engine/fsm.h"
 CREATE_STATE_MACHINE(EndingStateMachine, Ending, UnloadEnding, ExitEnding)
-
-
 
 static void stateEnding() {
     if (buttonState.just_pressed & PAD_START) {
@@ -48,9 +44,10 @@ static void stateEnding() {
     }
 
     int font_atlas =  Resources.getFontAtlas();
-    draw_text8(0, font_atlas, "THANKS", 8, 108, 0, -1);
-    draw_text8(0, font_atlas, "FOR", 8, 116, 0, -1);
-    draw_text8(0, font_atlas, "PLAYING!", 8, 124, 0, -1);
+    //Thank you so much a-for-to playing my game
+    draw_text8(0, font_atlas, "THANK YOU SO MUCH A-FOR-TO", 8, 108, 0, -1);
+    draw_text8(0, font_atlas, "PLAYING MY GAME!", 8, 116, 0, -1);
+    draw_text8(0, font_atlas, "HIPERBOU", 8, 132, 0, -1);
 }
 
 static void stateUnloadEnding() {
