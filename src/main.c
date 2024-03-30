@@ -6,6 +6,7 @@
 #include "utils/script.h"
 //#include "cppfunction.h"
 
+void initGameState();
 int gameMain();
 int gameUpdate();
 
@@ -17,6 +18,7 @@ int gameEndingUpdate();
 
 static void mainLoop() {
     script_begin
+        initGameState();
         gameTitle();
         script_await_while(gameTitleUpdate());
         initButtonStateInput();

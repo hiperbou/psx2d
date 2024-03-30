@@ -231,6 +231,24 @@ GameState gameState = {
     }
 };
 
+void initGameState() {
+    gameState = (GameState) {
+        .lastCourse = 0,
+        .courseMissionState = {
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden }
+        }
+    };
+}
+
 CourseMenu courseMenu;
 
 static HGL_Text * missionText;
