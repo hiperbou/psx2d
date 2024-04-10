@@ -458,6 +458,7 @@ static void loadLevel_e1m1c() {
 }
 
 static void loadUndergroundLevelTriggerCallback(Actor * trigger);
+static void playerOutOfBoundsTriggerCallback(Actor * trigger);
 static void loadSecretLevelTriggerCallback(Actor * trigger);
 
 static void loadLevel_e1m1() {
@@ -482,7 +483,8 @@ static void loadLevel_e1m1() {
     initPlayerEventHandler(&playerEventHandler, &bgaTileMap, &collisionTileMap);
 
     newTriggerScript(&playerEventHandler, loadUndergroundLevelTriggerCallback, true, (AABB) { TILE_SIZE * 147 + 8, TILE_SIZE * 6, TILE_SIZE * 1,  TILE_SIZE * 1});
-
+    newTriggerScript(&playerEventHandler, playerOutOfBoundsTriggerCallback, true, (AABB) { 0, TILE_SIZE * bgaTileMap.numRows, TILE_SIZE * bgaTileMap.numCols,  TILE_SIZE * 2});
+    
     //sonic = newSonic(Resources.getSonicFpg(), TILE(6), TILE(25), collisionTileMap, &playerEventHandler);
     sonic = newSonic(Resources.getSonicFpg(), TILE(148), TILE(6), collisionTileMap, &playerEventHandler);
     playerEventHandler.player = sonic;
@@ -578,6 +580,19 @@ static void loadUndergroundLevelTriggerCallback(Actor * trigger) {
         sonic->sonic.doPipeDown(FIX32(16 * 148));
         HGL_SCRIPT_create(60, loadLevelScript, NULL, LevelIndex_UNDERGROUND);
     }
+}
+
+ASYNC_SCRIPT(playerOutOfBoundsScript)
+    async_awaitFade(whiteFadeOut);
+    GameStateMachine.setUnloadLevelBackToMenu();
+ASYNC_SCRIPT_END
+
+static void playerOutOfBoundsTriggerCallback(Actor * trigger) {
+    deleteActor(trigger);
+    printf("Player died!\n");
+    //TODO: Play sound
+    //TODO: Block player input
+    HGL_SCRIPT_create(60, playerOutOfBoundsScript, NULL, 0);
 }
 
 static void loadSecretLevelTriggerCallback(Actor* trigger) {
