@@ -5,6 +5,8 @@
 #include "psx/psx_fpg.h"
 #elif defined(RAYLIB)
 #include "raylib/raylib_fpg.h"
+#elif defined(SDL3)
+#include "sdl3/sdl3_fpg.h"
 #else
 #include "ctoy/ctoy_fpg.h"
 #endif

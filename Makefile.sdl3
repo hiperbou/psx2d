@@ -1,0 +1,497 @@
+MODULES = core engine game game/data game/menu game/state input media pool utils
+MODULES_DEFAULT = core/default
+MODULES_RAYLIB = core/raylib engine/raylib input/raylib media/raylib # Keep for reference if needed, not used in SOURCES
+MODULES_SDL3 = core/sdl3 engine/sdl3 input/sdl3 media/sdl3
+
+SOURCES	= src $(addprefix src/,$(MODULES)) $(addprefix src/,$(MODULES_DEFAULT)) $(addprefix src/,$(MODULES_SDL3))
+
+CFILES		= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
+#CPPFILES	= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.cpp))
+
+OBJ_DIR = obj/
+
+OBJECTS		= $(addprefix $(OBJ_DIR),$(CFILES:.c=.o))
+#CPPOBJECTS	= $(addprefix $(OBJ_DIR),$(CPPFILES:.cpp=.o))
+
+INCLUDES  = $(addprefix -I,$(SOURCES))
+
+OPTS = -DSDL3
+
+ifeq ($(OS),Windows_NT)
+    makedir=@mkdir $(subst /,\,$(1)) &
+
+    define create_dir
+        @if not exist $(subst /,\,$(1)) $(makedir)
+    endef
+else
+    define create_dir
+        mkdir -p $(1);
+    endef
+endif
+
+#**************************************************************************************************
+#
+#   raylib makefile for Desktop platforms, Raspberry Pi, Android and HTML5
+#
+#   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5)
+#
+#   This software is provided "as-is", without any express or implied warranty. In no event
+#   will the authors be held liable for any damages arising from the use of this software.
+#
+#   Permission is granted to anyone to use this software for any purpose, including commercial
+#   applications, and to alter it and redistribute it freely, subject to the following restrictions:
+#
+#     1. The origin of this software must not be misrepresented; you must not claim that you
+#     wrote the original software. If you use this software in a product, an acknowledgment
+#     in the product documentation would be appreciated but is not required.
+#
+#     2. Altered source versions must be plainly marked as such, and must not be misrepresented
+#     as being the original software.
+#
+#     3. This notice may not be removed or altered from any source distribution.
+#
+#**************************************************************************************************
+
+.PHONY: all clean run create_obj_dirs
+
+# Define required environment variables
+#------------------------------------------------------------------------------------------------
+# Define target platform: PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_DRM, PLATFORM_ANDROID, PLATFORM_WEB
+PLATFORM              ?= PLATFORM_DESKTOP
+
+# Define project variables
+PROJECT_NAME          ?= sdl3_game
+PROJECT_VERSION       ?= 1.0
+PROJECT_BUILD_PATH    ?= .
+
+# RAYLIB_PATH           ?= ../../raylib # REMOVED
+# RAYLIB_INCLUDE_PATH   ?= /usr/local/include # REMOVED
+# RAYLIB_LIB_PATH       ?= /usr/local/lib # REMOVED
+# RAYLIB_LIBTYPE        ?= STATIC # REMOVED
+
+# Build mode for project: DEBUG or RELEASE
+BUILD_MODE            ?= RELEASE
+
+# Use Wayland display server protocol on Linux desktop (by default it uses X11 windowing system)
+# NOTE: This variable is only used for PLATFORM_OS: LINUX
+USE_WAYLAND_DISPLAY   ?= FALSE
+
+# PLATFORM_WEB: Default properties
+BUILD_WEB_ASYNCIFY    ?= FALSE
+BUILD_WEB_SHELL       ?= minshell.html
+BUILD_WEB_HEAP_SIZE   ?= 134217728
+BUILD_WEB_RESOURCES   ?= TRUE
+BUILD_WEB_RESOURCES_PATH  ?= art
+
+# Use cross-compiler for PLATFORM_RPI
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    USE_RPI_CROSS_COMPILER ?= FALSE
+    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
+        RPI_TOOLCHAIN ?= C:/SysGCC/Raspberry
+        RPI_TOOLCHAIN_SYSROOT ?= $(RPI_TOOLCHAIN)/arm-linux-gnueabihf/sysroot
+    endif
+endif
+
+# Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
+    # ifeq ($(UNAME),Msys) -> Windows
+    ifeq ($(OS),Windows_NT)
+        PLATFORM_OS = WINDOWS
+        ifndef PLATFORM_SHELL
+            PLATFORM_SHELL = cmd
+        endif
+    else
+        UNAMEOS = $(shell uname)
+        ifeq ($(UNAMEOS),Linux)
+            PLATFORM_OS = LINUX
+        endif
+        ifeq ($(UNAMEOS),FreeBSD)
+            PLATFORM_OS = BSD
+        endif
+        ifeq ($(UNAMEOS),OpenBSD)
+            PLATFORM_OS = BSD
+        endif
+        ifeq ($(UNAMEOS),NetBSD)
+            PLATFORM_OS = BSD
+        endif
+        ifeq ($(UNAMEOS),DragonFly)
+            PLATFORM_OS = BSD
+        endif
+        ifeq ($(UNAMEOS),Darwin)
+            PLATFORM_OS = OSX
+        endif
+        ifndef PLATFORM_SHELL
+            PLATFORM_SHELL = sh
+        endif
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    UNAMEOS = $(shell uname)
+    ifeq ($(UNAMEOS),Linux)
+        PLATFORM_OS = LINUX
+    endif
+    ifndef PLATFORM_SHELL
+        PLATFORM_SHELL = sh
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    UNAMEOS = $(shell uname)
+    ifeq ($(UNAMEOS),Linux)
+        PLATFORM_OS = LINUX
+    endif
+    ifndef PLATFORM_SHELL
+        PLATFORM_SHELL = sh
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    ifeq ($(OS),Windows_NT)
+        PLATFORM_OS = WINDOWS
+        ifndef PLATFORM_SHELL
+            PLATFORM_SHELL = cmd
+        endif
+    else
+        UNAMEOS = $(shell uname)
+        ifeq ($(UNAMEOS),Linux)
+            PLATFORM_OS = LINUX
+        endif
+        ifeq ($(UNAMEOS),Darwin)
+            PLATFORM_OS = OSX
+        endif
+        ifndef PLATFORM_SHELL
+            PLATFORM_SHELL = sh
+        endif
+    endif
+endif
+
+# Default path for raylib on Raspberry Pi - REMOVED
+# ifeq ($(PLATFORM),PLATFORM_RPI)
+#     RAYLIB_PATH        ?= /home/pi/raylib
+# endif
+# ifeq ($(PLATFORM),PLATFORM_DRM)
+#     RAYLIB_PATH        ?= /home/pi/raylib
+# endif
+
+# Define raylib release directory for compiled library - REMOVED
+# RAYLIB_RELEASE_PATH 	?= $(RAYLIB_PATH)/src
+
+ifeq ($(OS),Windows_NT)
+    ifeq ($(PLATFORM),PLATFORM_WEB)
+        # Emscripten required variables
+        EMSDK_PATH         ?= C:/emsdk
+        EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
+        CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
+        PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-nuget_64bit
+        NODE_PATH           = $(EMSDK_PATH)/node/14.15.5_64bit/bin
+        export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH):$$(PATH)
+    endif
+endif
+
+# Define default C compiler: CC
+#------------------------------------------------------------------------------------------------
+CC = gcc
+
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),OSX)
+        # OSX default compiler
+        CC = clang
+    endif
+    ifeq ($(PLATFORM_OS),BSD)
+        # FreeBSD, OpenBSD, NetBSD, DragonFly default compiler
+        CC = clang
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
+        # Define RPI cross-compiler
+        #CC = armv6j-hardfloat-linux-gnueabi-gcc
+        CC = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-gcc
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    # HTML5 emscripten compiler
+    # WARNING: To compile to HTML5, code must be redesigned
+    # to use emscripten.h and emscripten_set_main_loop()
+    CC = emcc
+endif
+
+# Define default make program: MAKE
+#------------------------------------------------------------------------------------------------
+MAKE ?= make
+
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        MAKE = mingw32-make
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    MAKE = mingw32-make
+endif
+
+# Define compiler flags: CFLAGS
+#------------------------------------------------------------------------------------------------
+#  -O1                  defines optimization level
+#  -g                   include debug information on compilation
+#  -s                   strip unnecessary data from build
+#  -Wall                turns on most, but not all, compiler warnings
+#  -std=c99             defines C language mode (standard C from 1999 revision)
+#  -std=gnu99           defines C language mode (GNU C from 1999 revision)
+#  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
+#  -Wno-unused-value    ignore unused return values of some functions (i.e. fread())
+#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
+CFLAGS = -std=c99 -Wno-missing-braces -Wunused-result -D_DEFAULT_SOURCE
+
+ifeq ($(BUILD_MODE),DEBUG)
+    CFLAGS += -g -D_DEBUG # Keep debug flags
+else
+    ifeq ($(PLATFORM),PLATFORM_WEB)
+        ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
+            CFLAGS += -O3 # Web specific optimization
+        else
+            CFLAGS += -Os # Web specific optimization for size
+        endif
+    else
+        CFLAGS += -s -O2 # General release optimizations
+    endif
+endif
+
+# Get SDL3 compiler flags
+SDL3_CFLAGS := $(shell sdl3-config --cflags)
+CFLAGS += $(SDL3_CFLAGS)
+# Ensure this also includes flags for SDL3_image:
+SDL3_IMAGE_CFLAGS := $(shell sdl3-config --cflags SDL3_image) # or pkg-config SDL3_image --cflags
+CFLAGS += $(SDL3_IMAGE_CFLAGS)
+# Placeholder example if sdl3-config is not available or needs manual setup:
+# CFLAGS += -I/usr/local/include/SDL3 # Example path for SDL3 headers
+# CFLAGS += -I/usr/local/include/SDL3_image # Example path for SDL3_image headers
+
+
+# Additional flags for compiler (if desired)
+#CFLAGS += -Wextra -Wmissing-prototypes -Wstrict-prototypes
+# Raylib specific CFLAGS (RAYLIB_LIBTYPE, rpath) removed.
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    CFLAGS += -std=gnu99
+endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    CFLAGS += -std=gnu99 -DEGL_NO_X11
+endif
+
+# Define include paths for required headers: INCLUDE_PATHS
+# NOTE: Some external/extras libraries could be required (stb, physac, easings...)
+#------------------------------------------------------------------------------------------------
+# INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external -I$(RAYLIB_PATH)/src/extras # REMOVED Raylib paths
+INCLUDE_PATHS = -I. # Basic include path for project root. sdl3-config should handle system includes.
+
+# Define additional directories containing required header files
+# Raylib specific include paths (RAYLIB_INCLUDE_PATH) removed.
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include
+    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vmcs_host/linux
+    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
+endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    INCLUDE_PATHS += -I/usr/include/libdrm
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    INCLUDE_PATHS += -I$(EMSCRIPTEN_PATH)/cache/sysroot/include
+endif
+
+# Define library paths containing required libs: LDFLAGS
+#------------------------------------------------------------------------------------------------
+# LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)/src # REMOVED Raylib paths
+LDFLAGS = -L. # Basic LDFLAG for project root. sdl3-config should handle system library paths.
+
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        # NOTE: The resource .rc file contains windows executable icon and properties
+        # LDFLAGS += path/to/sdl3/resource.rc.data # If SDL3 needs a resource file
+        # -Wl,--subsystem,windows hides the console window
+        ifeq ($(BUILD_MODE), RELEASE)
+            LDFLAGS += -Wl,--subsystem,windows
+        endif
+    endif
+    # Raylib specific LDFLAGS (RAYLIB_LIB_PATH) removed.
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    # -Os                        # size optimization
+    # -O2                        # optimization level 2, if used, also set --memory-init-file 0
+    # -s USE_GLFW=3              # Use glfw3 library (context/input management)
+    # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing -> WARNING: Audio buffers could FAIL!
+    # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB) (67108864 = 64MB)
+    # -s USE_PTHREADS=1          # multithreading support
+    # -s WASM=0                  # disable Web Assembly, emitted by default
+    # -s ASYNCIFY                # lets synchronous C/C++ code interact with asynchronous JS
+    # -s FORCE_FILESYSTEM=1      # force filesystem to load/save files data
+    # -s ASSERTIONS=1            # enable runtime checks for common memory allocation errors (-O1 and above turn it off)
+    # --profiling                # include information for code profiling
+    # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
+    # --preload-file resources   # specify a resources folder for data compilation
+    # --source-map-base          # allow debugging in browser with source map
+    # LDFLAGS += -s USE_GLFW=3 # GLFW is usually not directly used when using SDL3 for Emscripten
+    LDFLAGS += -s TOTAL_MEMORY=$(BUILD_WEB_HEAP_SIZE) -s FORCE_FILESYSTEM=1
+    # For SDL3 with Emscripten, sdl3-config (for emscripten) should provide appropriate flags.
+    # Example if using Emscripten ports without sdl3-config or if it's incomplete:
+    # LDFLAGS += -s USE_SDL=3 -s USE_SDL_IMAGE=3 -s SDL3_IMAGE_FORMATS='["png"]' # Note: SDL2_IMAGE_FORMATS for SDL2
+    
+    # Build using asyncify
+    ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
+        LDFLAGS += -s ASYNCIFY
+    endif
+    
+    # Add resources building if required
+    ifeq ($(BUILD_WEB_RESOURCES),TRUE)
+        LDFLAGS += --preload-file $(BUILD_WEB_RESOURCES_PATH)
+    endif
+    
+    # Add debug mode flags if required
+    ifeq ($(BUILD_MODE),DEBUG)
+        LDFLAGS += -s ASSERTIONS=1 # --profiling might also be useful
+    endif
+
+    # Define a custom shell .html and output extension
+    # Consider if SDL3 requires a specific shell or if minshell.html is still appropriate
+    LDFLAGS += --shell-file $(BUILD_WEB_SHELL)
+    EXT = .html
+endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    LDFLAGS += -L$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/lib
+endif
+
+# Define libraries required on linking: LDLIBS
+# NOTE: To link libraries (lib<name>.so or lib<name>.a), use -l<name>
+#------------------------------------------------------------------------------------------------
+# Get SDL3 linker flags and libraries
+SDL3_LIBS := $(shell sdl3-config --libs)
+# Also get flags for SDL3_image
+SDL3_IMAGE_LIBS := $(shell sdl3-config --libs SDL3_image) # or pkg-config SDL3_image --libs
+# Placeholder example if sdl3-config is not available or needs manual setup:
+# SDL3_LIBS = -L/usr/local/lib -lSDL3 # Example path and lib for SDL3
+# SDL3_IMAGE_LIBS = -L/usr/local/lib -lSDL3_image # Example path and lib for SDL3_image
+
+# LDLIBS can be set primarily by these, removing old raylib libs
+LDLIBS = $(SDL3_LIBS) $(SDL3_IMAGE_LIBS) -lm # Add other general libs like -lm if needed
+
+# Platform specific LDLIBS adjustments (remove raylib parts, add SDL3 specific if any)
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        # LDLIBS for Windows with SDL3 might need -lmingw32, -mwindows etc.
+        # $(SDL3_LIBS) should ideally handle this.
+        # Example: LDLIBS += -lmingw32 -mwindows
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        LDLIBS += -lpthread -ldl # Common on Linux
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        # $(SDL3_LIBS) for OSX should link necessary frameworks.
+        # Example: LDLIBS += -framework CoreAudio -framework CoreVideo -framework ForceFeedback
+    endif
+    # BSD specific LDLIBS for SDL3 if any
+endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    # LDLIBS for Raspberry Pi with SDL3
+    # $(SDL3_LIBS) should provide specifics like -lGLESv2 -lEGL etc. if SDL is built for RPi
+    LDLIBS += -lrt 
+endif
+ifeq ($(PLATFORM),PLATFORM_DRM)
+    # LDLIBS for DRM with SDL3
+    LDLIBS += -lrt 
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    # For web (HTML5) compiling, sdl3-config for emscripten should provide the .a paths or -s USE_SDL flags
+    # LDLIBS = path/to/libSDL3.a path/to/libSDL3_image.a # Example if linking static libs
+    # Or, if using emscripten ports/system libs, LDFLAGS usually handles this via -s USE_SDL=3 etc.
+    # For now, relying on sdl3-config output being comprehensive. If not, specific -s flags are needed in LDFLAGS for web.
+    # LDLIBS = # Often empty if LDFLAGS handles Emscripten SDL linkage
+endif
+
+# Define source code object files required
+#------------------------------------------------------------------------------------------------
+
+PROJECT_SOURCE_FILES ?= $(CFILES) $(CPPFILES)
+OBJS = $(OBJECTS) $(CPPOBJECTS)
+# INCLUDE_PATHS += $(INCLUDES) # This line is problematic as INCLUDES is defined based on SOURCES early on.
+# CFLAGS already has general project includes from INCLUDES = $(addprefix -I,$(SOURCES))
+# and sdl3-config for system ones. Duplicating $(INCLUDES) in $(PROJECT_NAME) rule is better.
+
+# Define processes to execute
+#------------------------------------------------------------------------------------------------
+# For Android platform we call a custom Makefile.Android
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    # MAKEFILE_PARAMS = -f Makefile.raylib.Android # TODO: Adapt for SDL3 if Android is a target
+    # For now, assume desktop/web focus
+    MAKEFILE_PARAMS = -f Makefile.sdl3 $(PROJECT_NAME)
+    export PROJECT_NAME
+    export PROJECT_SOURCE_FILES
+else
+    MAKEFILE_PARAMS = -f Makefile.sdl3 $(PROJECT_NAME)
+endif
+
+# Default target entry
+# NOTE: We call this Makefile target or Makefile.Android target
+all: $(PROJECT_NAME)
+
+create_obj_dirs:
+	$(foreach dir, $(addprefix $(OBJ_DIR),$(SOURCES)), $(call create_dir, $(dir)))
+
+# Project target defined by PROJECT_NAME
+$(PROJECT_NAME): create_obj_dirs $(OBJS)
+	@echo "--- Building $(PROJECT_NAME) ---"
+	@echo "CC: $(CC)"
+	@echo "SOURCES: $(SOURCES)"
+	@echo "INCLUDES: $(INCLUDES)"
+	@echo "CFLAGS: $(CFLAGS)"
+	@echo "LDFLAGS: $(LDFLAGS)"
+	@echo "LDLIBS: $(LDLIBS)"
+	@echo "OPTS: $(OPTS)"
+	$(CC) -o $(PROJECT_NAME)$(EXT) $(OBJS) $(LDFLAGS) $(LDLIBS) $(CFLAGS) $(INCLUDES) -D$(PLATFORM) $(OPTS) $(CUSTOM_CFLAGS)
+
+# Compile source files
+# NOTE: This pattern will compile every module defined on $(OBJS)
+# mkdir $(subst /,\, $(@D))
+$(OBJ_DIR)%.o: %.c
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) $(OPTS) $(CUSTOM_CFLAGS)
+
+# @mkdir -p $(@D)
+$(OBJ_DIR)%.o: %.cpp
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) $(OPTS) $(CUSTOM_CFLAGS)
+
+run: all
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+		@echo "Running $(PROJECT_NAME).exe..."
+		$(PROJECT_BUILD_PATH)\$(PROJECT_NAME).exe
+    else # Linux, OSX, BSD
+		@echo "Running ./$(PROJECT_NAME)..."
+		$(PROJECT_BUILD_PATH)/./$(PROJECT_NAME)
+    endif
+else ifeq ($(PLATFORM),PLATFORM_WEB)
+	@echo "Running $(PROJECT_NAME).html with emrun..."
+	emrun $(PROJECT_BUILD_PATH)/$(PROJECT_NAME).html
+else
+	@echo "Run target not configured for this platform: $(PLATFORM)"
+endif
+
+.PHONY: clean_shell_cmd clean_shell_sh
+
+# Clean everything
+# Define RM for shell or cmd
+ifeq ($(PLATFORM_SHELL),sh)
+    RM = rm -f
+    RM_RF = rm -rf
+else
+    RM = del /F /Q
+    RM_RF = rmdir /S /Q
+endif
+
+clean:
+	@echo "Cleaning build files..."
+	$(RM) $(PROJECT_BUILD_PATH)/$(PROJECT_NAME)$(EXT)
+	$(RM_RF) $(OBJ_DIR)
+	# Specific clean for web to remove all generated files
+	ifeq ($(PLATFORM),PLATFORM_WEB)
+		$(RM) $(PROJECT_BUILD_PATH)/$(PROJECT_NAME).js
+		$(RM) $(PROJECT_BUILD_PATH)/$(PROJECT_NAME).wasm
+		$(RM) $(PROJECT_BUILD_PATH)/$(PROJECT_NAME).data
+		$(RM) $(PROJECT_BUILD_PATH)/minshell.html # If this is the shell file name
+	endif
+	@echo "Clean complete."
