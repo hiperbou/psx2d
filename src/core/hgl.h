@@ -3,8 +3,10 @@
 
 #include <stdint.h>
 
-void HGL_init();
+int HGL_init(); // Modified to return int status
 void HGL_frame();
+void startFrame(); // Added for explicit call from main loop
+void HGL_quit();   // Added for explicit call from main
 
 typedef struct {
     uint8_t r;

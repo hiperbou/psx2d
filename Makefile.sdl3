@@ -1,0 +1,168 @@
+# Makefile for SDL3 Backend
+
+# Compiler and Linker
+CC = gcc
+CXX = g++ # For C++ files if any are directly linked or for linking stage
+
+# --- Configuration ---
+# Target executable name
+TARGET = game_sdl3
+
+# Use sdl3-config for SDL flags (recommended)
+# If sdl3-config is not in PATH, these will be empty.
+# In that case, you'll need to set SDL_CFLAGS and SDL_LIBS manually below.
+SDL_CFLAGS_CMD = $(shell sdl3-config --cflags)
+SDL_LIBS_CMD = $(shell sdl3-config --libs)
+
+# --- Compiler and Linker Flags ---
+# Base CFLAGS
+CFLAGS_BASE = -std=c99 -Wall -Wextra -g
+# Base CXXFLAGS (if C++ files are compiled separately)
+CXXFLAGS_BASE = -std=c++11 -Wall -Wextra -g
+
+# Include paths (add more as needed)
+INCLUDE_PATHS = -Isrc \
+                -Isrc/core \
+                -Isrc/engine \
+                -Isrc/input \
+                -Isrc/media \
+                -Isrc/game \
+                -Isrc/pool \
+                -Isrc/utils \
+                -Isrc/media/sdl3 # For sdl3_fpg.h if SPRITE is used by common code
+
+# SDL specific flags
+# If sdl3-config worked, use its output. Otherwise, provide manual fallbacks.
+ifeq ($(SDL_CFLAGS_CMD),)
+    $(warning "sdl3-config --cflags failed or not found. Using manual SDL_CFLAGS.")
+    $(warning "Please ensure SDL3 development headers are installed and paths are correct.")
+    SDL_CFLAGS = -I/usr/include/SDL3 # Example path, adjust if needed
+else
+    SDL_CFLAGS = $(SDL_CFLAGS_CMD)
+endif
+
+ifeq ($(SDL_LIBS_CMD),)
+    $(warning "sdl3-config --libs failed or not found. Using manual SDL_LIBS.")
+    $(warning "Please ensure SDL3 development libraries are installed and paths are correct.")
+    SDL_LIBS = -L/usr/lib/x86_64-linux-gnu -lSDL3 -lSDL3_image # Example path, adjust if needed
+else
+    SDL_LIBS = $(SDL_LIBS_CMD)
+endif
+
+# SDL_image is a separate library, ensure it's linked
+# sdl3-config might not include it by default in --libs for SDL3 itself
+SDL_LIBS += -lSDL3_image
+
+# Final flags
+CFLAGS = $(CFLAGS_BASE) $(INCLUDE_PATHS) $(SDL_CFLAGS)
+CXXFLAGS = $(CXXFLAGS_BASE) $(INCLUDE_PATHS) $(SDL_CFLAGS) # CXXFLAGS also need include paths and SDL CFLAGS
+LDFLAGS = $(SDL_LIBS) -lm # Link math library, common dependency
+
+# --- Source Files ---
+# SDL3 Backend Specific Sources
+SDL3_BACKEND_SRCS = src/core/sdl3/sdl3_hgl.c \
+                    src/core/sdl3/sdl3_hgl_file.c \
+                    src/engine/sdl3/sdl3_sprites.c \
+                    src/input/sdl3/sdl3_input.c \
+                    src/media/sdl3/sdl3_fpg.c \
+                    src/platform/sdl3/sdl3_main.c
+
+# Common Engine and Game Sources (expand this list based on your project)
+COMMON_C_SRCS = src/core/default/hgl_mem.c \
+                src/core/hgl_actor.c \
+                src/core/hgl_anim.c \
+                src/core/hgl_command.c \
+                src/core/hgl_ent.c \
+                src/core/hgl_pool.c \
+                src/core/hgl_script.c \
+                src/core/hgl_scroll.c \
+                src/core/hgl_spr.c \
+                src/core/hgl_text.c \
+                src/engine/fader.c \
+                src/engine/particle.c \
+                src/engine/sprites.c \
+                src/engine/text.c \
+                src/engine/tilemap.c \
+                src/input/buttonstate.c \
+                src/media/fpg.c \
+                src/game.c \
+                src/gamemain.c \
+                src/gameresources.c \
+                src/gameending.c \
+                src/gametitle.c \
+                src/game/actors.c \
+                src/game/bee.c \
+                src/game/block.c \
+                src/game/camera.c \
+                src/game/data/gamedata.c \
+                src/game/enemyupdate.c \
+                src/game/fallToBackgroundScript.c \
+                src/game/goal.c \
+                src/game/menu/coursemenu.c \
+                src/game/menustar.c \
+                src/game/motobug.c \
+                src/game/sonic.c \
+                src/game/state/gamestate.c \
+                src/game/tileshader.c \
+                src/game/triggerScript.c \
+                src/pool/FixedPool.c \
+                src/pool/ObjectPool.c \
+                src/utils/utils.c \
+                src/utils/picoro.c
+
+COMMON_CPP_SRCS = src/utils/cppfunction.cpp # C++ files
+
+# All source files
+SRCS_C = $(SDL3_BACKEND_SRCS) $(COMMON_C_SRCS)
+SRCS_CPP = $(COMMON_CPP_SRCS)
+
+# Object files
+OBJS_C = $(SRCS_C:.c=.o)
+OBJS_CPP = $(SRCS_CPP:.cpp=.o)
+OBJS = $(OBJS_C) $(OBJS_CPP)
+
+# --- Build Rules ---
+.PHONY: all clean
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	@echo "Linking target: $(TARGET)"
+	$(CXX) $(OBJS) -o $(TARGET) $(LDFLAGS) # Use CXX for linking if there are C++ objects
+
+# Rule for C files
+%.o: %.c
+	@echo "Compiling C: $<"
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Rule for C++ files (if any)
+%.o: %.cpp
+	@echo "Compiling C++: $<"
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean:
+	@echo "Cleaning build files..."
+	rm -f $(OBJS) $(TARGET)
+	@echo "Clean complete."
+
+# --- Help and Information ---
+info:
+	@echo "SDL3 Game Makefile"
+	@echo "--------------------"
+	@echo "Target: $(TARGET)"
+	@echo "SDL_CFLAGS: $(SDL_CFLAGS)"
+	@echo "SDL_LIBS: $(SDL_LIBS)"
+	@echo "CFLAGS: $(CFLAGS)"
+	@echo "CXXFLAGS: $(CXXFLAGS)"
+	@echo "LDFLAGS: $(LDFLAGS)"
+	@echo "To build: make -f Makefile.sdl3"
+	@echo "To clean: make -f Makefile.sdl3 clean"
+
+# Note: If sdl3-config is not found or fails, SDL_CFLAGS and SDL_LIBS will use the
+# hardcoded fallbacks. You may need to adjust these paths based on your SDL3 installation.
+# Common locations for SDL3 headers: /usr/include/SDL3, /usr/local/include/SDL3
+# Common locations for SDL3 libraries: /usr/lib, /usr/local/lib
+#
+# Ensure SDL3_image development package is also installed (e.g., libsdl3-image-dev).
+# The linker flag -lSDL3_image is added explicitly.
+```
