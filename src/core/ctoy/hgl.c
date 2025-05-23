@@ -2,6 +2,7 @@
 //#include "input.h"
 #include "../../engine/sprites.h"
 #include "../../media/fpg.h"
+#include "../hgl.h" // Added for HGL_start_frame prototype
 
 #include <ctoy.h>
 //#include "../util/img_util.c"
@@ -32,12 +33,15 @@ void HGL_init() {
 
 }
 
-void clear(struct m_image *dest);
+void clear(struct m_image *dest); // Assume this is declared elsewhere or define it if missing and simple
+
+void HGL_start_frame(void) {
+    clear(&buffer);
+}
 
 void HGL_frame() {
     //drawTexts();
     //display();
     ctoy_swap_buffer(&buffer);
-    clear(&buffer);
 }
 

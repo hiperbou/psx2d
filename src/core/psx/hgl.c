@@ -18,6 +18,12 @@ void HGL_init() {
 
 }
 
+// New empty function
+void HGL_start_frame(void) {
+    // PSX screen clearing and vsync are typically handled by display() or GsSortCls()
+    // For now, this function will be empty.
+}
+
 void HGL_frame() {
     drawTexts();
     display();

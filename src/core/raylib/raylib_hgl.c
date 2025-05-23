@@ -1,5 +1,6 @@
 #include "../../engine/sprites.h"
 #include "../../media/fpg.h"
+#include "../hgl.h" // Added for HGL function prototypes
 
 #include <raylib.h>
 #include "rlgl.h"
@@ -16,7 +17,7 @@ void setClearColor(uint8_t r, uint8_t g, uint8_t b) {
     raylibClearColor.a = 255;
 }
 
-static void startFrame() {
+void HGL_start_frame() { // Renamed and no longer static
     //int screen_width = (GetScreenWidth() / gameScreenWidth) * gameScreenWidth;  
     //int screen_height = (GetScreenHeight() / gameScreenHeight) * gameScreenHeight; 
     int screen_width = GetScreenWidth();  
@@ -68,9 +69,7 @@ void initDisplay() {
     SetTargetFPS(60);  
 
     setClearColor(0, 0, 0);
-    #ifndef __EMSCRIPTEN__
-    startFrame();
-    #endif
+    // Removed the call to startFrame() from here
 }
 
 void HGL_init() {
@@ -88,13 +87,7 @@ void HGL_init() {
 }
 
 void HGL_frame() {
-#ifdef __EMSCRIPTEN__
-    startFrame();
     EndDrawing();
-#else
-    EndDrawing();
-    startFrame();
-#endif
 }
 
 static Color fadeBlackColor = (Color) { 0, 0, 0, 255 };

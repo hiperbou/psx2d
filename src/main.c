@@ -17,6 +17,7 @@ int gameEnding();
 int gameEndingUpdate();
 
 static void mainLoop() {
+    HGL_start_frame(); // This is the new line to be added
     script_begin
         initGameState();
         gameTitle();

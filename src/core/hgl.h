@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 void HGL_init();
+void HGL_start_frame(void);
 void HGL_frame();
 
 typedef struct {
