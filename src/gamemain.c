@@ -983,6 +983,9 @@ int gameUpdate() {
     } else {
         updateInput();
     }
+#ifdef __EMSCRIPTEN__
+    startFrame(); // Added for Emscripten
+#endif
     GameStateMachine.update();
     updateFader();
     HGL_frame();

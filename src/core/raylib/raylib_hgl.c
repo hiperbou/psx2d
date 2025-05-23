@@ -89,8 +89,7 @@ void HGL_init() {
 
 void HGL_frame() {
 #ifdef __EMSCRIPTEN__
-    startFrame();
-    EndDrawing();
+    EndDrawing(); // startFrame() was removed, now called in gameUpdate/gameTitleUpdate
 #else
     EndDrawing();
     startFrame();

@@ -202,6 +202,9 @@ int gameTitleUpdate() {
     } else {
         updateInput();
     }
+#ifdef __EMSCRIPTEN__
+    startFrame(); // Added for Emscripten
+#endif
     TitleStateMachine.update();
     updateFader();
     HGL_frame();
