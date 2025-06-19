@@ -523,13 +523,13 @@ void draw_tilemap8(int file, int base_map, TileMap *tilemap, int offsetX, int of
 #endif
 }
 
-void draw_particle(int file, int graph, Particle *p) {
+void draw_particle(int file, int graph, int screen_x, int screen_y, Particle *p) {
     //int file = 2;
     int base_map = graph;
     tilemapSprite.file = file;
     tilemapSprite.graph = base_map;
-    tilemapSprite.x = p->pos.x >> 12;
-    tilemapSprite.y = p->pos.y >> 12;
+    tilemapSprite.x = screen_x;
+    tilemapSprite.y = screen_y;
     tilemapSprite.angle = p->angle;
     tilemapSprite.size_x = p->size * 40;//96;
     tilemapSprite.size_y = tilemapSprite.size_x;

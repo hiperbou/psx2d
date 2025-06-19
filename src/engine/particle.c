@@ -5,6 +5,7 @@
 #include <stdlib.h> //rand
 //#include "rand.h"
 #include "../core/hgl_pool.h"
+#include "../game/camera.h"
 #include "../pool/ObjectPool.h"
 
 #define MAX_NUM_PARTICLES 128
@@ -83,14 +84,22 @@ void remove_Particle(Particle *particle) {
 
 static inline void particleUpdater(Particle * particle) {
     update_particle(particle);
-    draw_particle(2, 42, particle);
-    if (particle->life <= 0 ||
-        particle->size <= 0 ||
-        particle->pos.x < 0 || particle->pos.x > FIX32(320) ||
-        particle->pos.y < 0 || particle->pos.y > FIX32(240)) {
 
+	#define SCREEN_WIDTH 320
+	#define SCREEN_HEIGHT 240
+	int screen_x = (particle->pos.x >> 12) - camposx;
+	int screen_y = (particle->pos.y >> 12) - camposy;
+
+    if ((particle->pos.x >> 12) < camposx ||
+        (particle->pos.x >> 12) > camposx + SCREEN_WIDTH ||
+        (particle->pos.y >> 12) < camposy ||
+        (particle->pos.y >> 12) > camposy + SCREEN_HEIGHT ||
+        particle->life <= 0 ||
+        particle->size <= 0) {
         remove_Particle(particle);
-    }
+    } else {
+		draw_particle(2, 42, screen_x, screen_y, particle);
+	}
 }
 
 
