@@ -46,5 +46,6 @@ void draw_tilemap8(int file, int base_map, TileMap *tilemap, int offsetX, int of
 
 TileMap fromTiledBin(const uint8_t *tmx);
 TileMap cloneTileMap(const TileMap * original);
+void freeTileMap(TileMap * tilemap);
 
 #endif //__HGL__TILEMAP_H

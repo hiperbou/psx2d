@@ -18,6 +18,7 @@
 #include "core/hgl_command.h"
 #include "core/hgl_mem.h"
 #include "core/hgl_scroll.h"
+#include "core/hgl_script.h"
 #include "core/hgl_text.h"
 #include "engine/fader.h"
 
@@ -27,6 +28,7 @@
 #include "game/data/gamedata.h"
 #include "game/state/gamestate.h"
 #include "game/menu/coursemenu.h"
+//#include "utils/async.h"
 #include "utils/utils.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -36,167 +38,6 @@
 #include "levels/e1m1.h"
 #include "levels/e1m1b.h"
 #include "levels/e1m1c.h"
-/*
-#include "utils/picoro.h"
-
-#define FRAME yield(0)
-#define WAIT_FRAMES(X) \
-    int _coroutine_frame_delay = (X); \
-    while(_coroutine_frame_delay-- > 0) {  yield(0); }\
-
-#define repeat do
-#define until(exp) while(!(exp))
-
-#define waitUntil(X) repeat { FRAME; } until (X);
-#define waitForInput(X) waitUntil(X);
-
-
-void co_wait(int delay) { WAIT_FRAMES(delay); }
-
-void waitFrames(int delay) {
-    coro waitCoroutine = coroutine(co_wait);
-    while(resumable(waitCoroutine)) {
-        yield(resume(waitCoroutine, delay));
-    }
-}
-
-void co_inner(void *arg) {
-    print("mocos con setas");
-    println("mocos con setas %i", 666);
-    println("init oc_inner %i", arg);
-    yield(123);
-    print("co_inner yielded 1");
-    yield(456);
-    print("co_inner yielded");
-    yield(789);
-    print("co_inner yielded 3");
-}
-
-void co_hello(void *arg) {
-    println("init co_hello %i", arg);
-    coro inner_coro = coroutine(co_inner);
-    while(resumable(inner_coro)) {
-        resume(inner_coro, 0);
-        yield(-1);
-    }
-
-    /*coro wait = coroutine(co_wait);
-    while(resumable(wait)) {
-        resume(wait, 1);
-        yield(-2);
-    }*/
- /*   waitFrames(20);
-
-
-    print("resumed inner_coro");
-    int * result = yield(666);
-    println("co_hello continue %i", result);
-}
-
-void picoroTest() {
-    print("picoroTest");
-    coro helloCoro = coroutine(co_hello);
-    //coro helloCoro2 = coroutine(co_hello);
-    println("picoroTest.coroutine created %u", helloCoro);
-    int* result = resume(helloCoro, 0);
-    //int* result2 = resume(helloCoro2, 0);
-    println("picoroTest.coroutine resumed %i", result);
-    //printf("picoroTest.coroutine2 resumed %i\n", result2);
-    while(resumable(helloCoro)) {
-        result = resume(helloCoro, 1);
-        println("picoroTest.coroutine resumed %i", result);
-    }
-    //printf("resumable %i %i\n", resumable(helloCoro), resumable(helloCoro2));
-    //result2 = resume(helloCoro2, 1);
-    //printf("picoroTest.coroutine resumed %i\n", result2);
-    print("picoroTest.end");
-}
-*/
-/*
-#include "lua/src/lua.h"
-#include "lua/src/lualib.h"
-#include "lua/src/lauxlib.h"
-
-
-int lua_hello(lua_State *L) {
-    printf("hello called from lua\n");
-    return(0);
-}
-
-void luaTest() {
-    printf("luaTest\n");
-    lua_State *L = lua_open();
-    printf("luaTest.1\n");
-    luaL_openlibs(L);
-    printf("luaTest.1.2\n");
-    lua_register(L, "hello", lua_hello);
-    printf("luaTest.2\n");
-    const char * code = R"####(
-            hello()
-        )####";
-    if (luaL_loadstring(L, code) == 0) {
-        printf("luaTest.3\n");
-        if (lua_pcall(L, 0, 0, 0) == 0) {
-            printf("luaTest.4\n");
-            // If it was executed successfuly we
-            // remove the code from the stack
-            lua_pop(L, lua_gettop(L));
-        }
-    }
-    printf("luaTest.close\n");
-    lua_close(L);
-}
-*/
-/*
-#include <setjmp.h>
-void jumpTest() {
-    jmp_buf state;
-    int jmp = 0;
-
-    jmp = setjmp(state);
-    if(!jmp)
-        printf("jmp available\n");
-    else
-        printf("jumped back!\n");
-
-    if(jmp == 0) {
-        printf("calling longjmp\n");
-        longjmp(state, 1);
-    } else {
-        printf("keep with the code :)\n");
-    }
-}*/
-
-//#include "memory.h"
-void wait(int wait);
-
-void waitCommand(DelayedCommand * command) {
-    ((void (*)())command->target)();
-}
-
-typedef struct FunctionArray {
-   void *(functions)[10];
-}FunctionArray;
-
-void waitCommandArray(DelayedCommand * command) {
-    printf("run waitCommand array!\n");
-    FunctionArray * functionArray = command->target;
-    for (int i=0; i < command->data; i++) {
-        //printf("iteration %i %i\n", i, functionArray);
-        //((void (*)())(*functionArray->functions[i]))();
-        ((void (*)())functionArray->functions[i])();
-        //printf("Called OK %i\n", *(int*)functionArray);
-
-    }
-}
-
-void newWaitCommand(int delay, void *func) {
-    HGL_COMMAND_create(delay, waitCommand, func, 0);
-}
-
-void newWaitCommandArray(int delay, FunctionArray *func, int numFunctions) {
-    HGL_COMMAND_create(delay, waitCommandArray, func, numFunctions);
-}
 
 #define TILE_SIZE 16
 #define HALF_TILE_SIZE (TILE_SIZE/2)
@@ -293,19 +134,6 @@ bool onPlayerGrounded(PlayerEventHandler*playerEventHandler, Tile tile) {
     return false;
 }
 
-void goToMainMenuCommandCallback(DelayedCommand * command);
-
-void newGoToMainMenuCommand(int delay, int8_t value) {
-    HGL_COMMAND_create(delay, goToMainMenuCommandCallback, NULL, value);
-}
-
-void doPlayerWinAnimationParticles(Actor*player, int8_t mission) {
-    int x = TILE_CENTER_X_TO_SCREEN(POS_TO_TILE_16(player->entity->x));
-    int y = TILE_CENTER_Y_TO_SCREEN(POS_TO_TILE_16(player->entity->y));
-    REPEAT25(new_Particle(x, y))
-    newGoToMainMenuCommand(120, mission);
-}
-
 void initPlayerEventHandler(PlayerEventHandler*playerEventHandler, TileMap *tilemap, TileMap* collisionTileMap) {
     playerEventHandler->collisionTileMap = collisionTileMap;
     playerEventHandler->tilemap = tilemap;
@@ -314,11 +142,18 @@ void initPlayerEventHandler(PlayerEventHandler*playerEventHandler, TileMap *tile
     playerEventHandler->onGrounded = onPlayerGrounded;
 }
 
-static int currentLevel = 0;
-static int nextLevel = 0;
+typedef enum {
+    LevelIndex_PLAINS,
+    LevelIndex_UNDERGROUND,
+    LevelIndex_SECRET
+} LevelIndex;
+
+static int currentLevel = LevelIndex_PLAINS;
+static int nextLevel = LevelIndex_PLAINS;
+
 
 void checkCoin(TileMap* tileMap, Actor * actor) {
-    if(currentLevel == 2) return;
+    if(currentLevel == LevelIndex_SECRET) return;
 
     int actorHalfWidth = FIX32(6);
     int actorHalfHeight = FIX32(6);
@@ -340,8 +175,7 @@ void checkCoin(TileMap* tileMap, Actor * actor) {
 }
 
 #include "engine/fsm.h"
-CREATE_STATE_MACHINE(GameStateMachine, LoadMenu, Menu, LoadLevelEnter, LoadLevel, Game, UnloadLevelBackToMenu)
-
+CREATE_STATE_MACHINE(GameStateMachine, Menu, LoadLevel, Game, UnloadLevelBackToMenu, GameCompleted)
 
 static int bgbx = 0;
 static int bgby = 0;
@@ -381,7 +215,6 @@ static void drawTestMenu() {
     draw_text8(0, font_atlas, text, 16, 160+48, 0, typewritter3 >> 3);
 }
 
-
 GameState gameState = {
     .lastCourse = 0,
     .courseMissionState = {
@@ -397,6 +230,24 @@ GameState gameState = {
         { active, hidden, hidden, hidden, hidden, hidden }
     }
 };
+
+void initGameState() {
+    gameState = (GameState) {
+        .lastCourse = 0,
+        .courseMissionState = {
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden },
+            { active, hidden, hidden, hidden, hidden, hidden }
+        }
+    };
+}
 
 CourseMenu courseMenu;
 
@@ -463,6 +314,15 @@ static void loadCourseMenu(CourseMenu *courseMenu) {
     star->menuStar.select(star);
 }
 
+bool isCourseCompleted(CourseMenu * courseMenu) {
+    for (int i=0; i<courseMenu->numStars; i++){
+        if(courseMenu->missionState[i] != completed) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void updateMissionText(CourseMenu *courseMenu) {
     static const int screenCenterX = 320 >> 1;
     const char * missionDescription = courseMenu->missionDescription[courseMenu->selectedItem];
@@ -510,16 +370,14 @@ static void drawCourseMenu(CourseMenu *courseMenu) {
     HGL_ACTOR_updateAll();
     HGL_ENT_renderAll(0, 0);
     HGL_SPR_renderAll();
+    HGL_SCRIPT_updateAll();
     HGL_TEXT_renderAll();
     draw_all_sprites_basic();
 }
 
-
 Actor* spawnGoal(int tileX, int tileY) {
     return newGoalActivated(tileset_fpgs[0], TILE_CENTER(tileX), TILE_CENTER(tileY), sonic);
 }
-
-
 
 static void loadLevel_e1m1b() {
     bgaTileMap = fromTiledBin(smb3_1_1_underground_layer);
@@ -555,7 +413,7 @@ static void loadLevel_e1m1b() {
 
     newGoalFloating(tileset_fpgs[0], TILE(23), TILE(5), sonic)->goal.mission = 3;
 
-    nextLevel = 0;
+    nextLevel = LevelIndex_PLAINS;
 }
 
 static void openChestTriggerCallback(Actor* trigger) {
@@ -596,10 +454,11 @@ static void loadLevel_e1m1c() {
     newTriggerScript(&playerEventHandler, openChestTriggerCallback, true, (AABB) { TILE_SIZE * 7, TILE_SIZE * 9, TILE_SIZE * 2, TILE_SIZE * 2});
     newGoalHiddenChest(tileset_fpgs[0], TILE(8), TILE(9), sonic)->goal.mission = 5;
 
-    nextLevel = 0;
+    nextLevel = LevelIndex_PLAINS;
 }
 
 static void loadUndergroundLevelTriggerCallback(Actor * trigger);
+static void playerOutOfBoundsTriggerCallback(Actor * trigger);
 static void loadSecretLevelTriggerCallback(Actor * trigger);
 
 static void loadLevel_e1m1() {
@@ -624,7 +483,8 @@ static void loadLevel_e1m1() {
     initPlayerEventHandler(&playerEventHandler, &bgaTileMap, &collisionTileMap);
 
     newTriggerScript(&playerEventHandler, loadUndergroundLevelTriggerCallback, true, (AABB) { TILE_SIZE * 147 + 8, TILE_SIZE * 6, TILE_SIZE * 1,  TILE_SIZE * 1});
-
+    newTriggerScript(&playerEventHandler, playerOutOfBoundsTriggerCallback, true, (AABB) { 0, TILE_SIZE * bgaTileMap.numRows, TILE_SIZE * bgaTileMap.numCols,  TILE_SIZE * 2});
+    
     //sonic = newSonic(Resources.getSonicFpg(), TILE(6), TILE(25), collisionTileMap, &playerEventHandler);
     sonic = newSonic(Resources.getSonicFpg(), TILE(148), TILE(6), collisionTileMap, &playerEventHandler);
     playerEventHandler.player = sonic;
@@ -671,222 +531,118 @@ static functionPointer levels[] = {
     loadLevel_e1m1c
 };
 
-
 static void unloadLevel() {
     HGL_ACTOR_deleteAll();
     HGL_COMMAND_deleteAll();
     HGL_TEXT_deleteAll();
     HGL_SCROLL_deleteAll();
+    HGL_SCRIPT_deleteAll();
     HGL_ANIM_deleteAll();
     remove_Particles();
-    HGL_free((void*)bgaTileMap.map);
-    HGL_free((void*)collisionTileMap.map);
+    freeTileMap(&bgaTileMap);
+    freeTileMap(&collisionTileMap);
     initSprites();
 }
 
-static void loadNextLevel(int levelIndex) {
-    nextLevel = levelIndex;
-    GameStateMachine.setLoadLevelEnter();
+#include "utils/async.h"
+#include "utils/script.h"
+
+ASYNC_SCRIPT(goToMainMenuScript)
+    int8_t mission = (int8_t)asyncScript->data;
+
+    printf("Completed mission %i\n", mission);
+
+    CourseMissionState * courseMissionState = &gameState.courseMissionState[0];
+
+    CourseMissionState_completeMission(courseMissionState, mission);
+    CourseMissionState_activateMission(courseMissionState, CourseMissionState_getNextMission(courseMissionState));
+
+    async_awaitFade(whiteFadeOut);
+    GameStateMachine.setUnloadLevelBackToMenu();
+ASYNC_SCRIPT_END
+
+void doPlayerWinAnimationParticles(Actor*player, int8_t mission) {
+    int x = TILE_CENTER_X_TO_SCREEN(POS_TO_TILE_16(player->entity->x));
+    int y = TILE_CENTER_Y_TO_SCREEN(POS_TO_TILE_16(player->entity->y));
+    REPEAT25(new_Particle(x, y))
+    HGL_SCRIPT_create(120, goToMainMenuScript, NULL, mission);
 }
 
-void loadNextLevelCommand(DelayedCommand * command) {
-    loadNextLevel(command->data);
-}
-
-inline static void createLoadNextLevelCommand(int nextLevelIndex) {
-    HGL_COMMAND_create(30, loadNextLevelCommand, NULL, nextLevelIndex);
-}
-
-void loadUnderGroundLevelCommand(DelayedCommand * command) {
-    blackFadeOut();
-    createLoadNextLevelCommand(1);
-    //loadNextLevel(1);
-}
-
-void fadeInCommand(DelayedCommand* command) {
-    fadeIn();
-}
+ASYNC_SCRIPT(loadLevelScript)
+    async_awaitFade(blackFadeOut);
+    nextLevel = asyncScript->data;
+    GameStateMachine.setLoadLevel();
+ASYNC_SCRIPT_END
 
 static void loadUndergroundLevelTriggerCallback(Actor * trigger) {
     if (buttonState.btn & PAD_DOWN) {
         deleteActor(trigger);
         sonic->sonic.doPipeDown(FIX32(16 * 148));
-        HGL_COMMAND_create(60, loadUnderGroundLevelCommand, NULL, 0);
+        HGL_SCRIPT_create(60, loadLevelScript, NULL, LevelIndex_UNDERGROUND);
     }
+}
+
+ASYNC_SCRIPT(playerOutOfBoundsScript)
+    async_awaitFade(whiteFadeOut);
+    GameStateMachine.setUnloadLevelBackToMenu();
+ASYNC_SCRIPT_END
+
+static void playerOutOfBoundsTriggerCallback(Actor * trigger) {
+    deleteActor(trigger);
+    printf("Player died!\n");
+    //TODO: Play sound
+    //TODO: Block player input
+    HGL_SCRIPT_create(60, playerOutOfBoundsScript, NULL, 0);
 }
 
 static void loadSecretLevelTriggerCallback(Actor* trigger) {
     deleteActor(trigger);
-    blackFadeOut();
-    createLoadNextLevelCommand(2);
+    HGL_SCRIPT_create(0, loadLevelScript, NULL, LevelIndex_SECRET);
 }
 
-static void stateLoadMenu() {
-    setClearColor(175, 249, 240);
-    initCourseMenu(&courseMenu, &gameData.course[0], &gameState);
-    loadCourseMenu(&courseMenu);
-    GameStateMachine.setMenu();
-    fadeIn();
-}
-/*
-void waitFadeIn() {
-    fadeIn();
-    waitUntil(fadeFinished());
-}
+#define fsm_script_begin script_begin_with(&GameStateMachine.asyncState);
 
-void waitWhiteFadeOut() {
-    whiteFadeOut();
-    waitUntil(fadeFinished());
-}
-
-void waitFade(void *fadeFun(void)) {
-    fadeFun();
-    waitUntil(fadeFinished());
-}
-
-static void stateMenuCoroutine(void * args) {
-    setClearColor(175, 249, 240);
-    initCourseMenu(&courseMenu, &gameData.course[0], &gameState);
-    loadCourseMenu(&courseMenu);
-
-    waitFade(fadeIn);
-    waitUntil(updateCourseMenuInput(&courseMenu));
-    waitFade(whiteFadeOut);
-
-    HGL_ACTOR_deleteAll();
-    HGL_TEXT_deleteAll();
-    HGL_ANIM_deleteAll();
-    initSprites();
-
-    currentLevel = nextLevel;
-    levels[nextLevel]();
-    GameStateMachine.setGame();
-    HGL_COMMAND_create(1, fadeIn, NULL, NULL);
-}
-*/
-static int stateMenuSwitch(int state) {
-    switch (state) {
-        case 0:
-            setClearColor(175, 249, 240);
-            initCourseMenu(&courseMenu, &gameData.course[0], &gameState);
-            loadCourseMenu(&courseMenu);
-            //GameStateMachine.setMenu();
-            fadeIn();
-            return 1;
-        case 1:
-            if (buttonState.just_pressed & PAD_START) return 2;
-            return 1;
-        case 2:
-            whiteFadeOut();
-            static int _coroutine_frame_delay = 20;
-            _coroutine_frame_delay = 20;
-        case 3:
-            if (_coroutine_frame_delay-- > 0) return 3;
-            _coroutine_frame_delay = 0;
-            return 4;
-        case 4:
-            HGL_ACTOR_deleteAll();
-            HGL_TEXT_deleteAll();
-            HGL_ANIM_deleteAll();
-            initSprites();
-
-            currentLevel = nextLevel;
-            levels[nextLevel]();
-            GameStateMachine.setGame();
-            HGL_COMMAND_create(1, fadeInCommand, NULL, 0);
-            return 0;
-        default:
-            break;
-    }
-    return 0;
-}
-
-static void stateMenuSw() {
-    updateCourseMenuInput(&courseMenu);
-    static int menuState = 0;
-    menuState = stateMenuSwitch(menuState);
-    drawCourseMenu(&courseMenu);
-}
-/*
-static void stateMenuCo() {
-    static coro coroStateMenu = NULL;
-
-    if(coroStateMenu == NULL) {
-        coroStateMenu = coroutine(stateMenuCoroutine);
-    }
-    if (resumable(coroStateMenu)) {
-        resume(coroStateMenu, 0);
-    } else {
-        coroStateMenu = NULL;
-    }
-
-    drawCourseMenu(&courseMenu);
-}
-*/
 static void stateMenu() {
-    ////drawTestMenu();
     updateCourseMenuInput(&courseMenu);
+    fsm_script_begin
+        setClearColor(175, 249, 240);
+        initCourseMenu(&courseMenu, &gameData.course[0], &gameState);
+        loadCourseMenu(&courseMenu);
+        script_awaitFade(fadeIn);
+        script_await(buttonState.just_pressed & PAD_START);
+        script_awaitFade(whiteFadeOut)
+        if(isCourseCompleted(&courseMenu)) GameStateMachine.setGameCompleted(); else GameStateMachine.setLoadLevel();
+        HGL_ACTOR_deleteAll();
+        HGL_TEXT_deleteAll();
+        HGL_ANIM_deleteAll();
+        initSprites();
+    script_end;
+
     drawCourseMenu(&courseMenu);
-
-    if (buttonState.just_pressed & PAD_START) {
-        whiteFadeOut();
-        //wait(20);
-        //GameStateMachine.setLoadLevel();
-        //HGL_ACTOR_deleteAll();
-        //HGL_TEXT_deleteAll();
-        //HGL_ANIM_deleteAll();
-        //initSprites();
-        /*newWaitCommand(20, GameStateMachine.setLoadLevel);
-        newWaitCommand(20, HGL_ACTOR_deleteAll);
-        newWaitCommand(20, HGL_TEXT_deleteAll);
-        newWaitCommand(20, HGL_ANIM_deleteAll);
-        newWaitCommand(20, initSprites);*/
-
-        static FunctionArray functionArray;
-        functionArray = (FunctionArray) {
-            GameStateMachine.setLoadLevel,
-            HGL_ACTOR_deleteAll,
-            HGL_TEXT_deleteAll,
-            HGL_ANIM_deleteAll,
-            initSprites
-        };
-        newWaitCommandArray(20, &functionArray, 5);
-    }
-}
-
-static void stateLoadLevelEnter() {
-    unloadLevel();
-    GameStateMachine.setLoadLevel();
 }
 
 static void stateLoadLevel() {
+    unloadLevel();
     currentLevel = nextLevel;
     levels[nextLevel]();
     GameStateMachine.setGame();
-    HGL_COMMAND_create(1, fadeInCommand, NULL, 0);
 }
 
 static void stateUnloadLevelBackToMenu() {
     unloadLevel();
-    GameStateMachine.setLoadMenu();
-    //GameStateMachine.setMenu(); //Coroutine picoro
+    GameStateMachine.setMenu();
 }
+
+static void stateGameCompleted() { }
 
 void draw_all_sprites_zorder2();
 
-static void stateGame() {
-    if (buttonState.just_pressed & PAD_START) {
-        whiteFadeOut();
-        //wait(20);
-        //GameStateMachine.setUnloadLevelBackToMenu();
-        //HGL_COMMAND_create(20, waitCommand, GameStateMachine.setUnloadLevelBackToMenu, 0);
-        newWaitCommand(20, GameStateMachine.setUnloadLevelBackToMenu);
-    }
-
+static void stateGameUpdate() {
     sonic->sonic.inputHandler.handleInput(&buttonState);
     if(fallToBackgroundScript) fallToBackgroundScript->inputHandler.handleInput(&buttonState);
 
     HGL_COMMAND_updateAll();
+    HGL_SCRIPT_updateAll();
     HGL_ANIM_updateAll();
 
     bgbx = camposx;
@@ -926,39 +682,18 @@ static void stateGame() {
     draw_text8(0, font_atlas, "Hello", 8, 24, 0, -1);
 }
 
-void goToMainMenuCommandCallback(DelayedCommand * command) {
-    int8_t mission = (int8_t)command->data;
-
-    printf("Completed mission %i\n", mission);
-
-    CourseMissionState * courseMissionState = &gameState.courseMissionState[0];
-
-    CourseMissionState_completeMission(courseMissionState, mission);
-    CourseMissionState_activateMission(courseMissionState, CourseMissionState_getNextMission(courseMissionState));
-
-    whiteFadeOut();
-    //wait(20);
-    //GameStateMachine.setUnloadLevelBackToMenu();
-    //HGL_COMMAND_create(20, waitCommand, GameStateMachine.setUnloadLevelBackToMenu, 0);
-    newWaitCommand(20, GameStateMachine.setUnloadLevelBackToMenu);
+static void stateGame() {
+    stateGameUpdate();
+    fsm_script_begin
+        script_awaitFadeIn();
+        script_await(buttonState.just_pressed & PAD_START);
+        script_awaitFade(whiteFadeOut);
+        GameStateMachine.setUnloadLevelBackToMenu();
+    script_end;
 }
 
 int gameMain() {
     printf("gameMain\n");
-    //jumpTest();
-    //picoroTest();
-    //luaTest();
-
-    //int tiles2_fpg = new_fpg();
-
-    //int texture64_map = load_map_from_memory(system_fpg, texture64);
-    //int girl01_map = load_map_from_memory(girl_fpg, girl01);
-    //int girl02_map = load_map_from_memory(girl_fpg, girl02);
-
-    //int texture64_map = load_map(system_fpg, "art/texture6");
-    //printf("texture64_map %i\n", texture64_map);
-    //int girl01_map = load_map(girl_fpg, "art/girl01");
-    //int girl02_map = load_map(girl_fpg, "art/girl02");
 
     tileset_fpgs[0] = Resources.getSmb3tTileset();
     tileset_fpgs[1] = Resources.getSmb3t2Tileset();
@@ -986,19 +721,5 @@ int gameUpdate() {
     GameStateMachine.update();
     updateFader();
     HGL_frame();
-    return 0;
-}
-
-
-void wait(int wait) {
-    initButtonStateInput();
-    while(wait) {
-        wait--;
-        GameStateMachine.update();
-        updateFader();
-        HGL_frame();
-
-    }
-    //updateFader();
-    //HGL_frame();
+    return isNotGameCompleted();
 }

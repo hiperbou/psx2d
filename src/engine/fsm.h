@@ -3,6 +3,7 @@
 #define __HGL_FINITESTATEMACHINE_H_
 
 #include <stdbool.h>
+#include "../utils/script.h"
 
 #define FSM_STATE(X) \
 	void (*X)();\
@@ -14,14 +15,14 @@
 	static void state##X();\
 	inline static bool is##X(){ return StateMachine.fsmState == StateMachine.X; }\
 	inline static bool isNot##X() { return StateMachine.fsmState != StateMachine.X; }\
-	inline static void set##X() {StateMachine.fsmState = StateMachine.X;}
+	inline static void set##X() {StateMachine.nextState = StateMachine.X;}
 
 //Allow to define struct name
 #define FSM_STATE_FUNCTIONS(S,X) \
 	static void state##X();\
 	inline static bool is##X(){ return S.fsmState == S.X; }\
 	inline static bool isNot##X() { return S.fsmState != S.X; }\
-	inline static void set##X() {S.fsmState = S.X;}
+	inline static void set##X() {S.nextState = S.X;}
 
 #define FSM_STATE_INIT(X) \
 	StateMachine.X = &state##X;\
@@ -104,14 +105,22 @@
 #define CREATE_STATE_MACHINE(N, ...) \
     FSM_DEFINE_STATE_MACHINE {       \
 	void (*fsmState)();\
+	void (*nextState)();\
     void (*update)();\
+	struct async asyncState;\
     CREATE_STRUCT_IMPL(__VA_ARGS__, CREATE_STRUCT_IMPL_16, CREATE_STRUCT_IMPL_15, CREATE_STRUCT_IMPL_14, CREATE_STRUCT_IMPL_13, CREATE_STRUCT_IMPL_12, CREATE_STRUCT_IMPL_11, CREATE_STRUCT_IMPL_10, CREATE_STRUCT_IMPL_9, CREATE_STRUCT_IMPL_8, CREATE_STRUCT_IMPL_7, CREATE_STRUCT_IMPL_6, CREATE_STRUCT_IMPL_5, CREATE_STRUCT_IMPL_4, CREATE_STRUCT_IMPL_3, CREATE_STRUCT_IMPL_2, CREATE_STRUCT_IMPL_1)(__VA_ARGS__) } N;\
     CREATE_FSTRUCT_IMPL(__VA_ARGS__, CREATE_FSTRUCT_IMPL_16, CREATE_FSTRUCT_IMPL_15, CREATE_FSTRUCT_IMPL_14, CREATE_FSTRUCT_IMPL_13, CREATE_FSTRUCT_IMPL_12, CREATE_FSTRUCT_IMPL_11, CREATE_FSTRUCT_IMPL_10, CREATE_FSTRUCT_IMPL_9, CREATE_FSTRUCT_IMPL_8, CREATE_FSTRUCT_IMPL_7, CREATE_FSTRUCT_IMPL_6, CREATE_FSTRUCT_IMPL_5, CREATE_FSTRUCT_IMPL_4, CREATE_FSTRUCT_IMPL_3, CREATE_FSTRUCT_IMPL_2, CREATE_FSTRUCT_IMPL_1)(N,__VA_ARGS__)           \
-    inline static void update##N() { N.fsmState(); }                                 \
+    inline static void update##N() {  \
+		if(N.fsmState!=N.nextState) {  \
+			N.fsmState = N.nextState; \
+			N.asyncState = (struct async){ ASYNC_INIT }; \
+	 } N.fsmState(); }                                 \
     static void init##N() {          \
         CREATE_INIT_IMPL(__VA_ARGS__, CREATE_INIT_IMPL_16, CREATE_INIT_IMPL_15, CREATE_INIT_IMPL_14, CREATE_INIT_IMPL_13, CREATE_INIT_IMPL_12, CREATE_INIT_IMPL_11, CREATE_INIT_IMPL_10, CREATE_INIT_IMPL_9, CREATE_INIT_IMPL_8, CREATE_INIT_IMPL_7, CREATE_INIT_IMPL_6, CREATE_INIT_IMPL_5, CREATE_INIT_IMPL_4, CREATE_INIT_IMPL_3, CREATE_INIT_IMPL_2, CREATE_INIT_IMPL_1)(N,__VA_ARGS__) \
         N.fsmState = N.FIRST_ARG_(__VA_ARGS__);                                                                                                                      \
-        N.update = &update##N;\
+        N.nextState = N.fsmState; \
+		N.update = &update##N;\
+		N.asyncState = (struct async){ ASYNC_INIT };\
     }
 
 

@@ -18,6 +18,7 @@
 #include "core/hgl_command.h"
 #include "core/hgl_mem.h"
 #include "core/hgl_scroll.h"
+#include "core/hgl_script.h"
 #include "core/hgl_text.h"
 #include "engine/fader.h"
 
@@ -56,5 +57,6 @@ void gameInit() {
     HGL_ENT_init();
     HGL_ACTOR_init();
     HGL_SCROLL_init();
+    HGL_SCRIPT_init();
     HGL_TEXT_init();
 }

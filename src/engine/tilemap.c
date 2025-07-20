@@ -32,5 +32,10 @@ TileMap cloneTileMap(const TileMap * original) {
     };
 }
 
+void freeTileMap(TileMap * tilemap) {
+    if(tilemap->map == NULL) return;
+    HGL_free((void*)tilemap->map);
+    tilemap->map=NULL;
+}
 
 

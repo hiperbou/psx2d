@@ -1,6 +1,6 @@
 #pragma once
-#ifndef ASYNC_H
-#define ASYNC_H
+#ifndef SCRIPT_H
+#define SCRIPT_H
 
 /*
  * Copyright 2021 Sandro Magi
@@ -62,70 +62,71 @@
  *    These must be changed into non-blocking calls that test a condition.
  */
 
-#include <limits.h>
-
+//#include <limits.h>
+#include <stdint.h>
+#include "async.h"
 /**
  * The async computation status
  */
-typedef enum ASYNC_EVT { ASYNC_INIT = 0, ASYNC_CONT = ASYNC_INIT, ASYNC_DONE = 1 } async;
+//typedef enum ASYNC_EVT { ASYNC_INIT = 0, ASYNC_CONT = ASYNC_INIT, ASYNC_DONE = 1 } async;
 
 /**
  * Declare the async state
  */
-#define async_state unsigned _async_k
+//#define async_state uint32_t _async_k
 
 /**
  * Core async structure, optional to use.
  */
-struct async { async_state; };
+//struct async { async_state; };
 
 /**
  * Mark the start of an async subroutine
  *
  * @param k The async state
  */
-#define async_begin(k) unsigned *_async_k = &(k)->_async_k; switch(*_async_k) { default:
+#define script_begin_with(k) unsigned *_async_k = &(k)->_async_k; switch(*_async_k) { default:
 
 /**
  * Mark the end of a async subroutine
  */
-#define async_end *_async_k=ASYNC_DONE; case ASYNC_DONE: return ASYNC_DONE; }
+#define script_end_simple *_async_k=ASYNC_DONE; case ASYNC_DONE: break /*ASYNC_DONE*/; }
 
 /**
  * Wait until the condition succeeds
  * @param cond The condition that must be satisfied before execution can proceed
  */
-#define async_await(cond) await_while(!(cond))
+#define script_await(cond) script_await_while(!(cond))
 
 /**
  * Wait while the condition succeeds
  * @param cond The condition that must fail before execution can proceed
  */
-#define await_while(cond) *_async_k = __LINE__; case __LINE__: if (cond) return ASYNC_CONT
+#define script_await_while(cond) *_async_k = __LINE__; case __LINE__: if (cond) break /*ASYNC_CONT*/
 
 /**
  * Yield execution
  */
-#define async_yield *_async_k = __LINE__; return ASYNC_CONT; case __LINE__:
+#define script_yield *_async_k = __LINE__; break /*ASYNC_CONT*/; case __LINE__:
 
 /**
  * Exit the current async subroutine
  */
-#define async_exit *_async_k = ASYNC_DONE; return ASYNC_DONE
+#define script_exit *_async_k = ASYNC_DONE; break /*ASYNC_DONE*/
 
 /**
  * Initialize a new async computation
  * @param state The async procedure state to initialize
  */
-#define async_init(state) (state)->_async_k=ASYNC_INIT
+#define script_init(state) (state)->_async_k=ASYNC_INIT
 
 /**
  * Check if async subroutine is done
  * @param state The async procedure state to check
  */
-#define async_done(state) (state)->_async_k==ASYNC_DONE
+#define script_done(state) (state)->_async_k==ASYNC_DONE
 
-#define async_not_done(state) (state)->_async_k!=ASYNC_DONE
+#define script_not_done(state) (state)->_async_k!=ASYNC_DONE
 
 /**
  * Resume a running async computation and check for completion
@@ -135,6 +136,33 @@ struct async { async_state; };
  * @param f The async procedure
  * @param state The async procedure state
  */
-#define async_call(f, state) (async_done(state) || (f)(state))
+//#define async_call(f, state) (async_done(state) || (f)(state))
+
+#define script_end_and_init *_async_k=ASYNC_INIT; case ASYNC_DONE: /*return ASYNC_DONE*/break; }
+
+#define script_begin \
+    static struct async asyncState = { ASYNC_INIT }; \
+    script_begin_with(&asyncState);
+
+#define script_end script_end_and_init
+
+
+/*
+#define FRAME yield(0)
+#define WAIT_FRAMES(X) \
+    int _coroutine_frame_delay = (X); \
+    while(_coroutine_frame_delay-- > 0) {  yield(0); }\
+
+#define repeat do
+#define until(exp) while(!(exp))
+
+#define waitUntil(X) repeat { FRAME; } until (X);
+#define waitForInput(X) waitUntil(X);
+*/
+
+//#define await_frames(X) \
+    //int _coroutine_frame_delay = (X); \ // you can't declare variables here
+    //await_while(_coroutine_frame_delay-- > 0)
+
 
 #endif
