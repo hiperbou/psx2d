@@ -1,0 +1,33 @@
+TARGET = Demo.elf
+KOS_BASE ?= /opt/toolchains/dc/kos
+IP ?= 192.168.0.100
+
+MODULES = core engine game game/data game/menu game/state input media pool utils
+MODULES_DREAMCAST = platform/dreamcast core/dreamcast engine/dreamcast input/dreamcast media/dreamcast
+SOURCES	= src $(addprefix src/,$(MODULES)) $(addprefix src/,$(MODULES_DREAMCAST))
+
+CFILES		= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
+CPPFILES	= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.cpp))
+
+OBJECTS		= $(CFILES:.c=.o)
+CPPOBJECTS	= $(CPPFILES:.cpp=.o)
+
+OBJS = $(OBJECTS) $(CPPOBJECTS)
+
+all: $(TARGET)
+
+include $(KOS_BASE)/Makefile.rules
+
+KOS_CFLAGS += $(addprefix -I,$(SOURCES)) -DDREAMCAST
+KOS_LDFLAGS +=
+KOS_LIBS +=
+
+build: all
+	$(KOS_STRIP) $(TARGET)
+	$(KOS_SCRAMBLE) $(TARGET) 1ST_READ.BIN
+
+run: build
+	$(KOS_BASE)/utils/dc-tool/dc-tool-ip -t $(IP) -x 1ST_READ.BIN
+
+clean:
+	rm -f $(OBJS) $(TARGET) 1ST_READ.BIN
