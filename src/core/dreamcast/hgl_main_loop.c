@@ -1,11 +1,12 @@
 #include "../../core/hgl.h"
 #include <kos.h>
-#include <arch/gldc.h>
+#include <dc/pvr.h>
 
 void hgl_main_loop(void (*user_update)(void), void (*user_draw)(void)) {
     for (;;) {
+        pvr_scene_begin();
         user_update();
         user_draw();
-        gldc_mini_wait_vbl();
+        pvr_scene_finish();
     }
 }
