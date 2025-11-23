@@ -30,10 +30,17 @@ void HGL_init() {
         return;
     }
 
+    //SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d12");  
+    //SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d11");  
+    //SDL_SetHint(SDL_HINT_RENDER_DRIVER, "vulkan");  
+    //SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");  
     if (!SDL_CreateWindowAndRenderer("SDL3 Backend", windowWidth, windowHeight, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
         SDL_Log("SDL_CreateWindowAndRenderer failed: %s", SDL_GetError());
         return;
     }
+
+    const char *name = SDL_GetRendererName(renderer);  
+    printf("Using renderer: %s\n", name);  
 
     SDL_SetHint("SDL_RENDER_SCALE_QUALITY", "linear");
     SDL_SetRenderLogicalPresentation(renderer, gameScreenWidth, gameScreenHeight, SDL_LOGICAL_PRESENTATION_LETTERBOX);
@@ -45,6 +52,10 @@ void HGL_init() {
     init_fpgs();
     
     lastFrameTime = SDL_GetTicks();
+}
+
+double HGL_getTime() {
+    return SDL_GetTicks() / 1000.0;
 }
 
 void setMainLoopCallback(void (*mainLoop)()) {
@@ -69,7 +80,7 @@ static uint8_t clearR = 0, clearG = 0, clearB = 0;
 void HGL_frame() {
     SDL_RenderPresent(renderer);
     
-    uint64_t currentTime = SDL_GetTicks();
+    /*uint64_t currentTime = SDL_GetTicks();
     double frameTime = (currentTime - lastFrameTime) / 1000.0;
     
     if (frameTime < targetFrameTime) {
@@ -77,7 +88,7 @@ void HGL_frame() {
         lastFrameTime = SDL_GetTicks();
     } else {
         lastFrameTime = currentTime;
-    }
+    }*/
     
     SDL_SetRenderDrawColor(renderer, clearR, clearG, clearB, 255);
     SDL_RenderClear(renderer);

@@ -24,4 +24,6 @@ void fadeToWhite(uint8_t fade);
 typedef void MainLoopCallback(void);
 void setMainLoopCallback(MainLoopCallback *mainLoop);
 
+double HGL_getTime();
+
 #endif

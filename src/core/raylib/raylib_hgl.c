@@ -61,11 +61,11 @@ void initDisplay() {
     const int windowWidth = 640;
     const int windowHeight = 480;
 
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
-    InitWindow(windowWidth, windowHeight, "Game!");
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE /*| FLAG_VSYNC_HINT*/);
+    InitWindow(windowWidth, windowHeight, "Raylib Backend");
     SetWindowMinSize(gameScreenWidth, gameScreenHeight);
 
-    SetTargetFPS(60);  
+    //SetTargetFPS(60);  
 
     setClearColor(0, 0, 0);
     #ifndef __EMSCRIPTEN__
@@ -108,4 +108,8 @@ void fadeToBlack(uint8_t fade) {
 void fadeToWhite(uint8_t fade) {
     fadeWhiteColor.a = fade;
     DrawRectangle(0, 0, 320, 240, fadeWhiteColor );
+}
+
+double HGL_getTime() {
+    return GetTime();
 }

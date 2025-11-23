@@ -53,6 +53,7 @@ typedef void (APIENTRY *PFNGLBINDBUFFERPROC) (GLenum target, GLuint buffer);
 typedef void (APIENTRY *PFNGLBUFFERDATAPROC) (GLenum target, GLsizeiptr size, const void *data, GLenum usage);
 typedef void (APIENTRY *PFNGLENABLEVERTEXATTRIBARRAYPROC) (GLuint index);
 typedef void (APIENTRY *PFNGLVERTEXATTRIBPOINTERPROC) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
+typedef void (APIENTRY *PFNGLBUFFERSUBDATAPROC) (GLenum target, GLsizeiptr offset, GLsizeiptr size, const void *data);
 
 static PFNGLCREATESHADERPROC glCreateShader;
 static PFNGLSHADERSOURCEPROC glShaderSource;
@@ -75,6 +76,7 @@ static PFNGLBINDBUFFERPROC glBindBuffer;
 static PFNGLBUFFERDATAPROC glBufferData;
 static PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
 static PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
+static PFNGLBUFFERSUBDATAPROC glBufferSubData;
 
 void loadGLFunctions() {
     glCreateShader = (PFNGLCREATESHADERPROC)glfwGetProcAddress("glCreateShader");
@@ -98,6 +100,7 @@ void loadGLFunctions() {
     glBufferData = (PFNGLBUFFERDATAPROC)glfwGetProcAddress("glBufferData");
     glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)glfwGetProcAddress("glEnableVertexAttribArray");
     glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)glfwGetProcAddress("glVertexAttribPointer");
+    glBufferSubData = (PFNGLBUFFERSUBDATAPROC)glfwGetProcAddress("glBufferSubData");
 }
 
 static GLFWwindow* window = NULL;
@@ -114,39 +117,56 @@ static GLuint shaderProgram;
 static GLuint vbo;
 static GLint uProjection;
 static GLint uTexture;
-static GLint uTexBounds;
 static GLuint whiteTexture;
+
+// Batching globals
+#define MAX_BATCH_SPRITES 2048
+#define MAX_BATCH_VERTICES (MAX_BATCH_SPRITES * 6)
 
 typedef struct {
     float x, y;
     float u, v;
     float r, g, b, a;
+    float minU, minV, maxU, maxV;
 } Vertex;
 
-const char* vertexShaderSrc = 
+static Vertex batchVertices[MAX_BATCH_VERTICES];
+static int batchVertexCount = 0;
+static GLuint currentTextureId = 0;
+
+// Cached attribute locations
+static GLint locPos;
+static GLint locTex;
+static GLint locCol;
+static GLint locBounds;
+
+static const char* vertexShaderSrc = 
     "attribute vec2 aPos;"
     "attribute vec2 aTexCoord;"
     "attribute vec4 aColor;"
+    "attribute vec4 aTexBounds;"
     "varying vec2 vTexCoord;"
     "varying vec4 vColor;"
+    "varying vec4 vTexBounds;"
     "uniform mat4 uProjection;"
     "void main() {"
     "    gl_Position = uProjection * vec4(aPos, 0.0, 1.0);"
     "    vTexCoord = aTexCoord;"
     "    vColor = aColor;"
+    "    vTexBounds = aTexBounds;"
     "}";
 
-const char* fragmentShaderSrc = 
+static const char* fragmentShaderSrc = 
     "varying vec2 vTexCoord;"
     "varying vec4 vColor;"
+    "varying vec4 vTexBounds;"
     "uniform sampler2D uTexture;"
-    "uniform vec4 uTexBounds;"
     "void main() {"
-    "    vec2 clampedUV = clamp(vTexCoord, uTexBounds.xy, uTexBounds.zw);"
+    "    vec2 clampedUV = clamp(vTexCoord, vTexBounds.xy, vTexBounds.zw);"
     "    gl_FragColor = texture2D(uTexture, clampedUV) * vColor;"
     "}";
 
-GLuint compileShader(GLenum type, const char* source) {
+static GLuint compileShader(GLenum type, const char* source) {
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &source, NULL);
     glCompileShader(shader);
@@ -161,7 +181,7 @@ GLuint compileShader(GLenum type, const char* source) {
     return shader;
 }
 
-void initShaders() {
+static void initShaders() {
     GLuint vs = compileShader(GL_VERTEX_SHADER, vertexShaderSrc);
     GLuint fs = compileShader(GL_FRAGMENT_SHADER, fragmentShaderSrc);
     
@@ -173,7 +193,11 @@ void initShaders() {
     glUseProgram(shaderProgram);
     uProjection = glGetUniformLocation(shaderProgram, "uProjection");
     uTexture = glGetUniformLocation(shaderProgram, "uTexture");
-    uTexBounds = glGetUniformLocation(shaderProgram, "uTexBounds");
+    
+    locPos = glGetAttribLocation(shaderProgram, "aPos");
+    locTex = glGetAttribLocation(shaderProgram, "aTexCoord");
+    locCol = glGetAttribLocation(shaderProgram, "aColor");
+    locBounds = glGetAttribLocation(shaderProgram, "aTexBounds");
     
     float L = 0.0f, R = 320.0f, B = 240.0f, T = 0.0f;
     float ortho[16] = {
@@ -196,7 +220,7 @@ void initShaders() {
 static int vpX = 0, vpY = 0, vpW = 0, vpH = 0;
 static uint8_t clearR = 0, clearG = 0, clearB = 0;
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+static void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     float targetAspect = (float)gameScreenWidth / (float)gameScreenHeight;
     float windowAspect = (float)width / (float)height;
     
@@ -222,7 +246,7 @@ void HGL_init() {
     if (!window) { glfwTerminate(); return; }
 
     glfwMakeContextCurrent(window);
-    
+    glfwSwapInterval(0);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
     int w, h;
@@ -234,14 +258,17 @@ void HGL_init() {
     initShaders();
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    
-    GLint locPos = glGetAttribLocation(shaderProgram, "aPos");
-    GLint locTex = glGetAttribLocation(shaderProgram, "aTexCoord");
-    GLint locCol = glGetAttribLocation(shaderProgram, "aColor");
+    glBufferData(GL_ARRAY_BUFFER, sizeof(batchVertices), NULL, GL_DYNAMIC_DRAW);
     
     glEnableVertexAttribArray(locPos);
     glEnableVertexAttribArray(locTex);
     glEnableVertexAttribArray(locCol);
+    glEnableVertexAttribArray(locBounds);
+    
+    glVertexAttribPointer(locPos, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glVertexAttribPointer(locTex, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2*sizeof(float)));
+    glVertexAttribPointer(locCol, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(4*sizeof(float)));
+    glVertexAttribPointer(locBounds, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(8*sizeof(float)));
     
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -267,11 +294,35 @@ void setMainLoopCallback(void (*mainLoop)()) {
     glfwTerminate();
 }
 
+double HGL_getTime() {
+    return glfwGetTime();
+}
+
+inline static void flush_batch() {
+    if (batchVertexCount == 0) return;
+    
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, batchVertexCount * sizeof(Vertex), batchVertices);
+    
+    glDrawArrays(GL_TRIANGLES, 0, batchVertexCount);
+    
+    batchVertexCount = 0;
+}
+
+inline static void check_batch(GLuint textureId, int neededVertices) {
+    if (currentTextureId != textureId || batchVertexCount + neededVertices > MAX_BATCH_VERTICES) {
+        flush_batch();
+        currentTextureId = textureId;
+        glBindTexture(GL_TEXTURE_2D, currentTextureId);
+    }
+}
+
 void HGL_frame() {
+    flush_batch();
     glfwSwapBuffers(window);
     glfwPollEvents();
     
-    double currentTime = glfwGetTime();
+    /*double currentTime = glfwGetTime();
     double frameTime = currentTime - lastFrameTime;
     if (frameTime < targetFrameTime) {
         double waitTime = targetFrameTime - frameTime;
@@ -288,7 +339,7 @@ void HGL_frame() {
         lastFrameTime = glfwGetTime();
     } else {
         lastFrameTime = currentTime;
-    }
+    }*/
     
     glDisable(GL_SCISSOR_TEST);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -306,26 +357,25 @@ void setClearColor(uint8_t r, uint8_t g, uint8_t b) {
     clearB = b;
 }
 
-void draw_quad_color(float r, float g, float b, float a) {
-    Vertex verts[6] = {
-        {0, 0, 0, 0, r, g, b, a}, {gameScreenWidth, 0, 0, 0, r, g, b, a}, {gameScreenWidth, gameScreenHeight, 0, 0, r, g, b, a},
-        {0, 0, 0, 0, r, g, b, a}, {gameScreenWidth, gameScreenHeight, 0, 0, r, g, b, a}, {0, gameScreenHeight, 0, 0, r, g, b, a}
-    };
+static void draw_quad_color(float r, float g, float b, float a) {
+    check_batch(whiteTexture, 6);
 
-    glBindTexture(GL_TEXTURE_2D, whiteTexture);
-    glUniform4f(uTexBounds, 0.0f, 0.0f, 1.0f, 1.0f);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_DYNAMIC_DRAW);
+    Vertex* v = &batchVertices[batchVertexCount];
     
-    GLint locPos = glGetAttribLocation(shaderProgram, "aPos");
-    GLint locTex = glGetAttribLocation(shaderProgram, "aTexCoord");
-    GLint locCol = glGetAttribLocation(shaderProgram, "aColor");
+    float w = (float)gameScreenWidth;
+    float h = (float)gameScreenHeight;
     
-    glVertexAttribPointer(locPos, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    glVertexAttribPointer(locTex, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2*sizeof(float)));
-    glVertexAttribPointer(locCol, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(4*sizeof(float)));
+    // Triangle 1
+    v[0] = (Vertex){0, 0, 0, 0, r, g, b, a, 0, 0, 1, 1};
+    v[1] = (Vertex){w, 0, 0, 0, r, g, b, a, 0, 0, 1, 1};
+    v[2] = (Vertex){w, h, 0, 0, r, g, b, a, 0, 0, 1, 1};
     
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    // Triangle 2
+    v[3] = (Vertex){0, 0, 0, 0, r, g, b, a, 0, 0, 1, 1};
+    v[4] = (Vertex){w, h, 0, 0, r, g, b, a, 0, 0, 1, 1};
+    v[5] = (Vertex){0, h, 0, 0, r, g, b, a, 0, 0, 1, 1};
+    
+    batchVertexCount += 6;
 }
 
 void fadeToBlack(uint8_t fade) {
@@ -413,7 +463,7 @@ static int savedY = 100;
 static int savedW = 640;
 static int savedH = 480;
 
-void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) {
+static void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) {
     if (action == GLFW_PRESS) {
         if (key == GLFW_KEY_ENTER && (mods & GLFW_MOD_ALT)) {
             if (!isFullscreen) {
@@ -472,7 +522,6 @@ void draw_sprite(Tsprite *spr) {
     float scale = spr->size_x / 4096.0f;
     float w = sprite->w * scale;
     float h = sprite->h * scale;
-    float angle = (spr->angle * 360.0f) / 4096.0f;
 
     float u = (float)sprite->u / sprite->tex_w;
     float v = (float)sprite->v / sprite->tex_h;
@@ -487,7 +536,8 @@ void draw_sprite(Tsprite *spr) {
     float x2 = w/2,  y2 = h/2;
     float x3 = -w/2, y3 = h/2;
 
-    if (angle != 0) {
+    if (spr->angle != 0) {
+        float angle = (spr->angle * 360.0f) / 4096.0f;
         float rad = angle * 3.14159f / 180.0f;
         float c = cosf(rad), s = sinf(rad);
         float tx, ty;
@@ -503,25 +553,25 @@ void draw_sprite(Tsprite *spr) {
     x2 += x; y2 += y;
     x3 += x; y3 += y;
 
-    Vertex verts[6] = {
-        {x0, y0, u, v, 1.0f, 1.0f, 1.0f, 1.0f}, {x1, y1, u2, v, 1.0f, 1.0f, 1.0f, 1.0f}, {x2, y2, u2, v2, 1.0f, 1.0f, 1.0f, 1.0f}, // Tri 1
-        {x0, y0, u, v, 1.0f, 1.0f, 1.0f, 1.0f}, {x2, y2, u2, v2, 1.0f, 1.0f, 1.0f, 1.0f}, {x3, y3, u, v2, 1.0f, 1.0f, 1.0f, 1.0f}  // Tri 2
-    };
+    check_batch(sprite->texture_id, 6);
 
-    glBindTexture(GL_TEXTURE_2D, sprite->texture_id);
-    glUniform4f(uTexBounds, sprite->minU, sprite->minV, sprite->maxU, sprite->maxV);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_DYNAMIC_DRAW);
+    Vertex* vPtr = &batchVertices[batchVertexCount];
+    float minU = sprite->minU;
+    float minV = sprite->minV;
+    float maxU = sprite->maxU;
+    float maxV = sprite->maxV;
+
+    // Triangle 1
+    vPtr[0] = (Vertex){x0, y0, u, v, 1.0f, 1.0f, 1.0f, 1.0f, minU, minV, maxU, maxV};
+    vPtr[1] = (Vertex){x1, y1, u2, v, 1.0f, 1.0f, 1.0f, 1.0f, minU, minV, maxU, maxV};
+    vPtr[2] = (Vertex){x2, y2, u2, v2, 1.0f, 1.0f, 1.0f, 1.0f, minU, minV, maxU, maxV};
     
-    GLint locPos = glGetAttribLocation(shaderProgram, "aPos");
-    GLint locTex = glGetAttribLocation(shaderProgram, "aTexCoord");
-    GLint locCol = glGetAttribLocation(shaderProgram, "aColor");
+    // Triangle 2
+    vPtr[3] = (Vertex){x0, y0, u, v, 1.0f, 1.0f, 1.0f, 1.0f, minU, minV, maxU, maxV};
+    vPtr[4] = (Vertex){x2, y2, u2, v2, 1.0f, 1.0f, 1.0f, 1.0f, minU, minV, maxU, maxV};
+    vPtr[5] = (Vertex){x3, y3, u, v2, 1.0f, 1.0f, 1.0f, 1.0f, minU, minV, maxU, maxV};
     
-    glVertexAttribPointer(locPos, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    glVertexAttribPointer(locTex, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2*sizeof(float)));
-    glVertexAttribPointer(locCol, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(4*sizeof(float)));
-    
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    batchVertexCount += 6;
 }
 
 inline static void draw_sprite_fast_generic(Tsprite *spr) {
@@ -551,25 +601,25 @@ inline static void draw_sprite_fast_generic(Tsprite *spr) {
     float x3 = x;
     float y3 = y + h;
 
-    Vertex verts[6] = {
-        {x0, y0, u, v, 1.0f, 1.0f, 1.0f, 1.0f}, {x1, y1, u2, v, 1.0f, 1.0f, 1.0f, 1.0f}, {x2, y2, u2, v2, 1.0f, 1.0f, 1.0f, 1.0f}, // Tri 1
-        {x0, y0, u, v, 1.0f, 1.0f, 1.0f, 1.0f}, {x2, y2, u2, v2, 1.0f, 1.0f, 1.0f, 1.0f}, {x3, y3, u, v2, 1.0f, 1.0f, 1.0f, 1.0f}  // Tri 2
-    };
+    check_batch(sprite->texture_id, 6);
 
-    glBindTexture(GL_TEXTURE_2D, sprite->texture_id);
-    glUniform4f(uTexBounds, sprite->minU, sprite->minV, sprite->maxU, sprite->maxV);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_DYNAMIC_DRAW);
+    Vertex* vPtr = &batchVertices[batchVertexCount];
+    float minU = sprite->minU;
+    float minV = sprite->minV;
+    float maxU = sprite->maxU;
+    float maxV = sprite->maxV;
+
+    // Triangle 1
+    vPtr[0] = (Vertex){x0, y0, u, v, 1.0f, 1.0f, 1.0f, 1.0f, minU, minV, maxU, maxV};
+    vPtr[1] = (Vertex){x1, y1, u2, v, 1.0f, 1.0f, 1.0f, 1.0f, minU, minV, maxU, maxV};
+    vPtr[2] = (Vertex){x2, y2, u2, v2, 1.0f, 1.0f, 1.0f, 1.0f, minU, minV, maxU, maxV};
     
-    GLint locPos = glGetAttribLocation(shaderProgram, "aPos");
-    GLint locTex = glGetAttribLocation(shaderProgram, "aTexCoord");
-    GLint locCol = glGetAttribLocation(shaderProgram, "aColor");
+    // Triangle 2
+    vPtr[3] = (Vertex){x0, y0, u, v, 1.0f, 1.0f, 1.0f, 1.0f, minU, minV, maxU, maxV};
+    vPtr[4] = (Vertex){x2, y2, u2, v2, 1.0f, 1.0f, 1.0f, 1.0f, minU, minV, maxU, maxV};
+    vPtr[5] = (Vertex){x3, y3, u, v2, 1.0f, 1.0f, 1.0f, 1.0f, minU, minV, maxU, maxV};
     
-    glVertexAttribPointer(locPos, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    glVertexAttribPointer(locTex, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2*sizeof(float)));
-    glVertexAttribPointer(locCol, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(4*sizeof(float)));
-    
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    batchVertexCount += 6;
 }
 
 void draw_sprite_fast(Tsprite *spr) { draw_sprite_fast_generic(spr); }

@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <math.h>
 #include "opengl_backend.h"
 #include "../../engine/sprites.h" // For Tsprite
 #include "../../input/input.h" // For PADSTATE
@@ -30,7 +31,20 @@ static double lastFrameTime = 0.0;
 static int vpX = 0, vpY = 0, vpW = 0, vpH = 0;
 static uint8_t clearR = 0, clearG = 0, clearB = 0;
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+// Batching globals
+typedef struct {
+    float x, y;
+    float u, v;
+} Vertex;
+
+#define MAX_BATCH_SPRITES 4096
+#define MAX_BATCH_VERTICES (MAX_BATCH_SPRITES * 4)
+
+static Vertex batchVertices[MAX_BATCH_VERTICES];
+static int batchVertexCount = 0;
+static GLuint currentTextureId = 0;
+
+static inline void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     float targetAspect = (float)gameScreenWidth / (float)gameScreenHeight;
     float windowAspect = (float)width / (float)height;
     
@@ -63,7 +77,7 @@ void HGL_init() {
     }
 
     glfwMakeContextCurrent(window);
-    
+    glfwSwapInterval(0);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
     int w, h;
@@ -108,11 +122,41 @@ void setMainLoopCallback(void (*mainLoop)()) {
     glfwTerminate();
 }
 
+double HGL_getTime() {
+    return glfwGetTime();
+}
+
+static inline void flush_batch() {
+    if (batchVertexCount == 0) return;
+    
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    
+    glVertexPointer(2, GL_FLOAT, sizeof(Vertex), &batchVertices[0].x);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(Vertex), &batchVertices[0].u);
+    
+    glDrawArrays(GL_QUADS, 0, batchVertexCount);
+    
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    
+    batchVertexCount = 0;
+}
+
+static inline void check_batch(GLuint textureId, int neededVertices) {
+    if (currentTextureId != textureId || batchVertexCount + neededVertices > MAX_BATCH_VERTICES) {
+        flush_batch();
+        currentTextureId = textureId;
+        glBindTexture(GL_TEXTURE_2D, currentTextureId);
+    }
+}
+
 void HGL_frame() {
+    flush_batch();
     glfwSwapBuffers(window);
     glfwPollEvents();
     
-    double currentTime = glfwGetTime();
+    /*double currentTime = glfwGetTime();
     double frameTime = currentTime - lastFrameTime;
     
     // Wait if frame finished too quickly
@@ -144,7 +188,7 @@ void HGL_frame() {
         lastFrameTime = glfwGetTime();
     } else {
         lastFrameTime = currentTime;
-    }
+    }*/
     
     glDisable(GL_SCISSOR_TEST);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -164,6 +208,7 @@ void setClearColor(uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void fadeToBlack(uint8_t fade) {
+    flush_batch();
     glDisable(GL_TEXTURE_2D);
     glColor4f(0.0f, 0.0f, 0.0f, fade / 255.0f);
     glBegin(GL_QUADS);
@@ -177,6 +222,7 @@ void fadeToBlack(uint8_t fade) {
 }
 
 void fadeToWhite(uint8_t fade) {
+    flush_batch();
     glDisable(GL_TEXTURE_2D);
     glColor4f(1.0f, 1.0f, 1.0f, fade / 255.0f);
     glBegin(GL_QUADS);
@@ -339,7 +385,7 @@ void draw_sprite(Tsprite *spr) {
     int mirroredVertical = spr->flags & 2;
 
     float scale = spr->size_x / 4096.0f;
-    float angle = (spr->angle * 360.0f) / 4096.0f;
+
     float w = sprite->w * scale;
     float h = sprite->h * scale;
     
@@ -359,19 +405,37 @@ void draw_sprite(Tsprite *spr) {
         v2 = temp;
     }
 
-    glPushMatrix();
-    glTranslatef(spr->x, spr->y, 0);
-    glRotatef(angle, 0, 0, 1);
-    glTranslatef(-w/2, -h/2, 0);
+    float x0 = -w/2, y0 = -h/2;
+    float x1 = w/2,  y1 = -h/2;
+    float x2 = w/2,  y2 = h/2;
+    float x3 = -w/2, y3 = h/2;
 
-    glBindTexture(GL_TEXTURE_2D, sprite->texture_id);
-    glBegin(GL_QUADS);
-        glTexCoord2f(u, v); glVertex2f(0, 0);
-        glTexCoord2f(u2, v); glVertex2f(w, 0);
-        glTexCoord2f(u2, v2); glVertex2f(w, h);
-        glTexCoord2f(u, v2); glVertex2f(0, h);
-    glEnd();
-    glPopMatrix();
+    if (spr->angle != 0) {
+        float angle = (spr->angle * 360.0f) / 4096.0f;
+        float rad = angle * 3.14159f / 180.0f;
+        float c = cosf(rad), s = sinf(rad);
+        float tx, ty;
+        
+        tx = x0*c - y0*s; ty = x0*s + y0*c; x0=tx; y0=ty;
+        tx = x1*c - y1*s; ty = x1*s + y1*c; x1=tx; y1=ty;
+        tx = x2*c - y2*s; ty = x2*s + y2*c; x2=tx; y2=ty;
+        tx = x3*c - y3*s; ty = x3*s + y3*c; x3=tx; y3=ty;
+    }
+
+    x0 += spr->x; y0 += spr->y;
+    x1 += spr->x; y1 += spr->y;
+    x2 += spr->x; y2 += spr->y;
+    x3 += spr->x; y3 += spr->y;
+
+    check_batch(sprite->texture_id, 4);
+
+    Vertex* vPtr = &batchVertices[batchVertexCount];
+    vPtr[0] = (Vertex){x0, y0, u, v};
+    vPtr[1] = (Vertex){x1, y1, u2, v};
+    vPtr[2] = (Vertex){x2, y2, u2, v2};
+    vPtr[3] = (Vertex){x3, y3, u, v2};
+
+    batchVertexCount += 4;
 }
 
 static inline void draw_sprite_fast_generic(Tsprite *spr) {
@@ -387,13 +451,15 @@ static inline void draw_sprite_fast_generic(Tsprite *spr) {
     float u2 = (float)(sprite->u + sprite->w) / (float)sprite->tex_w;
     float v2 = (float)(sprite->v + sprite->h) / (float)sprite->tex_h;
 
-    glBindTexture(GL_TEXTURE_2D, sprite->texture_id);
-    glBegin(GL_QUADS);
-        glTexCoord2f(u, v); glVertex2f(spr->x, spr->y);
-        glTexCoord2f(u2, v); glVertex2f(spr->x + w, spr->y);
-        glTexCoord2f(u2, v2); glVertex2f(spr->x + w, spr->y + h);
-        glTexCoord2f(u, v2); glVertex2f(spr->x, spr->y + h);
-    glEnd();
+    check_batch(sprite->texture_id, 4);
+
+    Vertex* vPtr = &batchVertices[batchVertexCount];
+    vPtr[0] = (Vertex){spr->x, spr->y, u, v};
+    vPtr[1] = (Vertex){spr->x + w, spr->y, u2, v};
+    vPtr[2] = (Vertex){spr->x + w, spr->y + h, u2, v2};
+    vPtr[3] = (Vertex){spr->x, spr->y + h, u, v2};
+
+    batchVertexCount += 4;
 }
 
 void draw_sprite_fast(Tsprite *spr) {
