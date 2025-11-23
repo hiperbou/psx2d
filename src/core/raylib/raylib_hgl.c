@@ -57,7 +57,7 @@ static void startFrame() {
 }
 
 
-void initDisplay() {
+static void initDisplay() {
     const int windowWidth = 640;
     const int windowHeight = 480;
 
@@ -75,16 +75,11 @@ void initDisplay() {
 
 void HGL_init() {
     initDisplay();
-    //initCD();
-    //initMemory();
-    //initFont();
-    //initInput();
 
     initSprites();
     init_particles();
-    
-    init_fpgs();
 
+    init_fpgs();
 }
 
 void HGL_frame() {

@@ -457,7 +457,7 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
     }
 }
 
-void initInput() { glfwSetKeyCallback(window, key_callback); }
+static void initInput() { glfwSetKeyCallback(window, key_callback); }
 PADSTATE* getPadState(int player) { pad_state.btn = button_state; return &pad_state; }
 uint16_t getButtons(int player) { return (player == 0) ? button_state : 0; }
 

@@ -4,6 +4,8 @@
 #include "fpg.h"
 #include "../hgl.h"
 
+void initInput();
+
 void HGL_init() {
     initDisplay();
     initCD();

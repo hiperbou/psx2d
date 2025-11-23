@@ -39,7 +39,6 @@ void HGL_init() {
     SDL_SetRenderLogicalPresentation(renderer, gameScreenWidth, gameScreenHeight, SDL_LOGICAL_PRESENTATION_LETTERBOX);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-    initInput();
     initSprites();
     init_particles();
     init_fpgs();
@@ -177,9 +176,6 @@ void SetSpriteDimensions(SPRITE *sprite, float u, float v, float w, float h) {
     sprite->v = v;
     sprite->w = w;
     sprite->h = h;
-}
-
-void initInput() {
 }
 
 PADSTATE* getPadState(int player) {

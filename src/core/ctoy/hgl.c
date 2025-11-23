@@ -20,23 +20,16 @@ void initDisplay() {
 
 void HGL_init() {
     initDisplay();
-    //initCD();
-    //initMemory();
-    //initFont();
-    //initInput();
 
     initSprites();
     init_particles();
     
     init_fpgs();
-
 }
 
 void clear(struct m_image *dest);
 
 void HGL_frame() {
-    //drawTexts();
-    //display();
     ctoy_swap_buffer(&buffer);
     clear(&buffer);
 }

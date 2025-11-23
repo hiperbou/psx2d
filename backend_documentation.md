@@ -118,9 +118,6 @@ The engine provides default, platform-agnostic implementations for certain core 
 
 ## Input Functions (`input.h`)
 
-### `initInput()`
-**Description:** Initializes the input system.
-
 ### `getPadState(int player)`
 **Description:** Gets the full state of the gamepad for the specified player.
 *   `player`: The player number (0 for player 1, etc.).

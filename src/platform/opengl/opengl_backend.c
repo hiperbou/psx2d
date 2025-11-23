@@ -315,7 +315,7 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
     }
 }
 
-void initInput() {
+static void initInput() {
     glfwSetKeyCallback(window, key_callback);
 }
 

@@ -11,8 +11,6 @@ typedef struct SPRITE SPRITE;
 
 // Initialization functions
 void HGL_init();
-void initSprites();
-void initInput();
 
 // Main loop and rendering control
 void HGL_frame();

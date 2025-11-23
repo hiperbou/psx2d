@@ -1,8 +1,6 @@
 #include "../input.h"
 #include <raylib.h>
 
-void initInput() {}
-
 PADSTATE * getPadState(int player) {
     return 0;//(PADSTATE*)padbuff[player];
 }

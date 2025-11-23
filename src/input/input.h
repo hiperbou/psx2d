@@ -30,7 +30,6 @@ typedef struct _PADSTATE
     unsigned char	ls_x,ls_y;
 } PADSTATE;
 
-void initInput();
 PADSTATE * getPadState(int player);
 uint16_t getButtons(int player);
 
