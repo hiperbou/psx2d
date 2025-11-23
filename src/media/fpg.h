@@ -15,6 +15,8 @@
 #include "ctoy/ctoy_fpg.h"
 #endif
 
+#include "../platform/backend_interface.h"
+
 #include <stdint.h>
 
 #define MAX_NUM_FPGS 16
