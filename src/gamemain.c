@@ -681,17 +681,8 @@ static void stateGameUpdate() {
     draw_text8(0, font_atlas, "ABCDEFGHIJLMNOPQRSTUVWXYZ", 8, 16, 0, -1);
     draw_text8(0, font_atlas, "Hello", 8, 24, 0, -1);
 
-    static double lastTime = 0;
-    static int frames = 0;
     static char fpsText[16] = "FPS: 0";
-
-    double currentTime = HGL_getTime();
-    frames++;
-    if (currentTime - lastTime >= 1.0) {
-        sprintf(fpsText, "FPS: %d", frames);
-        frames = 0;
-        lastTime = currentTime;
-    }
+    sprintf(fpsText, "FPS: %d", HGL_getFps());
     draw_text8(0, font_atlas, fpsText, 220, 8, 0, -1);
 }
 

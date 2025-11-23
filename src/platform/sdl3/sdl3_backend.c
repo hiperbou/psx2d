@@ -21,6 +21,10 @@ static const double targetFPS = 60.0;
 static const double targetFrameTime = 1.0 / 60.0;
 static uint64_t lastFrameTime = 0;
 
+static int fps = 6660;
+static int frames = 0;
+static uint64_t lastFpsTime = 0;
+
 static uint16_t button_state = 0;
 static PADSTATE pad_state = {0};
 
@@ -54,8 +58,8 @@ void HGL_init() {
     lastFrameTime = SDL_GetTicks();
 }
 
-double HGL_getTime() {
-    return SDL_GetTicks() / 1000.0;
+int HGL_getFps() {
+    return fps;
 }
 
 void setMainLoopCallback(void (*mainLoop)()) {
@@ -80,15 +84,21 @@ static uint8_t clearR = 0, clearG = 0, clearB = 0;
 void HGL_frame() {
     SDL_RenderPresent(renderer);
     
-    /*uint64_t currentTime = SDL_GetTicks();
+    uint64_t currentTime = SDL_GetTicks();
     double frameTime = (currentTime - lastFrameTime) / 1000.0;
     
     if (frameTime < targetFrameTime) {
-        SDL_Delay((uint32_t)((targetFrameTime - frameTime) * 1000.0));
-        lastFrameTime = SDL_GetTicks();
-    } else {
-        lastFrameTime = currentTime;
-    }*/
+        //SDL_Delay((uint32_t)((targetFrameTime - frameTime) * 1000.0));
+        currentTime = SDL_GetTicks();
+    }
+    lastFrameTime = currentTime;
+    
+    frames++;
+    if (currentTime - lastFpsTime >= 1000) {
+        fps = frames;
+        frames = 0;
+        lastFpsTime = currentTime;
+    }
     
     SDL_SetRenderDrawColor(renderer, clearR, clearG, clearB, 255);
     SDL_RenderClear(renderer);

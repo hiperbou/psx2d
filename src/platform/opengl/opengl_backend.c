@@ -44,6 +44,10 @@ static Vertex batchVertices[MAX_BATCH_VERTICES];
 static int batchVertexCount = 0;
 static GLuint currentTextureId = 0;
 
+static int fps = 0;
+static int frames = 0;
+static double lastFpsTime = 0;
+
 static inline void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     float targetAspect = (float)gameScreenWidth / (float)gameScreenHeight;
     float windowAspect = (float)width / (float)height;
@@ -122,8 +126,8 @@ void setMainLoopCallback(void (*mainLoop)()) {
     glfwTerminate();
 }
 
-double HGL_getTime() {
-    return glfwGetTime();
+int HGL_getFps() {
+    return fps;
 }
 
 static inline void flush_batch() {
@@ -156,19 +160,14 @@ void HGL_frame() {
     glfwSwapBuffers(window);
     glfwPollEvents();
     
-    /*double currentTime = glfwGetTime();
+    double currentTime = glfwGetTime();
     double frameTime = currentTime - lastFrameTime;
-    
-    // Wait if frame finished too quickly
     if (frameTime < targetFrameTime) {
         double waitTime = targetFrameTime - frameTime;
-        
-        // Sleep for 95% of the wait time
         double sleepTime = waitTime * 0.95;
-        
         #ifdef _WIN32
             if (sleepTime > 0.001) {
-                Sleep((DWORD)(sleepTime * 1000.0));
+                //Sleep((DWORD)(sleepTime * 1000.0));
             }
         #else
             if (sleepTime > 0.000001) {
@@ -178,17 +177,20 @@ void HGL_frame() {
                 nanosleep(&req, NULL);
             }
         #endif
-        
         // Busy-wait for the remaining 5% for precise timing
         double targetTime = currentTime + waitTime;
-        while (glfwGetTime() < targetTime) {
-            // Tight loop for precise timing (only ~0.8ms)
-        }
-        
-        lastFrameTime = glfwGetTime();
-    } else {
-        lastFrameTime = currentTime;
-    }*/
+        //while (glfwGetTime() < targetTime) {} // Tight loop for precise timing (only ~0.8ms)
+        currentTime = glfwGetTime();
+    }
+    
+    lastFrameTime = currentTime;
+    
+    frames++;
+    if (currentTime - lastFpsTime >= 1.0) {
+        fps = frames;
+        frames = 0;
+        lastFpsTime = currentTime;
+    }
     
     glDisable(GL_SCISSOR_TEST);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

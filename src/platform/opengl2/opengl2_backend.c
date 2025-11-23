@@ -140,6 +140,10 @@ static GLint locTex;
 static GLint locCol;
 static GLint locBounds;
 
+static int fps = 0;
+static int frames = 0;
+static double lastFpsTime = 0;
+
 static const char* vertexShaderSrc = 
     "attribute vec2 aPos;"
     "attribute vec2 aTexCoord;"
@@ -294,8 +298,8 @@ void setMainLoopCallback(void (*mainLoop)()) {
     glfwTerminate();
 }
 
-double HGL_getTime() {
-    return glfwGetTime();
+int HGL_getFps() {
+    return fps;
 }
 
 inline static void flush_batch() {
@@ -322,24 +326,31 @@ void HGL_frame() {
     glfwSwapBuffers(window);
     glfwPollEvents();
     
-    /*double currentTime = glfwGetTime();
+    double currentTime = glfwGetTime();
     double frameTime = currentTime - lastFrameTime;
     if (frameTime < targetFrameTime) {
         double waitTime = targetFrameTime - frameTime;
         double sleepTime = waitTime * 0.95;
         #ifdef _WIN32
-            if (sleepTime > 0.001) Sleep((DWORD)(sleepTime * 1000.0));
+            //if (sleepTime > 0.001) Sleep((DWORD)(sleepTime * 1000.0));
         #else
             if (sleepTime > 0.000001) {
                 struct timespec req = { (time_t)sleepTime, (long)((sleepTime - (time_t)sleepTime) * 1000000000L) };
-                nanosleep(&req, NULL);
+                //nanosleep(&req, NULL);
             }
         #endif
-        while (glfwGetTime() < currentTime + waitTime) {}
-        lastFrameTime = glfwGetTime();
-    } else {
-        lastFrameTime = currentTime;
-    }*/
+        //while (glfwGetTime() < currentTime + waitTime) {}
+        currentTime = glfwGetTime();
+    } 
+
+    lastFrameTime = currentTime;
+    
+    frames++;
+    if (currentTime - lastFpsTime >= 1.0) {
+        fps = frames;
+        frames = 0;
+        lastFpsTime = currentTime;
+    }
     
     glDisable(GL_SCISSOR_TEST);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

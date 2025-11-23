@@ -110,6 +110,6 @@ void fadeToWhite(uint8_t fade) {
     DrawRectangle(0, 0, 320, 240, fadeWhiteColor );
 }
 
-double HGL_getTime() {
-    return GetTime();
+int HGL_getFps() {
+    return GetFPS();
 }
