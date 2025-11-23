@@ -38,6 +38,10 @@ void HGL_init() {
     //SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d11");  
     //SDL_SetHint(SDL_HINT_RENDER_DRIVER, "vulkan");  
     //SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");  
+    //SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d");
+    //SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
+    //SDL_SetHint(SDL_HINT_RENDER_DRIVER, "gpu");
+    //SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
     if (!SDL_CreateWindowAndRenderer("SDL3 Backend", windowWidth, windowHeight, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
         SDL_Log("SDL_CreateWindowAndRenderer failed: %s", SDL_GetError());
         return;
