@@ -5,6 +5,12 @@
 #include "psx/psx_fpg.h"
 #elif defined(RAYLIB)
 #include "raylib/raylib_fpg.h"
+#elif defined(OPENGL)
+#include "../platform/opengl/opengl_backend.h"
+#elif defined(OPENGL2)
+#include "../platform/opengl2/opengl2_backend.h"
+#elif defined(SDL3)
+#include "../platform/sdl3/sdl3_backend.h"
 #else
 #include "ctoy/ctoy_fpg.h"
 #endif

@@ -1,0 +1,53 @@
+# Makefile for OpenGL 2 (Windows/MinGW)
+
+TARGET = DemoGL2
+CC = gcc
+CXX = g++
+
+# Core modules, always included
+MODULES = core engine game game/data game/menu game/state input media pool utils
+
+# Platform-specific modules for OpenGL 2
+MODULES_OPENGL = platform/opengl2
+
+# Combine all source directories
+SOURCES	= src $(addprefix src/,$(MODULES)) $(addprefix src/,$(MODULES_OPENGL))
+
+# Find all C and C++ files
+CFILES		= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
+# Add memory implementation from core/default (but not main loop)
+CFILES		+= src/core/default/hgl_mem.c
+CPPFILES	= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.cpp))
+
+# Create object file lists
+OBJECTS		= $(CFILES:.c=.o)
+CPPOBJECTS	= $(CPPFILES:.cpp=.o)
+
+# Define include paths
+INCLUDES  = $(addprefix -I,$(SOURCES)) -Isrc
+
+# Compiler and Linker Flags
+CPPFLAGS += -DOPENGL2 -g $(INCLUDES)
+# LDFLAGS for a desktop build with OpenGL and GLFW
+LDFLAGS += -Lglfw-3.4.bin.WIN64/lib-mingw-w64 -lglfw3 -lopengl32 -lgdi32 -lm -lwinmm
+
+# Default target
+all: $(TARGET)
+
+# Link the program
+$(TARGET): $(OBJECTS) $(CPPOBJECTS)
+	$(CC) $(OBJECTS) $(CPPOBJECTS) -o $(TARGET) $(LDFLAGS)
+
+# Compile C files
+%.o: %.c
+	$(CC) $(CPPFLAGS) -c $< -o $@
+
+# Compile C++ files
+%.o: %.cpp
+	$(CXX) $(CPPFLAGS) -c $< -o $@
+
+# Clean target
+clean:
+	rm -f $(OBJECTS) $(CPPOBJECTS) $(TARGET)
+
+.PHONY: all clean

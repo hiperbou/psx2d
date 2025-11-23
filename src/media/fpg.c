@@ -119,10 +119,11 @@ int load_atlas(int file, char *filename, int tileWidth, int tileHeight, int numC
                 CopySprite(atlas_sprite, sprite);
             }
 
-            sprite->u = x * tileWidth;
-            sprite->v = y * tileHeight;
-            sprite->w = tileWidth;
-            sprite->h = tileHeight;
+            float u = x * tileWidth;
+            float v = y * tileHeight;
+            float w = tileWidth;
+            float h = tileHeight;
+            SetSpriteDimensions(sprite, u, v, w, h);
         }
     }
     return atlas_map;

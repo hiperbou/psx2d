@@ -1,0 +1,49 @@
+# Makefile for PSX2D Engine (SDL3 Backend)
+
+# Compiler and Linker
+CC = gcc
+LD = gcc
+
+# Target Executable
+TARGET = DemoSDL3.exe
+
+# SDL3 Paths
+SDL3_DIR = SDL3-3.2.4/x86_64-w64-mingw32
+SDL3_INCLUDE = $(SDL3_DIR)/include
+SDL3_LIB = $(SDL3_DIR)/lib
+
+# Modules
+MODULES = core engine game game/data game/menu game/state input media pool utils
+MODULES_SDL3 = platform/sdl3
+
+# Source Directories
+SOURCES = src $(addprefix src/,$(MODULES)) $(addprefix src/,$(MODULES_SDL3))
+
+# Find all C files
+CFILES = $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
+# Add memory implementation from core/default
+CFILES += src/core/default/hgl_mem.c
+
+# Object Files
+OBJECTS = $(CFILES:.c=.o)
+
+# Include Directories
+INCLUDES  = $(addprefix -I,$(SOURCES)) -Isrc -I$(SDL3_INCLUDE)
+
+# Compiler and Linker Flags
+CPPFLAGS += -DSDL3 -g $(INCLUDES)
+LDFLAGS += -L$(SDL3_LIB) -lSDL3
+
+# Build Rules
+all: $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	$(CC) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
+
+%.o: %.c
+	$(CC) $(CPPFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJECTS) $(TARGET)
+
+.PHONY: all clean

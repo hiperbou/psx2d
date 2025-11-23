@@ -22,3 +22,9 @@ void CopySprite(SPRITE *original, SPRITE *sprite) {
     sprite->col.b = original->col.b;
 }
 
+void SetSpriteDimensions(SPRITE *sprite, float u, float v, float w, float h) {
+    sprite->u = u;
+    sprite->v = v;
+    sprite->w = w;
+    sprite->h = h;
+}
